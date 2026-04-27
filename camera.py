@@ -30,10 +30,12 @@ class Camera:
     def _open(self):
         if self.is_rtsp:
             os.environ.setdefault("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;tcp")
-        self.cap = cv2.VideoCapture(self.source)
-        if self.is_rtsp:
+            self.cap = cv2.VideoCapture()
             self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
             self.cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)
+            self.cap.open(self.source, cv2.CAP_FFMPEG)
+        else:
+            self.cap = cv2.VideoCapture(self.source)
         if not self.cap.isOpened():
             label = self.source if self.is_rtsp else f"/dev/video{self.source}"
             raise RuntimeError(f"Kaamerat ei leitud: {label}")
@@ -108,9 +110,10 @@ def probe_rtsp(ip: str, user: str = "admin", password: str = "admin", port: int 
         return None
     for path in RTSP_PATHS:
         url = f"rtsp://{user}:{password}@{ip}:{port}{path}"
-        cap = cv2.VideoCapture(url)
+        cap = cv2.VideoCapture()
         cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
         cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)
+        cap.open(url, cv2.CAP_FFMPEG)
         if cap.isOpened():
             ok, _ = cap.read()
             cap.release()

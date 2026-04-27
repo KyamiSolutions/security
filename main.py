@@ -1,3 +1,4 @@
+import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -22,7 +23,7 @@ def _default_source() -> str | int:
 async def lifespan(app: FastAPI):
     source = _default_source()
     try:
-        cameras[source] = Camera(source)
+        cameras[source] = await asyncio.to_thread(Camera, source)
         print(f"Kaamera avatud: {source}")
     except RuntimeError as e:
         print(f"Hoiatus: {e}")
@@ -65,9 +66,9 @@ def probe(
     _: str = Depends(verify_key),
 ):
     """Leiab automaatselt toimiva RTSP raja antud IP-kaamerale."""
-    if not _tcp_reachable(ip, port):
+    if not await asyncio.to_thread(_tcp_reachable, ip, port):
         raise HTTPException(503, f"Port {port} on suletud aadressil {ip}. Kontrolli, et kaamera on võrgus.")
-    url = probe_rtsp(ip, user, password, port)
+    url = await asyncio.to_thread(probe_rtsp, ip, user, password, port)
     if not url:
         raise HTTPException(404, "RTSP rada ei leitud. Kaamera vastab, aga ükski tuntud rada ei töötanud.")
     cameras[url] = Camera(url)
