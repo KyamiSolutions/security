@@ -19,10 +19,14 @@ ok "Python OK"
 
 # ── Sõltuvused ───────────────────────────────────────────────────────────────
 INSTALL_DIR="$HOME/kaamera"
-info "Paigaldan kausta: $INSTALL_DIR"
-mkdir -p "$INSTALL_DIR"
-cp -r . "$INSTALL_DIR/"
+CURRENT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ "$CURRENT_DIR" != "$INSTALL_DIR" ]; then
+  info "Kopeerin kausta: $INSTALL_DIR"
+  mkdir -p "$INSTALL_DIR"
+  cp -r . "$INSTALL_DIR/"
+fi
 cd "$INSTALL_DIR"
+info "Töökausta: $INSTALL_DIR"
 
 info "Paigaldan Python-paketid..."
 python3 -m venv .venv
