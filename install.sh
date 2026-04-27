@@ -74,6 +74,28 @@ systemctl --user enable kaamera
 systemctl --user start kaamera
 ok "Teenus käivitatud"
 
+# ── Tailscale (kaugpääs) ─────────────────────────────────────────────────────
+echo ""
+echo -e "  ${Y}Kas soovid kaugpääsu (vaata kaamerat ka kodust väljaspool)?${N}"
+read -r -p "  Paigalda Tailscale? [j/e]: " TAIL
+if [[ "$TAIL" =~ ^[jJ]$ ]]; then
+  if command -v tailscale &>/dev/null; then
+    ok "Tailscale on juba paigaldatud"
+  else
+    info "Paigaldan Tailscale..."
+    curl -fsSL https://tailscale.com/install.sh | sh
+    ok "Tailscale paigaldatud"
+  fi
+  info "Käivitan Tailscale'i (brauser avaneb autentimiseks)..."
+  sudo tailscale up
+  TAIL_IP=$(tailscale ip -4 2>/dev/null || echo "")
+  if [ -n "$TAIL_IP" ]; then
+    ok "Tailscale IP: $TAIL_IP"
+  fi
+else
+  TAIL_IP=""
+fi
+
 # ── Kohalik IP ───────────────────────────────────────────────────────────────
 LOCAL_IP=$(hostname -I | awk '{print $1}')
 PORT=$(grep PORT "$INSTALL_DIR/.env" | cut -d= -f2 || echo 8080)
@@ -82,7 +104,13 @@ echo ""
 echo "────────────────────────────────────"
 ok "Paigaldus valmis!"
 echo ""
-echo -e "  Ava brauseris: ${G}http://${LOCAL_IP}:${PORT}${N}"
+echo -e "  Koduvõrgus:   ${G}http://${LOCAL_IP}:${PORT}${N}"
+if [ -n "$TAIL_IP" ]; then
+echo -e "  Kõikjalt:     ${G}http://${TAIL_IP}:${PORT}${N}"
+echo -e "  ${Y}(Tailscale peab olema paigaldatud ka vaataja seadmes: tailscale.com/download)${N}"
+fi
+echo ""
+echo -e "  API võti: ${G}$(grep CAMERA_API_KEY "$INSTALL_DIR/.env" | cut -d= -f2)${N}"
 echo ""
 echo -e "  Teenuse haldus:"
 echo -e "    Peata:   ${Y}systemctl --user stop kaamera${N}"
