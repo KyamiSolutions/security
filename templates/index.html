@@ -125,6 +125,14 @@
   async function connectUsb() {
     apiKey = document.getElementById('api-key').value.trim();
     camKey = document.getElementById('usb-index').value;
+    setStatus('ühendun...', 'warn');
+    const res = await apiFetch(`/snapshot?key=${encodeURIComponent(camKey)}`);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      showErr(d.detail || `USB kaamera ${camKey} pole saadaval`);
+      setStatus('viga', 'err');
+      return;
+    }
     startViewer();
   }
 
