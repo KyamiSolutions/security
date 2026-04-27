@@ -4,23 +4,47 @@ import time
 import subprocess
 import os
 
+# Tuntud RTSP rajad Hiina IP-kaameratele (proovitakse järjekorras)
+RTSP_PATHS = [
+    "/11",                                      # CamHi / Zhongxin põhistream
+    "/12",                                      # CamHi alamstream
+    "/stream",
+    "/live/ch00_0",
+    "/ch0_0.264",
+    "/videoMain",
+    "/cam/realmonitor?channel=1&subtype=0",     # Dahua
+    "/h264/ch1/main/av_stream",                 # Hikvision
+]
+
 
 class Camera:
-    def __init__(self, device_index: int = 0):
-        self.device_index = device_index
+    def __init__(self, source: str | int):
+        # source on kas RTSP URL (str) või USB indeks (int)
+        self.source = source
+        self.is_rtsp = isinstance(source, str) and source.startswith("rtsp://")
         self.cap = None
         self.lock = threading.Lock()
         self._open()
 
     def _open(self):
-        self.cap = cv2.VideoCapture(self.device_index)
+        if self.is_rtsp:
+            os.environ.setdefault("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;tcp")
+        self.cap = cv2.VideoCapture(self.source)
         if not self.cap.isOpened():
-            raise RuntimeError(f"Kaamerat ei leitud: /dev/video{self.device_index}")
+            label = self.source if self.is_rtsp else f"/dev/video{self.source}"
+            raise RuntimeError(f"Kaamerat ei leitud: {label}")
 
     def read_frame(self) -> bytes | None:
         with self.lock:
             ok, frame = self.cap.read()
         if not ok:
+            # RTSP ühendus võib katkeda — proovi uuesti avada
+            if self.is_rtsp:
+                try:
+                    self.cap.release()
+                    self._open()
+                except RuntimeError:
+                    pass
             return None
         _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
         return buf.tobytes()
@@ -32,16 +56,19 @@ class Camera:
         if self.cap:
             self.cap.release()
 
-    # v4l2 settings — silently ignored if v4l2-utils not installed
     def set_v4l2(self, control: str, value: int):
-        dev = f"/dev/video{self.device_index}"
+        if self.is_rtsp:
+            return
+        dev = f"/dev/video{self.source}"
         subprocess.run(
             ["v4l2-ctl", f"--device={dev}", f"--set-ctrl={control}={value}"],
             capture_output=True,
         )
 
     def get_v4l2_controls(self) -> dict:
-        dev = f"/dev/video{self.device_index}"
+        if self.is_rtsp:
+            return {}
+        dev = f"/dev/video{self.source}"
         result = subprocess.run(
             ["v4l2-ctl", f"--device={dev}", "--list-ctrls"],
             capture_output=True, text=True,
@@ -62,7 +89,21 @@ class Camera:
         return controls
 
 
-def list_cameras() -> list[int]:
+def probe_rtsp(ip: str, user: str = "admin", password: str = "admin", port: int = 554) -> str | None:
+    """Proovib leida toimivat RTSP rada antud IP-l."""
+    for path in RTSP_PATHS:
+        url = f"rtsp://{user}:{password}@{ip}:{port}{path}"
+        cap = cv2.VideoCapture(url)
+        if cap.isOpened():
+            ok, _ = cap.read()
+            cap.release()
+            if ok:
+                return url
+        cap.release()
+    return None
+
+
+def list_usb_cameras() -> list[int]:
     found = []
     for i in range(8):
         path = f"/dev/video{i}"

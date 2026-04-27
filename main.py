@@ -3,20 +3,27 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
-from fastapi.staticfiles import StaticFiles
 
 from auth import verify_key
-from camera import Camera, list_cameras, mjpeg_generator
+from camera import Camera, list_usb_cameras, mjpeg_generator, probe_rtsp
 
-cameras: dict[int, Camera] = {}
+# Võtmeks on RTSP URL string või USB indeks int
+cameras: dict[str | int, Camera] = {}
+
+
+def _default_source() -> str | int:
+    url = os.environ.get("CAMERA_URL", "")
+    if url:
+        return url
+    return int(os.environ.get("CAMERA_INDEX", "0"))
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ava vaikimisi kaamera käivitumisel
-    default = int(os.environ.get("CAMERA_INDEX", "0"))
+    source = _default_source()
     try:
-        cameras[default] = Camera(default)
+        cameras[source] = Camera(source)
+        print(f"Kaamera avatud: {source}")
     except RuntimeError as e:
         print(f"Hoiatus: {e}")
     yield
@@ -27,13 +34,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Kaamera kaughaldus", lifespan=lifespan)
 
 
-def _get_camera(index: int) -> Camera:
-    if index not in cameras:
+def _get_camera(key: str | int) -> Camera:
+    if key not in cameras:
         try:
-            cameras[index] = Camera(index)
+            cameras[key] = Camera(key)
         except RuntimeError:
-            raise HTTPException(404, f"Kaamera {index} pole saadaval")
-    return cameras[index]
+            raise HTTPException(404, f"Kaamera pole saadaval: {key}")
+    return cameras[key]
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -44,41 +51,61 @@ def index():
 
 @app.get("/cameras")
 def get_cameras(_: str = Depends(verify_key)):
-    return {"cameras": list_cameras()}
+    usb = list_usb_cameras()
+    rtsp = [k for k in cameras if isinstance(k, str)]
+    return {"usb": usb, "rtsp": rtsp}
 
 
-@app.get("/stream/{index}")
-def stream(index: int = 0, _: str = Depends(verify_key)):
-    cam = _get_camera(index)
+@app.get("/probe")
+def probe(
+    ip: str = Query(...),
+    user: str = Query("admin"),
+    password: str = Query("admin"),
+    port: int = Query(554),
+    _: str = Depends(verify_key),
+):
+    """Leiab automaatselt toimiva RTSP raja antud IP-kaamerale."""
+    url = probe_rtsp(ip, user, password, port)
+    if not url:
+        raise HTTPException(404, "RTSP rada ei leitud. Kontrolli IP-d, kasutajat ja parooli.")
+    cameras[url] = Camera(url)
+    # Peida parool vastuses
+    safe = url.replace(f":{password}@", ":***@")
+    return {"url": safe, "internal_key": url}
+
+
+@app.get("/stream")
+def stream(key: str = Query(...), _: str = Depends(verify_key)):
+    cam = _get_camera(key if not key.isdigit() else int(key))
     return StreamingResponse(
         mjpeg_generator(cam),
         media_type="multipart/x-mixed-replace; boundary=frame",
     )
 
 
-@app.get("/snapshot/{index}")
-def snapshot(index: int = 0, _: str = Depends(verify_key)):
-    cam = _get_camera(index)
+@app.get("/snapshot")
+def snapshot(key: str = Query(...), _: str = Depends(verify_key)):
+    cam = _get_camera(key if not key.isdigit() else int(key))
     frame = cam.snapshot()
     if frame is None:
         raise HTTPException(503, "Kaader pole saadaval")
     return Response(content=frame, media_type="image/jpeg")
 
 
-@app.get("/controls/{index}")
-def get_controls(index: int = 0, _: str = Depends(verify_key)):
-    cam = _get_camera(index)
+@app.get("/controls")
+def get_controls(key: str = Query(...), _: str = Depends(verify_key)):
+    cam = _get_camera(key if not key.isdigit() else int(key))
     return {"controls": cam.get_v4l2_controls()}
 
 
-@app.post("/controls/{index}")
+@app.post("/controls")
 def set_control(
-    index: int = 0,
+    key: str = Query(...),
     control: str = Query(...),
     value: int = Query(...),
     _: str = Depends(verify_key),
 ):
-    cam = _get_camera(index)
+    cam = _get_camera(key if not key.isdigit() else int(key))
     cam.set_v4l2(control, value)
     return {"ok": True, "control": control, "value": value}
 
