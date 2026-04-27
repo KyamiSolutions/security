@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
 
 from auth import verify_key
-from camera import Camera, list_usb_cameras, mjpeg_generator, probe_rtsp
+from camera import Camera, _tcp_reachable, list_usb_cameras, mjpeg_generator, probe_rtsp
 
 # Võtmeks on RTSP URL string või USB indeks int
 cameras: dict[str | int, Camera] = {}
@@ -65,9 +65,11 @@ def probe(
     _: str = Depends(verify_key),
 ):
     """Leiab automaatselt toimiva RTSP raja antud IP-kaamerale."""
+    if not _tcp_reachable(ip, port):
+        raise HTTPException(503, f"Port {port} on suletud aadressil {ip}. Kontrolli, et kaamera on võrgus.")
     url = probe_rtsp(ip, user, password, port)
     if not url:
-        raise HTTPException(404, "RTSP rada ei leitud. Kontrolli IP-d, kasutajat ja parooli.")
+        raise HTTPException(404, "RTSP rada ei leitud. Kaamera vastab, aga ükski tuntud rada ei töötanud.")
     cameras[url] = Camera(url)
     # Peida parool vastuses
     safe = url.replace(f":{password}@", ":***@")

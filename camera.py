@@ -3,6 +3,7 @@ import threading
 import time
 import subprocess
 import os
+import socket
 
 # Tuntud RTSP rajad Hiina IP-kaameratele (proovitakse järjekorras)
 RTSP_PATHS = [
@@ -30,6 +31,9 @@ class Camera:
         if self.is_rtsp:
             os.environ.setdefault("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;tcp")
         self.cap = cv2.VideoCapture(self.source)
+        if self.is_rtsp:
+            self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
+            self.cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)
         if not self.cap.isOpened():
             label = self.source if self.is_rtsp else f"/dev/video{self.source}"
             raise RuntimeError(f"Kaamerat ei leitud: {label}")
@@ -89,11 +93,24 @@ class Camera:
         return controls
 
 
+def _tcp_reachable(ip: str, port: int, timeout: float = 3.0) -> bool:
+    """Kiire TCP ühenduse kontroll enne RTSP proovimist."""
+    try:
+        with socket.create_connection((ip, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
 def probe_rtsp(ip: str, user: str = "admin", password: str = "admin", port: int = 554) -> str | None:
     """Proovib leida toimivat RTSP rada antud IP-l."""
+    if not _tcp_reachable(ip, port):
+        return None
     for path in RTSP_PATHS:
         url = f"rtsp://{user}:{password}@{ip}:{port}{path}"
         cap = cv2.VideoCapture(url)
+        cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
+        cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)
         if cap.isOpened():
             ok, _ = cap.read()
             cap.release()
