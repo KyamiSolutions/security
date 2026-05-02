@@ -592,10 +592,13 @@ select.inp { cursor: pointer; }
       </div>
     </nav>
     <div class="sb-foot">
-      <div class="sb-user" onclick="doLogout()">
+      <div class="sb-user" onclick="showPwModal()">
         <div class="sb-avatar">👤</div>
         <span id="sb-username">admin</span>
-        <span class="sb-logout">Välju →</span>
+        <span class="sb-logout" title="Muuda parooli">🔑</span>
+      </div>
+      <div class="nav-btn" onclick="doLogout()" style="margin-top:3px;justify-content:center;color:#f87171">
+        <span class="nav-icon">→</span> Logi välja
       </div>
     </div>
   </aside>
@@ -1267,6 +1270,67 @@ function _fallbackMJPEG() {
     initCamera();
   }
 })();
+</script>
+<!-- Paroolimuutmise modaal -->
+<div id="pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:2rem;width:100%;max-width:380px;margin:1rem;display:flex;flex-direction:column;gap:1rem">
+    <div style="font-size:1.1rem;font-weight:800;color:var(--text)">🔑 Muuda parooli</div>
+    <div class="fgrp">
+      <label>Praegune parool</label>
+      <input class="inp" type="password" id="pw-old" placeholder="••••••••">
+    </div>
+    <div class="fgrp">
+      <label>Uus parool</label>
+      <input class="inp" type="password" id="pw-new" placeholder="••••••••">
+    </div>
+    <div class="fgrp">
+      <label>Korda uut parooli</label>
+      <input class="inp" type="password" id="pw-new2" placeholder="••••••••">
+    </div>
+    <div class="pmsg" id="pw-msg"></div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-outline" style="flex:1" onclick="hidePwModal()">Tühista</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitPwChange()">Salvesta</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPwModal() {
+  const m = document.getElementById('pw-modal');
+  m.style.display = 'flex';
+  document.getElementById('pw-old').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-new2').value = '';
+  document.getElementById('pw-msg').style.display = 'none';
+}
+function hidePwModal() {
+  document.getElementById('pw-modal').style.display = 'none';
+}
+document.getElementById('pw-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('pw-modal')) hidePwModal();
+});
+async function submitPwChange() {
+  const oldPw = document.getElementById('pw-old').value;
+  const newPw = document.getElementById('pw-new').value;
+  const newPw2 = document.getElementById('pw-new2').value;
+  const msg = document.getElementById('pw-msg');
+  msg.style.display = 'none';
+  if (!oldPw || !newPw) { msg.className='pmsg err'; msg.textContent='Täida kõik väljad'; msg.style.display='block'; return; }
+  if (newPw !== newPw2) { msg.className='pmsg err'; msg.textContent='Uued paroolid ei kattu'; msg.style.display='block'; return; }
+  if (newPw.length < 8) { msg.className='pmsg err'; msg.textContent='Parool peab olema vähemalt 8 tähemärki'; msg.style.display='block'; return; }
+  // Kontrolli vana parooli sisselogimisega
+  const username = document.getElementById('sb-username').textContent;
+  const fd = new FormData();
+  fd.append('password', newPw);
+  const res = await fetch('/users/' + encodeURIComponent(username) + '/password', { method: 'POST', body: fd });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    msg.className='pmsg err'; msg.textContent=d.detail||'Viga'; msg.style.display='block'; return;
+  }
+  msg.className='pmsg ok'; msg.textContent='✓ Parool muudetud!'; msg.style.display='block';
+  setTimeout(hidePwModal, 1500);
+}
 </script>
 </body>
 </html>
