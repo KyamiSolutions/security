@@ -33,10 +33,11 @@ class Camera:
 
     def _open(self):
         if self.is_rtsp:
-            os.environ.setdefault("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;tcp")
+            # threads;1 väldib libavcodec pthread_frame assertion crash'i
+            os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|threads;1"
             self.cap = cv2.VideoCapture()
-            self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
-            self.cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)
+            self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 8000)
+            self.cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 8000)
             self.cap.open(self.source, cv2.CAP_FFMPEG)
         else:
             self.cap = cv2.VideoCapture(self.source)
@@ -110,12 +111,13 @@ def probe_rtsp(ip: str, user: str = "admin", password: str = "admin", port: int 
     """Proovib leida toimivat RTSP rada antud IP-l. Parool URL-enkooditakse automaatselt."""
     if not _tcp_reachable(ip, port):
         return None
+    os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|threads;1"
     encoded_pass = quote(password, safe="")
     for path in RTSP_PATHS:
         url = f"rtsp://{user}:{encoded_pass}@{ip}:{port}{path}"
         cap = cv2.VideoCapture()
-        cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
-        cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)
+        cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 8000)
+        cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 8000)
         cap.open(url, cv2.CAP_FFMPEG)
         if cap.isOpened():
             ok, _ = cap.read()
