@@ -56,7 +56,10 @@ class Camera:
                 except RuntimeError:
                     pass
             return None
-        _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        h, w = frame.shape[:2]
+        if w > 1280:
+            frame = cv2.resize(frame, (1280, int(h * 1280 / w)), interpolation=cv2.INTER_LINEAR)
+        _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 65])
         return buf.tobytes()
 
     def snapshot(self) -> bytes | None:
