@@ -568,7 +568,7 @@ select.inp { cursor: pointer; }
     <nav class="sb-nav">
       <div class="sb-section">Ülevaade</div>
       <div class="nav-btn on" id="snav-dashboard" onclick="go('dashboard')">
-        <span class="nav-icon">📊</span> Armatuurlaud
+        <span class="nav-icon">📊</span> Töölaud
       </div>
 
       <div class="sb-section">Jälgimine</div>
@@ -596,7 +596,7 @@ select.inp { cursor: pointer; }
 
   <!-- Topbar (desktop) -->
   <div class="topbar">
-    <div class="topbar-title" id="topbar-title">Armatuurlaud</div>
+    <div class="topbar-title" id="topbar-title">Töölaud</div>
     <div class="topbar-right">
       <div class="topbar-time" id="topbar-clock"></div>
       <div class="topbar-user">
@@ -621,7 +621,7 @@ select.inp { cursor: pointer; }
     <div class="page on" id="page-dashboard">
       <div class="page-header">
         <div>
-          <div class="page-title">Armatuurlaud</div>
+          <div class="page-title">Töölaud</div>
           <div class="page-sub">Nutikodu süsteemi ülevaade</div>
         </div>
         <div class="page-date" id="dash-date"></div>
@@ -814,7 +814,7 @@ let recData = [];
 let devData = [];
 
 const PAGE_TITLES = {
-  dashboard: 'Armatuurlaud',
+  dashboard: 'Töölaud',
   camera: 'Kaamera',
   recordings: 'Salvestused',
   devices: 'Seadmed',
@@ -848,7 +848,7 @@ async function doLogin() {
     return;
   }
   camKey = data.cam_key || '';
-  sessionStorage.setItem('camKey', camKey);
+  localStorage.setItem('camKey', camKey);
   const name = u || 'admin';
   document.getElementById('sb-username').textContent = name;
   document.getElementById('topbar-username').textContent = name;
@@ -858,7 +858,8 @@ async function doLogin() {
 
 async function doLogout() {
   await fetch('/logout', { method: 'POST' });
-  sessionStorage.clear();
+  localStorage.removeItem('camKey');
+  localStorage.removeItem('username');
   location.reload();
 }
 
@@ -924,7 +925,7 @@ async function doProbe() {
     return;
   }
   camKey = data.internal_key;
-  sessionStorage.setItem('camKey', camKey);
+  localStorage.setItem('camKey', camKey);
   msg.className = 'pmsg ok'; msg.textContent = '✓ Leitud: ' + data.url;
   document.getElementById('setup-view').style.display = 'none';
   document.getElementById('live-view').style.display = 'block';
@@ -1111,8 +1112,8 @@ function initCamera() {
 (async () => {
   const res = await fetch('/recordings');
   if (res.ok) {
-    camKey = sessionStorage.getItem('camKey') || '';
-    const stored = sessionStorage.getItem('username') || 'admin';
+    camKey = localStorage.getItem('camKey') || '';
+    const stored = localStorage.getItem('username') || 'admin';
     document.getElementById('sb-username').textContent = stored;
     document.getElementById('topbar-username').textContent = stored;
     document.getElementById('topbar-initial').textContent = stored[0].toUpperCase();
