@@ -1486,14 +1486,13 @@ async function confirmTFA() {
   const code = document.getElementById('tfa-confirm-code').value.trim();
   const msg = document.getElementById('tfa-msg');
   if (!code) { msg.className='pmsg err'; msg.textContent='Sisesta kood'; msg.style.display='block'; return; }
-  // Kinnita et kood töötab
-  const username = document.getElementById('sb-username').textContent;
-  const fd = new FormData(); fd.append('temp_token', ''); fd.append('code', code);
-  const res = await fetch('/users/me/2fa');
-  const st = await res.json();
-  if (st.enabled) {
+  const fd = new FormData(); fd.append('code', code);
+  const res = await fetch('/users/me/2fa/verify', { method: 'POST', body: fd });
+  if (res.ok) {
     msg.className='pmsg ok'; msg.textContent='✅ 2FA edukalt seadistatud!'; msg.style.display='block';
     setTimeout(() => { hideTFAModal(); showTFAModal(); }, 1500);
+  } else {
+    msg.className='pmsg err'; msg.textContent='Vale kood, proovi uuesti'; msg.style.display='block';
   }
 }
 document.getElementById('tfa-modal').addEventListener('click', e => {

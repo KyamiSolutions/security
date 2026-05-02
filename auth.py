@@ -225,6 +225,13 @@ def disable_2fa(username: str):
     cur.close(); db.close()
 
 
+def verify_totp_code(username: str, code: str) -> bool:
+    u = _get_user(username)
+    if not u or not u["totp_secret"]:
+        return False
+    return pyotp.TOTP(u["totp_secret"]).verify(code, valid_window=1)
+
+
 def get_2fa_status(username: str) -> bool:
     u = _get_user(username)
     return bool(u and u["totp_secret"])

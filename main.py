@@ -11,7 +11,8 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Streamin
 
 from auth import (login as auth_login, logout as auth_logout, verify_session,
                   get_username, list_users, add_user, delete_user, change_password,
-                  init_db, verify_2fa, enable_2fa, disable_2fa, get_2fa_status, get_user_role)
+                  init_db, verify_2fa, enable_2fa, disable_2fa, get_2fa_status, get_user_role,
+                  verify_totp_code)
 from camera import Camera, _tcp_reachable, mjpeg_generator, probe_rtsp
 from devices import add_device, list_devices, remove_device, toggle_device
 from motion import MotionDetector, list_recordings, RECORDINGS_DIR
@@ -150,6 +151,14 @@ def my_2fa_enable(token: str = Depends(verify_session)):
 def my_2fa_disable(token: str = Depends(verify_session)):
     username = get_username(token)
     disable_2fa(username)
+    return {"ok": True}
+
+
+@app.post("/users/me/2fa/verify")
+def my_2fa_verify(code: str = Form(...), token: str = Depends(verify_session)):
+    username = get_username(token)
+    if not verify_totp_code(username, code):
+        raise HTTPException(400, "Vale kood")
     return {"ok": True}
 
 
