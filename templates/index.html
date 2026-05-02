@@ -585,6 +585,11 @@ select.inp { cursor: pointer; }
       <div class="nav-btn" id="snav-devices" onclick="go('devices')">
         <span class="nav-icon">💡</span> Seadmed
       </div>
+
+      <div class="sb-section">Haldus</div>
+      <div class="nav-btn" id="snav-users" onclick="go('users')">
+        <span class="nav-icon">👥</span> Kasutajad
+      </div>
     </nav>
     <div class="sb-foot">
       <div class="sb-user" onclick="doLogout()">
@@ -785,6 +790,44 @@ select.inp { cursor: pointer; }
       </div>
     </div>
 
+    <!-- ── USERS ── -->
+    <div class="page" id="page-users">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Kasutajad</div>
+          <div class="page-sub">Halda süsteemi kasutajaid</div>
+        </div>
+      </div>
+
+      <div class="panel" style="max-width:600px;margin-bottom:1.5rem">
+        <div class="panel-head">
+          <div class="panel-title">👥 Kasutajate nimekiri</div>
+        </div>
+        <div class="panel-body" id="users-list"></div>
+      </div>
+
+      <div class="setup-card" style="max-width:480px">
+        <h3>Lisa uus kasutaja</h3>
+        <div class="fgrp">
+          <label>Kasutajanimi</label>
+          <input class="inp" id="new-username" placeholder="kasutaja123">
+        </div>
+        <div class="fgrp">
+          <label>Parool</label>
+          <input class="inp" type="password" id="new-password" placeholder="••••••••">
+        </div>
+        <div class="fgrp">
+          <label>Roll</label>
+          <select class="inp" id="new-role">
+            <option value="user">Kasutaja</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="createUser()">+ Lisa kasutaja</button>
+        <div class="pmsg" id="user-msg"></div>
+      </div>
+    </div>
+
   </div><!-- /main -->
 
   <!-- Mobile bottom nav -->
@@ -820,6 +863,7 @@ const PAGE_TITLES = {
   camera: 'Kaamera',
   recordings: 'Salvestused',
   devices: 'Seadmed',
+  users: 'Kasutajad',
 };
 
 // ── Clock ────────────────────────────────────────────────────────────────────
@@ -904,6 +948,7 @@ function go(name) {
   document.getElementById('topbar-title').textContent = PAGE_TITLES[name] || name;
   if (name === 'recordings') loadRecordings();
   if (name === 'devices') loadDevices();
+  if (name === 'users') loadUsers();
   if (name === 'dashboard') refreshDashboard();
 }
 
@@ -1048,6 +1093,58 @@ async function delDev(id) {
   if (!confirm('Eemaldan seadme?')) return;
   await fetch('/devices/' + id, { method: 'DELETE' });
   loadDevices();
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+
+async function loadUsers() {
+  const res = await fetch('/users');
+  if (!res.ok) return;
+  const users = await res.json();
+  const el = document.getElementById('users-list');
+  if (!users.length) { el.innerHTML = '<div class="panel-empty">Kasutajaid pole</div>'; return; }
+  el.innerHTML = users.map(u => `<div class="panel-row">
+    <div class="panel-row-icon">👤</div>
+    <div class="panel-row-main">
+      <div class="panel-row-name">${u.username}</div>
+      <div class="panel-row-sub">${u.role === 'admin' ? '⭐ Admin' : 'Kasutaja'}</div>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center">
+      <button class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="promptPassword('${u.username}')">🔑 Parool</button>
+      <button class="btn btn-danger" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="removeUser('${u.username}')">🗑</button>
+    </div>
+  </div>`).join('');
+}
+
+async function createUser() {
+  const username = document.getElementById('new-username').value.trim();
+  const password = document.getElementById('new-password').value;
+  const role = document.getElementById('new-role').value;
+  const msg = document.getElementById('user-msg');
+  if (!username || !password) { msg.className='pmsg err'; msg.textContent='Täida kõik väljad'; msg.style.display='block'; return; }
+  const fd = new FormData();
+  fd.append('username', username); fd.append('password', password); fd.append('role', role);
+  const res = await fetch('/users', { method: 'POST', body: fd });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { msg.className='pmsg err'; msg.textContent=data.detail||'Viga'; msg.style.display='block'; return; }
+  msg.className='pmsg ok'; msg.textContent='✓ Kasutaja lisatud'; msg.style.display='block';
+  document.getElementById('new-username').value='';
+  document.getElementById('new-password').value='';
+  loadUsers();
+}
+
+async function removeUser(username) {
+  if (!confirm('Kustutan kasutaja ' + username + '?')) return;
+  await fetch('/users/' + encodeURIComponent(username), { method: 'DELETE' });
+  loadUsers();
+}
+
+async function promptPassword(username) {
+  const pw = prompt('Uus parool kasutajale ' + username + ':');
+  if (!pw) return;
+  const fd = new FormData(); fd.append('password', pw);
+  const res = await fetch('/users/' + encodeURIComponent(username) + '/password', { method: 'POST', body: fd });
+  if (res.ok) alert('Parool muudetud');
 }
 
 // ── Dashboard panels ─────────────────────────────────────────────────────────

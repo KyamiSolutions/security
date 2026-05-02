@@ -9,7 +9,8 @@ load_dotenv()
 from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 
-from auth import login as auth_login, logout as auth_logout, verify_session
+from auth import (login as auth_login, logout as auth_logout, verify_session,
+                  get_username, list_users, add_user, delete_user, change_password)
 from camera import Camera, _tcp_reachable, mjpeg_generator, probe_rtsp
 from devices import add_device, list_devices, remove_device, toggle_device
 from motion import MotionDetector, list_recordings, RECORDINGS_DIR
@@ -224,6 +225,47 @@ def delete_device(device_id: str, _: str = Depends(verify_session)):
 @app.post("/devices/{device_id}/toggle")
 async def toggle(device_id: str, _: str = Depends(verify_session)):
     return await toggle_device(device_id)
+
+
+# ── Users ────────────────────────────────────────────────────────────────────
+
+@app.get("/users")
+def get_users(token: str = Depends(verify_session)):
+    return list_users()
+
+
+@app.post("/users")
+def create_user(
+    username: str = Form(...),
+    password: str = Form(...),
+    role: str = Form("user"),
+    _: str = Depends(verify_session),
+):
+    add_user(username, password, role)
+    return {"ok": True}
+
+
+@app.delete("/users/{username}")
+def remove_user(username: str, token: str = Depends(verify_session)):
+    current = get_username(token)
+    delete_user(username, current)
+    return {"ok": True}
+
+
+@app.post("/users/{username}/password")
+def update_password(
+    username: str,
+    password: str = Form(...),
+    token: str = Depends(verify_session),
+):
+    current = get_username(token)
+    # Kasutaja saab muuta ainult oma parooli; admin saab kõiki
+    users = list_users()
+    current_role = next((u["role"] for u in users if u["username"] == current), "user")
+    if current != username and current_role != "admin":
+        raise HTTPException(403, "Pole lubatud")
+    change_password(username, password)
+    return {"ok": True}
 
 
 if __name__ == "__main__":
