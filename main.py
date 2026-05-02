@@ -1,6 +1,10 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+from dotenv import load_dotenv
+load_dotenv()
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -193,17 +197,4 @@ async def toggle(device_id: str, _: str = Depends(verify_session)):
 
 if __name__ == "__main__":
     import uvicorn
-
-    host = os.environ.get("HOST", "0.0.0.0")
-    port = int(os.environ.get("PORT", "8080"))
-    ssl_cert = os.environ.get("SSL_CERT")
-    ssl_key = os.environ.get("SSL_KEY")
-
-    uvicorn.run(
-        "main:app",
-        host=host,
-        port=port,
-        ssl_certfile=ssl_cert or None,
-        ssl_keyfile=ssl_key or None,
-        reload=False,
-    )
+    uvicorn.run("main:app", host=os.environ.get("HOST", "0.0.0.0"), port=int(os.environ.get("PORT", "8080")), reload=False)
