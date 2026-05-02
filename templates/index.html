@@ -1409,7 +1409,7 @@ async function submitPwChange() {
   <div style="background:#fff;border-radius:14px;padding:2rem;width:100%;max-width:420px;margin:1rem;display:flex;flex-direction:column;gap:1rem">
     <div style="font-size:1.1rem;font-weight:800;color:var(--text)">🔐 Kaheastmeline autentimine</div>
     <div id="tfa-status" style="font-size:0.85rem;color:var(--muted)">Laen...</div>
-    <div id="tfa-qr" style="display:none;text-align:center"></div>
+    <div id="tfa-qr" style="display:none;text-align:center;min-height:180px"></div>
     <div id="tfa-secret" style="display:none;font-size:0.78rem;color:var(--muted);word-break:break-all;background:#f9fafb;padding:0.5rem;border-radius:8px;border:1px solid var(--border)"></div>
     <div id="tfa-confirm-wrap" style="display:none" class="fgrp">
       <label>Kinnita kood autentimisrakendusest</label>
@@ -1429,8 +1429,11 @@ let _tfaEnabled = false;
 async function showTFAModal() {
   document.getElementById('tfa-modal').style.display = 'flex';
   document.getElementById('tfa-qr').style.display = 'none';
+  document.getElementById('tfa-qr').innerHTML = '';
+  document.getElementById('tfa-secret').style.display = 'none';
   document.getElementById('tfa-confirm-wrap').style.display = 'none';
   document.getElementById('tfa-msg').style.display = 'none';
+  document.getElementById('tfa-action-btn').onclick = tfa2Action;
   const res = await fetch('/users/me/2fa');
   const data = await res.json();
   _tfaEnabled = data.enabled;
@@ -1457,15 +1460,21 @@ async function tfa2Action() {
   const msg = document.getElementById('tfa-msg');
   msg.style.display = 'none';
   if (_tfaEnabled) {
-    await fetch('/users/me/2fa/disable', { method: 'POST' });
-    msg.className = 'pmsg ok'; msg.textContent = '✓ 2FA keelatud'; msg.style.display = 'block';
-    setTimeout(showTFAModal, 1000);
+    const r = await fetch('/users/me/2fa/disable', { method: 'POST' });
+    if (r.ok) {
+      msg.className = 'pmsg ok'; msg.textContent = '✓ 2FA keelatud'; msg.style.display = 'block';
+      setTimeout(showTFAModal, 1000);
+    } else {
+      msg.className = 'pmsg err'; msg.textContent = 'Viga: ' + r.status; msg.style.display = 'block';
+    }
     return;
   }
   // Luba 2FA — näita QR koodi
   const res = await fetch('/users/me/2fa/enable', { method: 'POST' });
   const data = await res.json();
   document.getElementById('tfa-qr').innerHTML = data.qr_svg;
+  const svgEl = document.getElementById('tfa-qr').querySelector('svg');
+  if (svgEl) { svgEl.style.width = '180px'; svgEl.style.height = '180px'; }
   document.getElementById('tfa-qr').style.display = 'block';
   document.getElementById('tfa-secret').textContent = 'Võti: ' + data.secret;
   document.getElementById('tfa-secret').style.display = 'block';

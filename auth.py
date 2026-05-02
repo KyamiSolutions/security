@@ -211,6 +211,8 @@ def enable_2fa(username: str) -> dict:
     buf = BytesIO()
     img.save(buf)
     svg = buf.getvalue().decode()
+    if '?>' in svg:
+        svg = svg.split('?>', 1)[-1].strip()
     db = _db()
     cur = db.cursor()
     cur.execute("UPDATE users SET totp_secret=%s WHERE username=%s", (secret, username))
