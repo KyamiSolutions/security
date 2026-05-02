@@ -36,26 +36,31 @@ def init_db():
     _migrate_from_json()
 
 
+def _create_admin_from_env():
+    db = _db()
+    cur = db.cursor()
+    cur.execute("SELECT COUNT(*) FROM users")
+    count = cur.fetchone()[0]
+    cur.close(); db.close()
+    if count == 0:
+        admin_user = os.environ.get("ADMIN_USER", "admin")
+        admin_pass = os.environ.get("ADMIN_PASSWORD", "")
+        if admin_pass:
+            add_user(admin_user, admin_pass, "admin")
+            print(f"Admin kasutaja loodud: {admin_user}")
+
+
 def _migrate_from_json():
     from pathlib import Path
     import json
     old = Path(__file__).parent / "users.json"
     if not old.exists():
-        # Loo admin .env-st kui tabelis pole ühtegi kasutajat
-        db = _db()
-        cur = db.cursor()
-        cur.execute("SELECT COUNT(*) FROM users")
-        count = cur.fetchone()[0]
-        cur.close(); db.close()
-        if count == 0:
-            admin_user = os.environ.get("ADMIN_USER", "admin")
-            admin_pass = os.environ.get("ADMIN_PASSWORD", "")
-            if admin_pass:
-                add_user(admin_user, admin_pass, "admin")
+        _create_admin_from_env()
         return
     data = json.loads(old.read_text())
     if not isinstance(data, dict):
         old.rename(old.with_suffix(".json.bak"))
+        _create_admin_from_env()
         return
     db = _db()
     cur = db.cursor()
