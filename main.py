@@ -6,9 +6,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-from dotenv import load_dotenv
-load_dotenv()
-
 from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 
@@ -16,9 +13,11 @@ from auth import login as auth_login, logout as auth_logout, verify_session
 from camera import Camera, _tcp_reachable, mjpeg_generator, probe_rtsp
 from devices import add_device, list_devices, remove_device, toggle_device
 from motion import MotionDetector, list_recordings, RECORDINGS_DIR
+from hls_stream import HLSStream, HLS_DIR
 
 cameras: dict[str | int, Camera] = {}
 detectors: dict[str | int, MotionDetector] = {}
+hls_stream: HLSStream | None = None
 
 
 def _default_source() -> str | int | None:
@@ -33,6 +32,7 @@ def _default_source() -> str | int | None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global hls_stream
     source = _default_source()
     if source is not None:
         try:
@@ -44,7 +44,13 @@ async def lifespan(app: FastAPI):
             print(f"Kaamera avatud ja liikumistuvastus käivitatud: {source}")
         except RuntimeError as e:
             print(f"Hoiatus: {e}")
+        if isinstance(source, str) and source.startswith("rtsp://"):
+            hls_stream = HLSStream(source)
+            hls_stream.start()
+            print("HLS stream käivitatud (VAAPI)")
     yield
+    if hls_stream:
+        hls_stream.stop()
     for det in detectors.values():
         det.stop()
     for cam in cameras.values():
@@ -96,6 +102,31 @@ def logout(token: str = Depends(verify_session)):
     resp = JSONResponse({"ok": True})
     resp.delete_cookie("session")
     return resp
+
+
+# ── HLS ──────────────────────────────────────────────────────────────────────
+
+@app.get("/hls/stream.m3u8")
+def hls_manifest(_: str = Depends(verify_session)):
+    if not hls_stream or not hls_stream.ready():
+        raise HTTPException(503, "HLS stream pole veel valmis")
+    return FileResponse(str(hls_stream.m3u8), media_type="application/vnd.apple.mpegurl",
+                        headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/hls/{filename}")
+def hls_segment(filename: str, _: str = Depends(verify_session)):
+    path = HLS_DIR / filename
+    if not path.exists() or path.suffix not in (".ts", ".m3u8"):
+        raise HTTPException(404, "Segment ei leitud")
+    media_type = "video/MP2T" if filename.endswith(".ts") else "application/vnd.apple.mpegurl"
+    return FileResponse(str(path), media_type=media_type,
+                        headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/hls-status")
+def hls_status(_: str = Depends(verify_session)):
+    return {"ready": bool(hls_stream and hls_stream.ready())}
 
 
 # ── Camera ───────────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nutikodu</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
 <style>
 :root {
   --sb-bg: #1a1d2e;
@@ -350,7 +351,7 @@ button { font-family: inherit; }
   background: #000; border-radius: 12px; overflow: hidden;
   border: 1px solid var(--border); position: relative; max-width: 960px;
 }
-.cam-wrap img { display: block; width: 100%; min-height: 240px; }
+.cam-wrap img, .cam-wrap video { display: block; width: 100%; min-height: 240px; background: #000; }
 .cam-overlay { position: absolute; inset: 0; pointer-events: none; }
 .cam-pill {
   position: absolute; top: 1rem; left: 1rem;
@@ -693,7 +694,8 @@ select.inp { cursor: pointer; }
 
       <div id="live-view" style="display:none">
         <div class="cam-wrap">
-          <img id="stream-img" alt="">
+          <video id="stream-video" autoplay muted playsinline style="display:none"></video>
+          <img id="stream-img" alt="" style="display:none">
           <div class="cam-overlay">
             <div class="cam-pill">
               <div class="live-dot" id="ldot"></div>
@@ -1096,17 +1098,63 @@ function refreshDashboard() {
 
 // ── Camera live setup ────────────────────────────────────────────────────────
 
-function initCamera() {
-  if (camKey) {
-    document.getElementById('setup-view').style.display = 'none';
-    document.getElementById('live-view').style.display = 'block';
-    const img = document.getElementById('stream-img');
-    img.src = '/stream?key=' + encodeURIComponent(camKey);
-    img.onerror = () => {
-      document.getElementById('ldot').className = 'live-dot off';
-      document.getElementById('lstatus').textContent = 'Ühendus katkes';
-    };
+let hlsPlayer = null;
+
+async function initCamera() {
+  if (!camKey) return;
+  document.getElementById('setup-view').style.display = 'none';
+  document.getElementById('live-view').style.display = 'block';
+
+  // Proovi HLS esimesena (GPU-kiirendatud)
+  const status = await fetch('/hls-status').then(r => r.json()).catch(() => ({ready: false}));
+  if (status.ready) {
+    _startHLS();
+  } else {
+    // HLS pole veel valmis — oota ja proovi uuesti
+    _waitForHLS();
   }
+}
+
+function _startHLS() {
+  const video = document.getElementById('stream-video');
+  document.getElementById('stream-img').style.display = 'none';
+  video.style.display = 'block';
+  if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
+  if (Hls.isSupported()) {
+    hlsPlayer = new Hls({ liveSyncDurationCount: 2, liveMaxLatencyDurationCount: 4 });
+    hlsPlayer.loadSource('/hls/stream.m3u8');
+    hlsPlayer.attachMedia(video);
+    hlsPlayer.on(Hls.Events.ERROR, (e, d) => {
+      if (d.fatal) { setTimeout(_waitForHLS, 3000); }
+    });
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = '/hls/stream.m3u8';
+  } else {
+    _fallbackMJPEG();
+  }
+  document.getElementById('ldot').className = 'live-dot';
+  document.getElementById('lstatus').textContent = 'Live · HLS';
+}
+
+function _waitForHLS(attempts = 0) {
+  if (attempts > 15) { _fallbackMJPEG(); return; }
+  setTimeout(async () => {
+    const s = await fetch('/hls-status').then(r => r.json()).catch(() => ({ready: false}));
+    if (s.ready) _startHLS();
+    else _waitForHLS(attempts + 1);
+  }, 2000);
+}
+
+function _fallbackMJPEG() {
+  document.getElementById('stream-video').style.display = 'none';
+  const img = document.getElementById('stream-img');
+  img.style.display = 'block';
+  img.src = '/stream?key=' + encodeURIComponent(camKey);
+  img.onerror = () => {
+    document.getElementById('ldot').className = 'live-dot off';
+    document.getElementById('lstatus').textContent = 'Ühendus katkes';
+  };
+  document.getElementById('lstatus').textContent = 'Live · MJPEG';
 }
 
 // ── Session restore ───────────────────────────────────────────────────────────
