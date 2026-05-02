@@ -1,31 +1,28 @@
 import os
 import secrets
-from fastapi import HTTPException, Security, status
-from fastapi.security import APIKeyHeader, APIKeyQuery
+from fastapi import HTTPException, Request
 
-API_KEY_ENV = "CAMERA_API_KEY"
-
-_header_scheme = APIKeyHeader(name="X-API-Key", auto_error=False)
-_query_scheme = APIKeyQuery(name="api_key", auto_error=False)
+_sessions: set[str] = set()
 
 
-def _get_required_key() -> str:
-    key = os.environ.get(API_KEY_ENV, "")
-    if not key:
-        raise RuntimeError(
-            f"Seadista API võti: export {API_KEY_ENV}=<sinu-salasõna>"
-        )
-    return key
+def login(username: str, password: str) -> str:
+    expected_user = os.environ.get("ADMIN_USER", "admin")
+    expected_pass = os.environ.get("ADMIN_PASSWORD", "")
+    if not expected_pass:
+        raise HTTPException(500, "ADMIN_PASSWORD pole seadistatud")
+    if username == expected_user and password == expected_pass:
+        token = secrets.token_hex(32)
+        _sessions.add(token)
+        return token
+    raise HTTPException(401, "Vale kasutajanimi või parool")
 
 
-def verify_key(
-    header_key: str | None = Security(_header_scheme),
-    query_key: str | None = Security(_query_scheme),
-) -> str:
-    provided = header_key or query_key
-    if not provided or not secrets.compare_digest(provided, _get_required_key()):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Vale või puuduv API võti",
-        )
-    return provided
+def logout(token: str):
+    _sessions.discard(token)
+
+
+def verify_session(request: Request) -> str:
+    token = request.cookies.get("session") or request.headers.get("X-Session-Token")
+    if not token or token not in _sessions:
+        raise HTTPException(401, "Pole sisse logitud")
+    return token
