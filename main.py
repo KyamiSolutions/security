@@ -1,48 +1,74 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, Query
-from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from dotenv import load_dotenv
+load_dotenv()
 
-from auth import verify_key
-from camera import Camera, _tcp_reachable, list_usb_cameras, mjpeg_generator, probe_rtsp
+from dotenv import load_dotenv
+load_dotenv()
 
-# Võtmeks on RTSP URL string või USB indeks int
+from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
+
+from auth import login as auth_login, logout as auth_logout, verify_session
+from camera import Camera, _tcp_reachable, mjpeg_generator, probe_rtsp
+from devices import add_device, list_devices, remove_device, toggle_device
+from motion import MotionDetector, list_recordings, RECORDINGS_DIR
+
 cameras: dict[str | int, Camera] = {}
+detectors: dict[str | int, MotionDetector] = {}
 
 
-def _default_source() -> str | int:
+def _default_source() -> str | int | None:
     url = os.environ.get("CAMERA_URL", "")
     if url:
         return url
-    return int(os.environ.get("CAMERA_INDEX", "0"))
+    idx = os.environ.get("CAMERA_INDEX", "")
+    if idx:
+        return int(idx)
+    return None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     source = _default_source()
-    try:
-        cameras[source] = await asyncio.to_thread(Camera, source)
-        print(f"Kaamera avatud: {source}")
-    except RuntimeError as e:
-        print(f"Hoiatus: {e}")
+    if source is not None:
+        try:
+            cam = await asyncio.to_thread(Camera, source)
+            cameras[source] = cam
+            det = MotionDetector(cam)
+            det.start()
+            detectors[source] = det
+            print(f"Kaamera avatud ja liikumistuvastus käivitatud: {source}")
+        except RuntimeError as e:
+            print(f"Hoiatus: {e}")
     yield
+    for det in detectors.values():
+        det.stop()
     for cam in cameras.values():
         cam.release()
 
 
-app = FastAPI(title="Kaamera kaughaldus", lifespan=lifespan)
+app = FastAPI(title="KyamiSecurity", lifespan=lifespan)
 
 
-def _get_camera(key: str | int) -> Camera:
-    if key not in cameras:
+def _cam(key: str) -> Camera:
+    k: str | int = int(key) if key.isdigit() else key
+    if k not in cameras:
         try:
-            cameras[key] = Camera(key)
+            cam = Camera(k)
+            cameras[k] = cam
+            det = MotionDetector(cam)
+            det.start()
+            detectors[k] = det
         except RuntimeError:
             raise HTTPException(404, f"Kaamera pole saadaval: {key}")
-    return cameras[key]
+    return cameras[k]
 
+
+# ── HTML ─────────────────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def index():
@@ -50,36 +76,33 @@ def index():
         return f.read()
 
 
-@app.get("/cameras")
-def get_cameras(_: str = Depends(verify_key)):
-    usb = list_usb_cameras()
-    rtsp = [k for k in cameras if isinstance(k, str)]
-    return {"usb": usb, "rtsp": rtsp}
+# ── Auth ─────────────────────────────────────────────────────────────────────
+
+@app.post("/login")
+def login(username: str = Form(...), password: str = Form(...)):
+    token = auth_login(username, password)
+    cam_key = ""
+    src = _default_source()
+    if src is not None:
+        cam_key = str(src)
+    resp = JSONResponse({"ok": True, "cam_key": cam_key})
+    resp.set_cookie("session", token, httponly=True, samesite="lax", max_age=86400)
+    return resp
 
 
-@app.get("/probe")
-def probe(
-    ip: str = Query(...),
-    user: str = Query("admin"),
-    password: str = Query("admin"),
-    port: int = Query(554),
-    _: str = Depends(verify_key),
-):
-    """Leiab automaatselt toimiva RTSP raja antud IP-kaamerale."""
-    if not await asyncio.to_thread(_tcp_reachable, ip, port):
-        raise HTTPException(503, f"Port {port} on suletud aadressil {ip}. Kontrolli, et kaamera on võrgus.")
-    url = await asyncio.to_thread(probe_rtsp, ip, user, password, port)
-    if not url:
-        raise HTTPException(404, "RTSP rada ei leitud. Kaamera vastab, aga ükski tuntud rada ei töötanud.")
-    cameras[url] = Camera(url)
-    # Peida parool vastuses
-    safe = url.replace(f":{password}@", ":***@")
-    return {"url": safe, "internal_key": url}
+@app.post("/logout")
+def logout(token: str = Depends(verify_session)):
+    auth_logout(token)
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie("session")
+    return resp
 
+
+# ── Camera ───────────────────────────────────────────────────────────────────
 
 @app.get("/stream")
-def stream(key: str = Query(...), _: str = Depends(verify_key)):
-    cam = _get_camera(key if not key.isdigit() else int(key))
+def stream(key: str = Query(...), _: str = Depends(verify_session)):
+    cam = _cam(key)
     return StreamingResponse(
         mjpeg_generator(cam),
         media_type="multipart/x-mixed-replace; boundary=frame",
@@ -87,45 +110,91 @@ def stream(key: str = Query(...), _: str = Depends(verify_key)):
 
 
 @app.get("/snapshot")
-def snapshot(key: str = Query(...), _: str = Depends(verify_key)):
-    cam = _get_camera(key if not key.isdigit() else int(key))
+def snapshot(key: str = Query(...), _: str = Depends(verify_session)):
+    cam = _cam(key)
     frame = cam.snapshot()
     if frame is None:
         raise HTTPException(503, "Kaader pole saadaval")
     return Response(content=frame, media_type="image/jpeg")
 
 
-@app.get("/controls")
-def get_controls(key: str = Query(...), _: str = Depends(verify_key)):
-    cam = _get_camera(key if not key.isdigit() else int(key))
-    return {"controls": cam.get_v4l2_controls()}
-
-
-@app.post("/controls")
-def set_control(
-    key: str = Query(...),
-    control: str = Query(...),
-    value: int = Query(...),
-    _: str = Depends(verify_key),
+@app.get("/probe")
+async def probe(
+    ip: str = Query(...),
+    user: str = Query("admin"),
+    password: str = Query("admin"),
+    port: int = Query(554),
+    _: str = Depends(verify_session),
 ):
-    cam = _get_camera(key if not key.isdigit() else int(key))
-    cam.set_v4l2(control, value)
-    return {"ok": True, "control": control, "value": value}
+    reachable = await asyncio.to_thread(_tcp_reachable, ip, port)
+    if not reachable:
+        raise HTTPException(503, f"Port {port} suletud aadressil {ip}")
+    url = await asyncio.to_thread(probe_rtsp, ip, user, password, port)
+    if not url:
+        raise HTTPException(404, "RTSP rada ei leitud")
+    if url not in cameras:
+        cam = await asyncio.to_thread(Camera, url)
+        cameras[url] = cam
+        det = MotionDetector(cam)
+        det.start()
+        detectors[url] = det
+    safe = url.replace(f":{password}@", ":***@")
+    return {"url": safe, "internal_key": url}
+
+
+# ── Recordings ───────────────────────────────────────────────────────────────
+
+@app.get("/recordings")
+def recordings(_: str = Depends(verify_session)):
+    return list_recordings()
+
+
+@app.get("/recordings/{filename}")
+def download_recording(filename: str, _: str = Depends(verify_session)):
+    path = os.path.join(RECORDINGS_DIR, filename)
+    if not os.path.isfile(path):
+        raise HTTPException(404, "Fail ei leitud")
+    return FileResponse(path, media_type="video/mp4", filename=filename)
+
+
+@app.delete("/recordings/{filename}")
+def delete_recording(filename: str, _: str = Depends(verify_session)):
+    path = os.path.join(RECORDINGS_DIR, filename)
+    if not os.path.isfile(path):
+        raise HTTPException(404, "Fail ei leitud")
+    os.remove(path)
+    return {"ok": True}
+
+
+# ── Devices ──────────────────────────────────────────────────────────────────
+
+@app.get("/devices")
+def get_devices(_: str = Depends(verify_session)):
+    return list_devices()
+
+
+@app.post("/devices")
+def create_device(
+    name: str = Form(...),
+    kind: str = Form(...),
+    ip: str = Form(...),
+    port: int = Form(80),
+    _: str = Depends(verify_session),
+):
+    return add_device(name, kind, ip, port)
+
+
+@app.delete("/devices/{device_id}")
+def delete_device(device_id: str, _: str = Depends(verify_session)):
+    remove_device(device_id)
+    return {"ok": True}
+
+
+@app.post("/devices/{device_id}/toggle")
+async def toggle(device_id: str, _: str = Depends(verify_session)):
+    return await toggle_device(device_id)
 
 
 if __name__ == "__main__":
     import uvicorn
-
-    host = os.environ.get("HOST", "0.0.0.0")
-    port = int(os.environ.get("PORT", "8080"))
-    ssl_cert = os.environ.get("SSL_CERT")
-    ssl_key = os.environ.get("SSL_KEY")
-
-    uvicorn.run(
-        "main:app",
-        host=host,
-        port=port,
-        ssl_certfile=ssl_cert or None,
-        ssl_keyfile=ssl_key or None,
-        reload=False,
-    )
+    uvicorn.run("main:app", host=os.environ.get("HOST", "0.0.0.0"), port=int(os.environ.get("PORT", "8080")), reload=False)
