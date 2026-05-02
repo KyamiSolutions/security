@@ -1,42 +1,84 @@
 import hashlib
-import json
 import os
 import secrets
-from pathlib import Path
+import mysql.connector
+from functools import lru_cache
 from fastapi import HTTPException, Request
 
-USERS_FILE = Path(__file__).parent / "users.json"
 _sessions: dict[str, str] = {}  # token -> username
+
+
+def _db():
+    return mysql.connector.connect(
+        host=os.environ.get("MYSQL_HOST", "localhost"),
+        user=os.environ.get("MYSQL_USER", "nutikodu"),
+        password=os.environ.get("MYSQL_PASSWORD", ""),
+        database=os.environ.get("MYSQL_DB", "nutikodu"),
+        autocommit=True,
+    )
+
+
+def init_db():
+    db = _db()
+    cur = db.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(64) UNIQUE NOT NULL,
+            salt VARCHAR(64) NOT NULL,
+            hash VARCHAR(128) NOT NULL,
+            role ENUM('admin','user') DEFAULT 'user',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    """)
+    cur.close()
+    db.close()
+    _migrate_from_json()
+
+
+def _migrate_from_json():
+    from pathlib import Path
+    import json
+    old = Path(__file__).parent / "users.json"
+    if not old.exists():
+        # Loo admin .env-st kui tabelis pole ühtegi kasutajat
+        db = _db()
+        cur = db.cursor()
+        cur.execute("SELECT COUNT(*) FROM users")
+        count = cur.fetchone()[0]
+        cur.close(); db.close()
+        if count == 0:
+            admin_user = os.environ.get("ADMIN_USER", "admin")
+            admin_pass = os.environ.get("ADMIN_PASSWORD", "")
+            if admin_pass:
+                add_user(admin_user, admin_pass, "admin")
+        return
+    data = json.loads(old.read_text())
+    db = _db()
+    cur = db.cursor()
+    for username, v in data.items():
+        cur.execute("SELECT id FROM users WHERE username=%s", (username,))
+        if not cur.fetchone():
+            cur.execute(
+                "INSERT INTO users (username, salt, hash, role) VALUES (%s,%s,%s,%s)",
+                (username, v["salt"], v["hash"], v.get("role", "user")),
+            )
+    cur.close(); db.close()
+    old.rename(old.with_suffix(".json.bak"))
+    print("Kasutajad migreeritud users.json -> MySQL")
 
 
 def _hash(password: str, salt: str) -> str:
     return hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 200_000).hex()
 
 
-def _load() -> dict:
-    if USERS_FILE.exists():
-        return json.loads(USERS_FILE.read_text())
-    # Esimene käivitus: loo admin kasutaja .env paroolist
-    admin_pass = os.environ.get("ADMIN_PASSWORD", "")
-    admin_user = os.environ.get("ADMIN_USER", "admin")
-    if not admin_pass:
-        return {}
-    salt = secrets.token_hex(16)
-    users = {admin_user: {"salt": salt, "hash": _hash(admin_pass, salt), "role": "admin"}}
-    _save(users)
-    return users
-
-
-def _save(users: dict):
-    USERS_FILE.write_text(json.dumps(users, indent=2))
-
-
 def login(username: str, password: str) -> str:
-    users = _load()
-    u = users.get(username)
-    if not u:
-        raise HTTPException(401, "Vale kasutajanimi või parool")
-    if _hash(password, u["salt"]) != u["hash"]:
+    db = _db()
+    cur = db.cursor(dictionary=True)
+    cur.execute("SELECT * FROM users WHERE username=%s", (username,))
+    u = cur.fetchone()
+    cur.close(); db.close()
+    if not u or _hash(password, u["salt"]) != u["hash"]:
         raise HTTPException(401, "Vale kasutajanimi või parool")
     token = secrets.token_hex(32)
     _sessions[token] = username
@@ -59,29 +101,44 @@ def get_username(token: str) -> str:
 
 
 def list_users() -> list[dict]:
-    return [{"username": u, "role": v["role"]} for u, v in _load().items()]
+    db = _db()
+    cur = db.cursor(dictionary=True)
+    cur.execute("SELECT username, role, created_at FROM users ORDER BY created_at")
+    rows = cur.fetchall()
+    cur.close(); db.close()
+    return [{"username": r["username"], "role": r["role"],
+             "created_at": r["created_at"].isoformat() if r["created_at"] else None}
+            for r in rows]
 
 
 def add_user(username: str, password: str, role: str = "user"):
     if not username or not password:
         raise HTTPException(400, "Kasutajanimi ja parool on kohustuslikud")
-    users = _load()
-    if username in users:
-        raise HTTPException(409, "Kasutaja on juba olemas")
     salt = secrets.token_hex(16)
-    users[username] = {"salt": salt, "hash": _hash(password, salt), "role": role}
-    _save(users)
+    h = _hash(password, salt)
+    db = _db()
+    cur = db.cursor()
+    try:
+        cur.execute(
+            "INSERT INTO users (username, salt, hash, role) VALUES (%s,%s,%s,%s)",
+            (username, salt, h, role),
+        )
+    except mysql.connector.IntegrityError:
+        raise HTTPException(409, "Kasutaja on juba olemas")
+    finally:
+        cur.close(); db.close()
 
 
 def delete_user(username: str, current_user: str):
     if username == current_user:
         raise HTTPException(400, "Ei saa iseennast kustutada")
-    users = _load()
-    if username not in users:
+    db = _db()
+    cur = db.cursor()
+    cur.execute("DELETE FROM users WHERE username=%s", (username,))
+    if cur.rowcount == 0:
+        cur.close(); db.close()
         raise HTTPException(404, "Kasutajat ei leitud")
-    del users[username]
-    _save(users)
-    # Logi see kasutaja välja
+    cur.close(); db.close()
     for token, u in list(_sessions.items()):
         if u == username:
             _sessions.pop(token, None)
@@ -90,10 +147,12 @@ def delete_user(username: str, current_user: str):
 def change_password(username: str, new_password: str):
     if not new_password:
         raise HTTPException(400, "Parool ei tohi olla tühi")
-    users = _load()
-    if username not in users:
-        raise HTTPException(404, "Kasutajat ei leitud")
     salt = secrets.token_hex(16)
-    users[username]["salt"] = salt
-    users[username]["hash"] = _hash(new_password, salt)
-    _save(users)
+    h = _hash(new_password, salt)
+    db = _db()
+    cur = db.cursor()
+    cur.execute("UPDATE users SET salt=%s, hash=%s WHERE username=%s", (salt, h, username))
+    if cur.rowcount == 0:
+        cur.close(); db.close()
+        raise HTTPException(404, "Kasutajat ei leitud")
+    cur.close(); db.close()
