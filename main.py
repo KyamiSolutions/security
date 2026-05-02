@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, Respo
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 
 from auth import (login as auth_login, logout as auth_logout, verify_session,
-                  get_username, list_users, add_user, delete_user, change_password)
+                  get_username, list_users, add_user, delete_user, change_password, init_db)
 from camera import Camera, _tcp_reachable, mjpeg_generator, probe_rtsp
 from devices import add_device, list_devices, remove_device, toggle_device
 from motion import MotionDetector, list_recordings, RECORDINGS_DIR
@@ -34,6 +34,7 @@ def _default_source() -> str | int | None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global hls_stream
+    init_db()
     source = _default_source()
     if source is not None:
         try:
