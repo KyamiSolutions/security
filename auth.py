@@ -54,6 +54,9 @@ def _migrate_from_json():
                 add_user(admin_user, admin_pass, "admin")
         return
     data = json.loads(old.read_text())
+    if not isinstance(data, dict):
+        old.rename(old.with_suffix(".json.bak"))
+        return
     db = _db()
     cur = db.cursor()
     for username, v in data.items():
