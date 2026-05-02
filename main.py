@@ -4,11 +4,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from pydantic import BaseModel
 
-from auth import verify_key
+from auth import login, logout, verify_key
 from camera import Camera, _tcp_reachable, list_usb_cameras, mjpeg_generator, probe_rtsp
 
-# Võtmeks on RTSP URL string või USB indeks int
 cameras: dict[str | int, Camera] = {}
 
 
@@ -32,7 +32,16 @@ async def lifespan(app: FastAPI):
         cam.release()
 
 
-app = FastAPI(title="Kaamera kaughaldus", lifespan=lifespan)
+app = FastAPI(title="Nutikodu kaamera", lifespan=lifespan)
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LogoutRequest(BaseModel):
+    token: str
 
 
 def _get_camera(key: str | int) -> Camera:
@@ -50,6 +59,20 @@ def index():
         return f.read()
 
 
+@app.post("/login")
+def do_login(req: LoginRequest):
+    token = login(req.username, req.password)
+    source = _default_source()
+    cam_key = str(source)
+    return {"token": token, "cam_key": cam_key}
+
+
+@app.post("/logout")
+def do_logout(req: LogoutRequest):
+    logout(req.token)
+    return {"ok": True}
+
+
 @app.get("/cameras")
 def get_cameras(_: str = Depends(verify_key)):
     usb = list_usb_cameras()
@@ -58,21 +81,19 @@ def get_cameras(_: str = Depends(verify_key)):
 
 
 @app.get("/probe")
-def probe(
+async def probe(
     ip: str = Query(...),
     user: str = Query("admin"),
     password: str = Query("admin"),
     port: int = Query(554),
     _: str = Depends(verify_key),
 ):
-    """Leiab automaatselt toimiva RTSP raja antud IP-kaamerale."""
     if not await asyncio.to_thread(_tcp_reachable, ip, port):
-        raise HTTPException(503, f"Port {port} on suletud aadressil {ip}. Kontrolli, et kaamera on võrgus.")
+        raise HTTPException(503, f"Port {port} on suletud aadressil {ip}.")
     url = await asyncio.to_thread(probe_rtsp, ip, user, password, port)
     if not url:
-        raise HTTPException(404, "RTSP rada ei leitud. Kaamera vastab, aga ükski tuntud rada ei töötanud.")
+        raise HTTPException(404, "RTSP rada ei leitud.")
     cameras[url] = Camera(url)
-    # Peida parool vastuses
     safe = url.replace(f":{password}@", ":***@")
     return {"url": safe, "internal_key": url}
 
