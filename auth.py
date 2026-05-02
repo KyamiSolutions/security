@@ -3,8 +3,8 @@ import os
 import secrets
 import mysql.connector
 import pyotp
+import base64
 import qrcode
-import qrcode.image.svg
 from io import BytesIO
 from fastapi import HTTPException, Request
 
@@ -207,17 +207,15 @@ def enable_2fa(username: str) -> dict:
     totp = pyotp.TOTP(secret)
     uri = totp.provisioning_uri(name=username, issuer_name="Nutikodu")
     # QR kood SVG-na
-    img = qrcode.make(uri, image_factory=qrcode.image.svg.SvgImage)
+    img = qrcode.make(uri)
     buf = BytesIO()
-    img.save(buf)
-    svg = buf.getvalue().decode()
-    if '?>' in svg:
-        svg = svg.split('?>', 1)[-1].strip()
+    img.save(buf, format="PNG")
+    qr_b64 = base64.b64encode(buf.getvalue()).decode()
     db = _db()
     cur = db.cursor()
     cur.execute("UPDATE users SET totp_secret=%s WHERE username=%s", (secret, username))
     cur.close(); db.close()
-    return {"secret": secret, "uri": uri, "qr_svg": svg}
+    return {"secret": secret, "uri": uri, "qr_png": qr_b64}
 
 
 def disable_2fa(username: str):

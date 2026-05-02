@@ -1472,9 +1472,7 @@ async function tfa2Action() {
   // Luba 2FA — näita QR koodi
   const res = await fetch('/users/me/2fa/enable', { method: 'POST' });
   const data = await res.json();
-  document.getElementById('tfa-qr').innerHTML = data.qr_svg;
-  const svgEl = document.getElementById('tfa-qr').querySelector('svg');
-  if (svgEl) { svgEl.style.width = '180px'; svgEl.style.height = '180px'; }
+  document.getElementById('tfa-qr').innerHTML = `<img src="data:image/png;base64,${data.qr_png}" style="width:180px;height:180px">`;
   document.getElementById('tfa-qr').style.display = 'block';
   document.getElementById('tfa-secret').textContent = 'Võti: ' + data.secret;
   document.getElementById('tfa-secret').style.display = 'block';
