@@ -6,235 +6,367 @@
   <title>Nutikodu</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#0d0d1f;color:#eee;font-family:sans-serif;min-height:100vh;display:flex;flex-direction:column}
-
-    /* ===== LANDING ===== */
-    #landing{flex:1;display:flex;flex-direction:row}
-    .left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4rem 3rem;background:linear-gradient(135deg,#0d0d1f 60%,#1a1a3e)}
-    .logo{display:flex;align-items:center;gap:.7rem;margin-bottom:2rem}
-    .logo .ic{width:44px;height:44px;background:linear-gradient(135deg,#7c3aed,#3a7bd5);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
-    .logo span{font-size:1.1rem;font-weight:600}
-    .left h1{font-size:2.4rem;font-weight:700;line-height:1.2;margin-bottom:1rem}
-    .left p{color:#aaa;font-size:.95rem;margin-bottom:2rem;max-width:420px;line-height:1.6}
-    .features{display:flex;flex-direction:column;gap:.8rem}
-    .feat{display:flex;align-items:center;gap:.8rem;font-size:.9rem;color:#ccc}
-    .feat .fi{width:32px;height:32px;border-radius:8px;background:#1e1e3e;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
-    .right{width:380px;background:#11111f;display:flex;align-items:center;justify-content:center;padding:2rem;border-left:1px solid #1e1e3e}
-    .login-box{width:100%}
-    .login-box .logo{margin-bottom:1.5rem}
-    .login-box .logo .ic{width:36px;height:36px;border-radius:9px;font-size:1.1rem}
-    .login-box h2{font-size:1.4rem;font-weight:700;margin-bottom:.3rem}
-    .sub{font-size:.82rem;color:#888;margin-bottom:1.8rem}
-
-    /* ===== FORMS ===== */
-    label{font-size:.78rem;font-weight:600;letter-spacing:.05em;color:#999;text-transform:uppercase;display:block;margin-bottom:.4rem}
-    input[type=text],input[type=password],input[type=number],select{
-      width:100%;padding:.65rem .9rem;border-radius:6px;border:1px solid #2a2a4e;
-      background:#0d0d1f;color:#eee;font-size:.95rem;margin-bottom:1rem
+    :root{
+      --bg:#0a0a14;--surface:#12121f;--surface2:#1a1a2e;--border:#252540;
+      --accent:#7c3aed;--accent2:#3a7bd5;--text:#e8e8f0;--muted:#6b6b8a;
+      --green:#22c55e;--red:#ef4444;--amber:#f59e0b
     }
-    input:focus,select:focus{outline:none;border-color:#7c3aed}
-    #error{font-size:.82rem;color:#f66;background:#2a0a0a;padding:.5rem .8rem;border-radius:5px;margin-bottom:1rem;display:none}
-    .btn{padding:.6rem 1.2rem;border-radius:6px;border:none;cursor:pointer;font-size:.9rem;font-weight:600;transition:filter .15s}
-    .btn:hover{filter:brightness(1.15)}
-    .btn-primary{background:linear-gradient(135deg,#7c3aed,#3a7bd5);color:#fff;width:100%;padding:.75rem;font-size:1rem}
-    .btn-sm{padding:.35rem .8rem;font-size:.8rem;border-radius:5px;border:none;cursor:pointer;white-space:nowrap}
-    .btn-danger{background:#5c1a1a;color:#faa}
-    .btn-toggle{background:#2a1a1a;color:#f66}
-    .btn-toggle.on{background:#1a3a1a;color:#6f6}
+    body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column;font-size:14px}
 
-    /* ===== APP ===== */
-    #app{display:none;flex:1;flex-direction:column;min-height:0}
-    header{background:#11111f;padding:.8rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid #1e1e3e;flex-wrap:wrap}
-    header .logo .ic{width:30px;height:30px;border-radius:7px;font-size:.9rem}
-    header .logo span{font-size:.95rem;font-weight:600}
-    nav{display:flex;gap:.2rem;flex:1}
-    .tab-btn{background:none;border:none;color:#aaa;padding:.4rem .7rem;border-radius:5px;cursor:pointer;font-size:.85rem;white-space:nowrap}
-    .tab-btn.active{background:#1e1e3e;color:#eee}
-    .tab-btn:hover{background:#1a1a2e;color:#eee}
-    .btn-logout{padding:.4rem .9rem;border-radius:5px;border:none;background:#1e1e3e;color:#ccc;cursor:pointer;font-size:.82rem}
-    .btn-logout:hover{background:#5c1a1a;color:#fff}
+    /* ===== LOGIN ===== */
+    #landing{flex:1;display:flex;align-items:center;justify-content:center;padding:1rem;
+      background:radial-gradient(ellipse at 60% 40%,#1a0a3e 0%,var(--bg) 70%)}
+    .login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+      padding:2.5rem;width:100%;max-width:380px;box-shadow:0 24px 80px #0008}
+    .brand{display:flex;align-items:center;gap:.75rem;margin-bottom:2rem}
+    .brand-icon{width:42px;height:42px;border-radius:10px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+    .brand-name{font-size:1.1rem;font-weight:700;letter-spacing:-.02em}
+    .brand-tag{font-size:.7rem;color:var(--muted);margin-top:.1rem}
+    .login-card h2{font-size:1.5rem;font-weight:700;margin-bottom:.3rem}
+    .login-card p{color:var(--muted);font-size:.85rem;margin-bottom:1.8rem}
+    .field{margin-bottom:1rem}
+    .field label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem}
+    .field input{width:100%;padding:.7rem 1rem;border-radius:8px;border:1px solid var(--border);background:#0d0d1a;color:var(--text);font-size:.9rem;transition:border-color .15s}
+    .field input:focus{outline:none;border-color:var(--accent)}
+    #login-err{font-size:.82rem;color:var(--red);background:#2a0a0a;border:1px solid #5c1a1a;padding:.5rem .8rem;border-radius:6px;margin-bottom:1rem;display:none}
+    .btn-login{width:100%;padding:.8rem;border-radius:8px;border:none;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+      font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .15s}
+    .btn-login:hover{opacity:.9}
+    .login-footer{text-align:center;margin-top:1.5rem;color:var(--muted);font-size:.75rem}
 
-    .tab-content{display:none;flex:1;padding:1rem;overflow-y:auto;flex-direction:column;gap:1rem}
-    .tab-content.active{display:flex}
+    /* ===== APP SHELL ===== */
+    #app{display:none;flex:1;flex-direction:row;min-height:0;height:100vh}
+
+    /* Sidebar */
+    .sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);
+      display:flex;flex-direction:column;flex-shrink:0}
+    .sidebar-brand{padding:1.2rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem}
+    .sidebar-brand .brand-icon{width:32px;height:32px;border-radius:8px;font-size:.95rem}
+    .sidebar-brand .brand-name{font-size:.95rem}
+    .nav-section{padding:.75rem .75rem .25rem;font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+    .nav-item{display:flex;align-items:center;gap:.7rem;padding:.6rem .85rem;margin:.1rem .5rem;
+      border-radius:8px;cursor:pointer;border:none;background:none;color:var(--muted);
+      font-size:.85rem;width:calc(100% - 1rem);text-align:left;transition:all .15s}
+    .nav-item:hover{background:var(--surface2);color:var(--text)}
+    .nav-item.active{background:linear-gradient(135deg,#3d1a7a,#1a3a6a);color:#fff}
+    .nav-item .ni{font-size:1rem;width:20px;text-align:center}
+    .nav-item .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:.65rem;
+      font-weight:700;padding:.1rem .4rem;border-radius:99px;display:none}
+    .nav-item .badge.show{display:block}
+    .sidebar-bottom{margin-top:auto;padding:.75rem;border-top:1px solid var(--border)}
+    .user-row{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:8px;background:var(--surface2)}
+    .user-avatar{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+    .user-info{flex:1;min-width:0}
+    .user-name{font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .user-role{font-size:.65rem;color:var(--muted)}
+    .btn-logout-sm{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:.2rem;border-radius:4px}
+    .btn-logout-sm:hover{color:var(--red)}
+
+    /* Main content */
+    .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+    .topbar{padding:.75rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0}
+    .topbar-title{font-size:.95rem;font-weight:600}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:.4rem;box-shadow:0 0 6px var(--green)}
+    .status-dot.off{background:var(--red);box-shadow:0 0 6px var(--red)}
+    .topbar-actions{display:flex;gap:.5rem;align-items:center}
+    .btn-sm{padding:.35rem .75rem;border-radius:6px;border:none;cursor:pointer;
+      font-size:.78rem;font-weight:600;white-space:nowrap;transition:filter .15s}
+    .btn-sm:hover{filter:brightness(1.2)}
+    .btn-ghost{background:var(--surface2);color:var(--text)}
+    .btn-accent{background:var(--accent);color:#fff}
+    .btn-danger{background:#3a0a0a;color:var(--red)}
+    .btn-success{background:#0a2a0a;color:var(--green)}
+    .content{flex:1;overflow-y:auto;padding:1.2rem}
+
+    /* Tab panes */
+    .pane{display:none;flex-direction:column;gap:1rem;height:100%}
+    .pane.active{display:flex}
 
     /* Camera */
-    .cam-toolbar{display:flex;gap:.5rem;flex-wrap:wrap}
-    .stream-wrap{background:#000;border-radius:8px;display:flex;align-items:center;justify-content:center;min-height:200px;overflow:hidden}
-    #stream-img{width:100%;border-radius:8px;display:none}
-    #stream-status{color:#555;font-size:.9rem;padding:2rem}
+    .cam-wrap{background:#000;border-radius:12px;border:1px solid var(--border);
+      overflow:hidden;display:flex;align-items:center;justify-content:center;
+      flex:1;min-height:300px;position:relative}
+    #stream-img{width:100%;height:100%;object-fit:contain;display:none}
+    #stream-placeholder{color:var(--muted);font-size:.9rem;text-align:center;padding:2rem}
+    .cam-info{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+      padding:.8rem 1rem;display:flex;gap:1.5rem;flex-wrap:wrap}
+    .cam-stat{display:flex;flex-direction:column;gap:.2rem}
+    .cam-stat-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;font-weight:600}
+    .cam-stat-val{font-size:.85rem;font-weight:600}
 
     /* Recordings */
-    .section-header{display:flex;justify-content:space-between;align-items:center}
-    .section-header h2{font-size:1rem;font-weight:600}
-    .rec-list,.devices-list{display:flex;flex-direction:column;gap:.5rem}
-    .rec-item,.device-item{background:#1e1e2e;border-radius:8px;padding:.8rem 1rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
-    .rec-info,.device-info{flex:1;min-width:0}
-    .rec-name,.device-name{font-size:.9rem;font-weight:600;word-break:break-all}
-    .rec-meta,.device-meta{font-size:.75rem;color:#888;margin-top:.2rem}
-    .rec-actions,.device-actions{display:flex;gap:.4rem;flex-wrap:wrap}
-    .empty{color:#555;font-size:.9rem;padding:1rem 0}
+    .rec-grid{display:flex;flex-direction:column;gap:.5rem}
+    .rec-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+      padding:.85rem 1rem;display:flex;align-items:center;gap:1rem}
+    .rec-icon{width:40px;height:40px;border-radius:8px;background:#1a0a2e;
+      display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+    .rec-info{flex:1;min-width:0}
+    .rec-name{font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .rec-meta{font-size:.72rem;color:var(--muted);margin-top:.2rem}
+    .rec-actions{display:flex;gap:.4rem}
 
-    /* Add device form */
-    .add-form{background:#1e1e2e;border-radius:8px;padding:1.2rem;display:flex;flex-direction:column;gap:.5rem}
-    .add-form h3{font-size:.95rem;margin-bottom:.3rem}
-    .form-row{display:flex;gap:.5rem;flex-wrap:wrap}
-    .form-row input,.form-row select{margin-bottom:0;flex:1;min-width:120px}
+    /* Devices */
+    .devices-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem}
+    .device-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:1rem;display:flex;flex-direction:column;gap:.75rem}
+    .device-header{display:flex;align-items:flex-start;gap:.6rem}
+    .device-icon{width:36px;height:36px;border-radius:8px;background:var(--surface2);
+      display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+    .device-name{font-size:.88rem;font-weight:600;line-height:1.3}
+    .device-meta{font-size:.7rem;color:var(--muted);margin-top:.1rem}
+    .device-toggle{width:100%;padding:.5rem;border-radius:8px;border:1px solid var(--border);
+      cursor:pointer;font-size:.8rem;font-weight:600;transition:all .15s;background:var(--surface2);color:var(--muted)}
+    .device-toggle.on{background:#0a2a0a;border-color:#1a4a1a;color:var(--green)}
+    .device-toggle:hover{filter:brightness(1.2)}
+    .device-footer{display:flex;justify-content:flex-end}
 
-    /* ===== MOBILE ===== */
-    @media(max-width:700px){
-      #landing{flex-direction:column}
-      .left{padding:2rem 1.5rem;order:2}
-      .left h1{font-size:1.7rem}
-      .left p{display:none}
-      .features{display:none}
-      .right{width:100%;border-left:none;border-bottom:1px solid #1e1e3e;order:1;padding:1.5rem}
-      nav{order:3;width:100%;justify-content:center}
-      header{justify-content:space-between}
-      .tab-btn{padding:.4rem .5rem;font-size:.78rem}
-      .rec-item,.device-item{flex-direction:column;align-items:flex-start}
-      .rec-actions,.device-actions{width:100%}
-      .rec-actions .btn-sm,.device-actions .btn-sm{flex:1;text-align:center}
+    /* Add form */
+    .add-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem}
+    .add-card h3{font-size:.9rem;font-weight:600;margin-bottom:1rem;color:var(--muted)}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.8rem}
+    .form-grid input,.form-grid select{padding:.55rem .75rem;border-radius:7px;border:1px solid var(--border);background:#0d0d1a;color:var(--text);font-size:.85rem}
+    .form-grid input:focus,.form-grid select:focus{outline:none;border-color:var(--accent)}
+
+    /* Empty state */
+    .empty-state{text-align:center;padding:3rem 1rem;color:var(--muted)}
+    .empty-state .ei{font-size:2.5rem;margin-bottom:.8rem;opacity:.4}
+    .empty-state p{font-size:.85rem}
+
+    /* Section header */
+    .section-hdr{display:flex;align-items:center;justify-content:space-between}
+    .section-hdr h3{font-size:.95rem;font-weight:600}
+
+    /* Mobile */
+    @media(max-width:680px){
+      #app{flex-direction:column}
+      .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid var(--border)}
+      .sidebar-brand{border-bottom:none;padding:.75rem}
+      .nav-section{display:none}
+      .nav-item{padding:.5rem .65rem;margin:.3rem .2rem;font-size:.78rem}
+      .nav-item .ni{font-size:.9rem}
+      .sidebar-bottom{margin:auto 0;padding:.5rem}
+      .user-info,.brand-tag{display:none}
+      .content{padding:.75rem}
+      .form-grid{grid-template-columns:1fr}
+      .devices-grid{grid-template-columns:1fr 1fr}
+      .cam-info{gap:.8rem}
+      .rec-card{flex-wrap:wrap}
+      .rec-actions{width:100%}
+      .rec-actions .btn-sm{flex:1;text-align:center}
+    }
+    @media(max-width:420px){
+      .devices-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
 
-<!-- LANDING -->
+<!-- LOGIN -->
 <div id="landing">
-  <div class="left">
-    <div class="logo"><div class="ic">🏠</div><span>Nutikodu</span></div>
-    <h1>Halda kodu<br>ühest kohast.</h1>
-    <p>Reaalajas kaameravaade, liikumistuvastus ja seadmete juhtimine — kõik turvalises juhtpaneelis.</p>
-    <div class="features">
-      <div class="feat"><div class="fi">📹</div> Live kaameravaade</div>
-      <div class="feat"><div class="fi">🔍</div> Liikumistuvastus + salvestamine</div>
-      <div class="feat"><div class="fi">💡</div> Nutikodu seadmete juhtimine</div>
-      <div class="feat"><div class="fi">🔒</div> Turvaline sisselogimine</div>
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">🏠</div>
+      <div><div class="brand-name">Nutikodu</div><div class="brand-tag">Turvaline juhtpaneel</div></div>
     </div>
-  </div>
-  <div class="right">
-    <div class="login-box">
-      <div class="logo"><div class="ic">🏠</div><span>Nutikodu</span></div>
-      <h2>Logi sisse</h2>
-      <p class="sub">Sisesta kasutajanimi ja parool</p>
-      <label>Kasutajanimi</label>
-      <input type="text" id="username" placeholder="admin" autocomplete="username">
-      <label>Parool</label>
-      <input type="password" id="password" placeholder="parool" autocomplete="current-password">
-      <div id="error"></div>
-      <button class="btn btn-primary" onclick="doLogin()">Sisene</button>
-    </div>
+    <h2>Tere tulemast</h2>
+    <p>Logi sisse et pääseda juhtpaneelile</p>
+    <div class="field"><label>Kasutajanimi</label><input type="text" id="username" placeholder="admin" autocomplete="username"></div>
+    <div class="field"><label>Parool</label><input type="password" id="password" placeholder="••••••••" autocomplete="current-password"></div>
+    <div id="login-err"></div>
+    <button class="btn-login" onclick="doLogin()">Sisene →</button>
+    <p class="login-footer">Nutikodu v1.0 &bull; KyamiSolutions</p>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
-  <header>
-    <div class="logo"><div class="ic" style="width:30px;height:30px;border-radius:7px;font-size:.9rem">🏠</div><span style="font-size:.95rem;font-weight:600">Nutikodu</span></div>
-    <nav>
-      <button class="tab-btn active" onclick="showTab('camera',this)">📹 Kaamera</button>
-      <button class="tab-btn" onclick="showTab('recordings',this)">📂 Salvestused</button>
-      <button class="tab-btn" onclick="showTab('devices',this)">💡 Seadmed</button>
-    </nav>
-    <button class="btn-logout" onclick="doLogout()">Välja</button>
-  </header>
-
-  <!-- KAAMERA -->
-  <div class="tab-content active" id="tab-camera">
-    <div class="cam-toolbar">
-      <button class="btn btn-sm" style="background:#1e1e3e;color:#eee" onclick="takeSnapshot()">📸 Snapshot</button>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏠</div>
+      <div class="brand-name">Nutikodu</div>
     </div>
-    <div class="stream-wrap">
-      <span id="stream-status">Laen kaamerat...</span>
-      <img id="stream-img" alt="kaamera">
-    </div>
-  </div>
-
-  <!-- SALVESTUSED -->
-  <div class="tab-content" id="tab-recordings">
-    <div class="section-header">
-      <h2>Liikumissalvestused</h2>
-      <button class="btn btn-sm" style="background:#1e1e3e;color:#eee" onclick="loadRecordings()">↻ Uuenda</button>
-    </div>
-    <div class="rec-list" id="rec-list"><p class="empty">Laen...</p></div>
-  </div>
-
-  <!-- SEADMED -->
-  <div class="tab-content" id="tab-devices">
-    <div class="section-header"><h2>Nutikodu seadmed</h2></div>
-    <div class="add-form">
-      <h3>+ Lisa seade</h3>
-      <div class="form-row">
-        <input type="text" id="d-name" placeholder="Nimi (nt. Elutoa lamp)">
-        <select id="d-kind">
-          <option value="shelly">Shelly</option>
-          <option value="tasmota">Tasmota</option>
-          <option value="http">HTTP</option>
-        </select>
+    <div class="nav-section">Põhivaated</div>
+    <button class="nav-item active" onclick="showPane('camera',this)">
+      <span class="ni">📹</span> Kaamera
+    </button>
+    <button class="nav-item" onclick="showPane('recordings',this)">
+      <span class="ni">📂</span> Salvestused
+      <span class="badge" id="rec-badge">0</span>
+    </button>
+    <button class="nav-item" onclick="showPane('devices',this)">
+      <span class="ni">💡</span> Seadmed
+    </button>
+    <div class="sidebar-bottom">
+      <div class="user-row">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <div class="user-name" id="user-label">admin</div>
+          <div class="user-role">Administraator</div>
+        </div>
+        <button class="btn-logout-sm" onclick="doLogout()" title="Logi välja">🚪</button>
       </div>
-      <div class="form-row">
-        <input type="text" id="d-ip" placeholder="IP (192.168.1.x)">
-        <input type="number" id="d-port" placeholder="Port" value="80" style="max-width:90px">
-      </div>
-      <button class="btn btn-sm" style="background:#7c3aed;color:#fff;align-self:flex-start" onclick="addDevice()">Lisa</button>
     </div>
-    <div class="devices-list" id="devices-list"><p class="empty">Laen...</p></div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">
+        <span class="status-dot" id="cam-dot"></span>Live kaamera
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-sm btn-ghost" onclick="takeSnapshot()">📸 Snapshot</button>
+        <button class="btn-sm btn-ghost" id="refresh-btn" onclick="refreshCurrent()">↻ Uuenda</button>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- KAAMERA -->
+      <div class="pane active" id="pane-camera">
+        <div class="cam-wrap" id="cam-wrap">
+          <div id="stream-placeholder">
+            <div style="font-size:2rem;margin-bottom:.5rem">📹</div>
+            <div>Laen kaamerat...</div>
+          </div>
+          <img id="stream-img" alt="kaamera">
+        </div>
+        <div class="cam-info">
+          <div class="cam-stat">
+            <div class="cam-stat-label">Olek</div>
+            <div class="cam-stat-val" id="cam-status-text" style="color:var(--amber)">Ühendub...</div>
+          </div>
+          <div class="cam-stat">
+            <div class="cam-stat-label">Allikas</div>
+            <div class="cam-stat-val" id="cam-source">RTSP</div>
+          </div>
+          <div class="cam-stat">
+            <div class="cam-stat-label">Liikumistuvastus</div>
+            <div class="cam-stat-val" style="color:var(--green)">✓ Aktiivne</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SALVESTUSED -->
+      <div class="pane" id="pane-recordings">
+        <div class="section-hdr">
+          <h3>📂 Liikumissalvestused</h3>
+          <button class="btn-sm btn-ghost" onclick="loadRecordings()">↻ Uuenda</button>
+        </div>
+        <div class="rec-grid" id="rec-list">
+          <div class="empty-state"><div class="ei">📂</div><p>Laen...</p></div>
+        </div>
+      </div>
+
+      <!-- SEADMED -->
+      <div class="pane" id="pane-devices">
+        <div class="section-hdr">
+          <h3>💡 Nutikodu seadmed</h3>
+        </div>
+        <div class="add-card">
+          <h3>+ Lisa uus seade</h3>
+          <div class="form-grid">
+            <input type="text" id="d-name" placeholder="Nimi (nt. Elutoa lamp)">
+            <select id="d-kind">
+              <option value="shelly">Shelly</option>
+              <option value="tasmota">Tasmota</option>
+              <option value="http">HTTP</option>
+            </select>
+            <input type="text" id="d-ip" placeholder="IP (192.168.1.x)">
+            <input type="number" id="d-port" placeholder="Port" value="80">
+          </div>
+          <button class="btn-sm btn-accent" onclick="addDevice()">Lisa seade</button>
+        </div>
+        <div class="devices-grid" id="devices-grid">
+          <div class="empty-state" style="grid-column:1/-1"><div class="ei">💡</div><p>Laen...</p></div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
 <script>
-  let token='', camKey='';
-
+  let token='',camKey='';
   document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
   async function doLogin(){
-    const username=document.getElementById('username').value.trim();
-    const password=document.getElementById('password').value;
-    document.getElementById('error').style.display='none';
-    if(!username||!password){showErr('Sisesta kasutajanimi ja parool');return;}
-    const res=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
-    if(!res.ok){const d=await res.json().catch(()=>({}));showErr(d.detail||'Vale kasutajanimi või parool');return;}
-    const data=await res.json();
-    token=data.token; camKey=data.cam_key;
-    sessionStorage.setItem('token',token); sessionStorage.setItem('cam_key',camKey);
+    const u=document.getElementById('username').value.trim();
+    const p=document.getElementById('password').value;
+    const err=document.getElementById('login-err');
+    err.style.display='none';
+    if(!u||!p){err.textContent='Sisesta kasutajanimi ja parool';err.style.display='block';return;}
+    const r=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    if(!r.ok){const d=await r.json().catch(()=>({}));err.textContent=d.detail||'Vale kasutajanimi või parool';err.style.display='block';return;}
+    const data=await r.json();
+    token=data.token;camKey=data.cam_key;
+    sessionStorage.setItem('token',token);sessionStorage.setItem('cam_key',camKey);
+    document.getElementById('user-label').textContent=u;
     showApp();
   }
 
   function showApp(){
     document.getElementById('landing').style.display='none';
     document.getElementById('app').style.display='flex';
-    startStream(); loadRecordings(); loadDevices();
+    startStream();loadRecordings();loadDevices();
   }
 
   function startStream(){
     const img=document.getElementById('stream-img');
     img.src=`/stream?key=${encodeURIComponent(camKey)}&api_key=${encodeURIComponent(token)}`;
-    img.style.display='block';
-    img.onload=()=>{document.getElementById('stream-status').style.display='none';};
+    img.onload=()=>{
+      document.getElementById('stream-placeholder').style.display='none';
+      img.style.display='block';
+      document.getElementById('cam-dot').classList.remove('off');
+      document.getElementById('cam-status-text').textContent='Live';
+      document.getElementById('cam-status-text').style.color='var(--green)';
+    };
+    img.onerror=()=>{
+      document.getElementById('cam-dot').classList.add('off');
+      document.getElementById('cam-status-text').textContent='Ühendus katkes';
+      document.getElementById('cam-status-text').style.color='var(--red)';
+    };
+    const src=camKey.startsWith('rtsp')||camKey.startsWith('http')?'RTSP':'USB #'+camKey;
+    document.getElementById('cam-source').textContent=src;
   }
 
-  function showTab(name,btn){
-    document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
-    document.getElementById('tab-'+name).classList.add('active');
+  function showPane(name,btn){
+    document.querySelectorAll('.pane').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+    document.getElementById('pane-'+name).classList.add('active');
     btn.classList.add('active');
+    const titles={camera:'Live kaamera',recordings:'Salvestused',devices:'Nutikodu seadmed'};
+    document.getElementById('topbar-title').innerHTML=`<span class="status-dot ${name==='camera'?'':'off'}" id="cam-dot"></span>${titles[name]}`;
+    document.getElementById('refresh-btn').style.display=name==='camera'?'none':'block';
+  }
+
+  function refreshCurrent(){
+    const active=document.querySelector('.nav-item.active');
+    if(document.getElementById('pane-recordings').classList.contains('active'))loadRecordings();
+    if(document.getElementById('pane-devices').classList.contains('active'))loadDevices();
   }
 
   async function loadRecordings(){
-    const res=await apiFetch('/recordings');
+    const r=await apiFetch('/recordings');
     const list=document.getElementById('rec-list');
-    if(!res.ok){list.innerHTML='<p class="empty">Viga laadimisel</p>';return;}
-    const data=await res.json();
-    if(!data.length){list.innerHTML='<p class="empty">Salvestusi pole veel — liikumine käivitab salvestamise</p>';return;}
-    list.innerHTML=data.map(r=>`
-      <div class="rec-item">
+    if(!r.ok){list.innerHTML='<div class="empty-state"><div class="ei">⚠️</div><p>Viga laadimisel</p></div>';return;}
+    const data=await r.json();
+    const badge=document.getElementById('rec-badge');
+    badge.textContent=data.length;badge.classList.toggle('show',data.length>0);
+    if(!data.length){list.innerHTML='<div class="empty-state"><div class="ei">📂</div><p>Salvestusi pole veel<br><small>Liikumine käivitab automaatse salvestamise</small></p></div>';return;}
+    list.innerHTML=data.map(rec=>`
+      <div class="rec-card">
+        <div class="rec-icon">🎬</div>
         <div class="rec-info">
-          <div class="rec-name">${r.filename}</div>
-          <div class="rec-meta">${r.created} &bull; ${r.size_mb} MB</div>
+          <div class="rec-name">${rec.filename}</div>
+          <div class="rec-meta">${rec.created} &bull; ${rec.size_mb} MB</div>
         </div>
         <div class="rec-actions">
-          <a href="/recordings/${r.filename}?api_key=${encodeURIComponent(token)}" download class="btn btn-sm" style="background:#1e3a5c;color:#6af;text-decoration:none;text-align:center">⬇ Lae alla</a>
-          <button class="btn btn-sm btn-danger" onclick="deleteRec('${r.filename}')">Kustuta</button>
+          <a href="/recordings/${rec.filename}?api_key=${encodeURIComponent(token)}" download class="btn-sm" style="background:#0a1a2a;color:#6af;border:1px solid #1a3a5a;border-radius:6px;padding:.35rem .75rem;text-decoration:none;font-size:.78rem;font-weight:600">⬇ Lae alla</a>
+          <button class="btn-sm btn-danger" onclick="deleteRec('${rec.filename}')">🗑</button>
         </div>
       </div>`).join('');
   }
@@ -246,20 +378,23 @@
   }
 
   async function loadDevices(){
-    const res=await apiFetch('/devices');
-    const list=document.getElementById('devices-list');
-    if(!res.ok){list.innerHTML='<p class="empty">Viga laadimisel</p>';return;}
-    const data=await res.json();
-    if(!data.length){list.innerHTML='<p class="empty">Seadmeid pole lisatud</p>';return;}
-    list.innerHTML=data.map(d=>`
-      <div class="device-item">
-        <div class="device-info">
-          <div class="device-name">${d.name}</div>
-          <div class="device-meta">${d.kind} &bull; ${d.ip}:${d.port}</div>
+    const r=await apiFetch('/devices');
+    const grid=document.getElementById('devices-grid');
+    if(!r.ok){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="ei">⚠️</div><p>Viga</p></div>';return;}
+    const data=await r.json();
+    if(!data.length){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="ei">💡</div><p>Seadmeid pole lisatud<br><small>Lisa Shelly, Tasmota või HTTP seade</small></p></div>';return;}
+    const icons={shelly:'🔌',tasmota:'💻',http:'🌐'};
+    grid.innerHTML=data.map(d=>`
+      <div class="device-card">
+        <div class="device-header">
+          <div class="device-icon">${icons[d.kind]||'💡'}</div>
+          <div><div class="device-name">${d.name}</div><div class="device-meta">${d.kind} &bull; ${d.ip}</div></div>
         </div>
-        <div class="device-actions">
-          <button class="btn btn-sm btn-toggle ${d.state?'on':''}" onclick="toggleDev(${d.id})">${d.state?'🟢 SEES':'🔴 VÄLJAS'}</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteDev(${d.id})">Eemalda</button>
+        <button class="device-toggle ${d.state?'on':''}" onclick="toggleDev(${d.id})">
+          ${d.state?'🟢 SEES':'🔴 VÄLJAS'}
+        </button>
+        <div class="device-footer">
+          <button class="btn-sm btn-danger" onclick="deleteDev(${d.id})">Eemalda</button>
         </div>
       </div>`).join('');
   }
@@ -276,23 +411,15 @@
     loadDevices();
   }
 
-  async function toggleDev(id){
-    await apiFetch('/devices/'+id+'/toggle',{method:'POST'});
-    loadDevices();
-  }
-
-  async function deleteDev(id){
-    if(!confirm('Eemalda seade?'))return;
-    await apiFetch('/devices/'+id,{method:'DELETE'});
-    loadDevices();
-  }
+  async function toggleDev(id){await apiFetch('/devices/'+id+'/toggle',{method:'POST'});loadDevices();}
+  async function deleteDev(id){if(!confirm('Eemalda?'))return;await apiFetch('/devices/'+id,{method:'DELETE'});loadDevices();}
 
   async function takeSnapshot(){
-    const res=await apiFetch(`/snapshot?key=${encodeURIComponent(camKey)}`);
-    if(!res.ok)return;
-    const blob=await res.blob();
+    const r=await apiFetch(`/snapshot?key=${encodeURIComponent(camKey)}`);
+    if(!r.ok)return;
+    const blob=await r.blob();
     const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`snapshot_${Date.now()}.jpg`});
-    a.click(); URL.revokeObjectURL(a.href);
+    a.click();URL.revokeObjectURL(a.href);
   }
 
   async function doLogout(){
@@ -300,18 +427,13 @@
     token='';camKey='';sessionStorage.clear();
     document.getElementById('stream-img').src='';
     document.getElementById('stream-img').style.display='none';
-    document.getElementById('stream-status').style.display='block';
+    document.getElementById('stream-placeholder').style.display='block';
     document.getElementById('app').style.display='none';
     document.getElementById('landing').style.display='flex';
     document.getElementById('password').value='';
   }
 
-  function apiFetch(path,opts={}){
-    const sep=path.includes('?')?'&':'?';
-    return fetch(path+sep+'api_key='+encodeURIComponent(token),opts);
-  }
-
-  function showErr(msg){const el=document.getElementById('error');el.textContent=msg;el.style.display='block';}
+  function apiFetch(path,opts={}){const s=path.includes('?')?'&':'?';return fetch(path+s+'api_key='+encodeURIComponent(token),opts);}
 
   const t=sessionStorage.getItem('token'),k=sessionStorage.getItem('cam_key');
   if(t&&k){token=t;camKey=k;showApp();}
