@@ -10,7 +10,8 @@ from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, Respo
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 
 from auth import (login as auth_login, logout as auth_logout, verify_session,
-                  get_username, list_users, add_user, delete_user, change_password, init_db)
+                  get_username, list_users, add_user, delete_user, change_password,
+                  init_db, verify_2fa, enable_2fa, disable_2fa, get_2fa_status)
 from camera import Camera, _tcp_reachable, mjpeg_generator, probe_rtsp
 from devices import add_device, list_devices, remove_device, toggle_device
 from motion import MotionDetector, list_recordings, RECORDINGS_DIR
@@ -88,7 +89,21 @@ def index():
 
 @app.post("/login")
 def login(username: str = Form(...), password: str = Form(...)):
-    token = auth_login(username, password)
+    result = auth_login(username, password)
+    if result["requires_2fa"]:
+        return JSONResponse({"ok": True, "requires_2fa": True, "temp_token": result["temp_token"]})
+    cam_key = ""
+    src = _default_source()
+    if src is not None:
+        cam_key = str(src)
+    resp = JSONResponse({"ok": True, "requires_2fa": False, "cam_key": cam_key})
+    resp.set_cookie("session", result["token"], httponly=True, samesite="lax", max_age=86400)
+    return resp
+
+
+@app.post("/login/2fa")
+def login_2fa(temp_token: str = Form(...), code: str = Form(...)):
+    token = verify_2fa(temp_token, code)
     cam_key = ""
     src = _default_source()
     if src is not None:
@@ -104,6 +119,27 @@ def logout(token: str = Depends(verify_session)):
     resp = JSONResponse({"ok": True})
     resp.delete_cookie("session")
     return resp
+
+
+# ── 2FA ──────────────────────────────────────────────────────────────────────
+
+@app.get("/users/me/2fa")
+def get_my_2fa(token: str = Depends(verify_session)):
+    username = get_username(token)
+    return {"enabled": get_2fa_status(username)}
+
+
+@app.post("/users/me/2fa/enable")
+def my_2fa_enable(token: str = Depends(verify_session)):
+    username = get_username(token)
+    return enable_2fa(username)
+
+
+@app.post("/users/me/2fa/disable")
+def my_2fa_disable(token: str = Depends(verify_session)):
+    username = get_username(token)
+    disable_2fa(username)
+    return {"ok": True}
 
 
 # ── HLS ──────────────────────────────────────────────────────────────────────

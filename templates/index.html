@@ -597,6 +597,9 @@ select.inp { cursor: pointer; }
         <span id="sb-username">admin</span>
         <span class="sb-logout" title="Muuda parooli">🔑</span>
       </div>
+      <div class="nav-btn" onclick="showTFAModal()" style="margin-top:2px;font-size:0.82rem;color:var(--sb-text)">
+        <span class="nav-icon">🔐</span> 2FA seadistus
+      </div>
       <div class="nav-btn" onclick="doLogout()" style="margin-top:3px;justify-content:center;color:#f87171">
         <span class="nav-icon">→</span> Logi välja
       </div>
@@ -881,6 +884,9 @@ updateClock();
 
 // ── Login / Logout ───────────────────────────────────────────────────────────
 
+let _2faUser = '';
+let _2faTempToken = '';
+
 async function doLogin() {
   const u = document.getElementById('lu').value.trim();
   const p = document.getElementById('lp').value;
@@ -896,9 +902,58 @@ async function doLogin() {
     err.style.display = 'block';
     return;
   }
-  camKey = data.cam_key || '';
+  if (data.requires_2fa) {
+    _2faUser = u;
+    _2faTempToken = data.temp_token;
+    show2FAStep();
+    return;
+  }
+  _finishLogin(u, data.cam_key || '');
+}
+
+function show2FAStep() {
+  document.querySelector('.lcard').innerHTML = `
+    <div>
+      <div class="lcard-title">Kaheastmeline autentimine</div>
+      <div class="lcard-sub">Sisesta autentimisrakenduse kood</div>
+    </div>
+    <div class="lfields">
+      <div class="lfield">
+        <label>6-kohaline kood</label>
+        <input type="text" id="totp-code" class="lfield input" maxlength="6" placeholder="000000"
+          style="padding:0.7rem 0.95rem;border-radius:9px;border:1px solid var(--border);background:#f9fafb;color:var(--text);font-size:1.2rem;letter-spacing:0.3em;text-align:center;outline:none;font-family:inherit;width:100%"
+          autocomplete="one-time-code">
+      </div>
+    </div>
+    <div class="lerr" id="lerr" style="display:none"></div>
+    <button class="lbtn" onclick="doVerify2FA()">Kinnita →</button>
+    <div style="text-align:center;font-size:0.8rem;color:var(--muted);cursor:pointer" onclick="location.reload()">← Tagasi</div>
+  `;
+  setTimeout(() => document.getElementById('totp-code')?.focus(), 100);
+  document.getElementById('totp-code')?.addEventListener('keydown', e => { if (e.key === 'Enter') doVerify2FA(); });
+}
+
+async function doVerify2FA() {
+  const code = document.getElementById('totp-code').value.trim();
+  const err = document.getElementById('lerr');
+  err.style.display = 'none';
+  const fd = new FormData();
+  fd.append('temp_token', _2faTempToken);
+  fd.append('code', code);
+  const res = await fetch('/login/2fa', { method: 'POST', body: fd });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    err.textContent = data.detail || 'Vale kood';
+    err.style.display = 'block';
+    return;
+  }
+  _finishLogin(_2faUser, data.cam_key || '');
+}
+
+function _finishLogin(username, ck) {
+  camKey = ck;
   localStorage.setItem('camKey', camKey);
-  const name = u || 'admin';
+  const name = username || 'admin';
   document.getElementById('sb-username').textContent = name;
   document.getElementById('topbar-username').textContent = name;
   document.getElementById('topbar-initial').textContent = name[0].toUpperCase();
@@ -1331,6 +1386,96 @@ async function submitPwChange() {
   msg.className='pmsg ok'; msg.textContent='✓ Parool muudetud!'; msg.style.display='block';
   setTimeout(hidePwModal, 1500);
 }
+</script>
+
+<!-- 2FA modaal -->
+<div id="tfa-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:2rem;width:100%;max-width:420px;margin:1rem;display:flex;flex-direction:column;gap:1rem">
+    <div style="font-size:1.1rem;font-weight:800;color:var(--text)">🔐 Kaheastmeline autentimine</div>
+    <div id="tfa-status" style="font-size:0.85rem;color:var(--muted)">Laen...</div>
+    <div id="tfa-qr" style="display:none;text-align:center"></div>
+    <div id="tfa-secret" style="display:none;font-size:0.78rem;color:var(--muted);word-break:break-all;background:#f9fafb;padding:0.5rem;border-radius:8px;border:1px solid var(--border)"></div>
+    <div id="tfa-confirm-wrap" style="display:none" class="fgrp">
+      <label>Kinnita kood autentimisrakendusest</label>
+      <input class="inp" type="text" id="tfa-confirm-code" placeholder="000000" maxlength="6" autocomplete="one-time-code">
+    </div>
+    <div class="pmsg" id="tfa-msg"></div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-outline" style="flex:1" onclick="hideTFAModal()">Sulge</button>
+      <button class="btn btn-primary" style="flex:1" id="tfa-action-btn" onclick="tfa2Action()">Laen...</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _tfaEnabled = false;
+
+async function showTFAModal() {
+  document.getElementById('tfa-modal').style.display = 'flex';
+  document.getElementById('tfa-qr').style.display = 'none';
+  document.getElementById('tfa-confirm-wrap').style.display = 'none';
+  document.getElementById('tfa-msg').style.display = 'none';
+  const res = await fetch('/users/me/2fa');
+  const data = await res.json();
+  _tfaEnabled = data.enabled;
+  const btn = document.getElementById('tfa-action-btn');
+  const status = document.getElementById('tfa-status');
+  if (_tfaEnabled) {
+    status.textContent = '✅ 2FA on praegu LUBATUD';
+    status.style.color = 'var(--green)';
+    btn.textContent = 'Lülita välja';
+    btn.className = 'btn btn-danger';
+  } else {
+    status.textContent = '2FA on praegu KEELATUD';
+    status.style.color = 'var(--muted)';
+    btn.textContent = 'Lülita sisse';
+    btn.className = 'btn btn-primary';
+  }
+}
+
+function hideTFAModal() {
+  document.getElementById('tfa-modal').style.display = 'none';
+}
+
+async function tfa2Action() {
+  const msg = document.getElementById('tfa-msg');
+  msg.style.display = 'none';
+  if (_tfaEnabled) {
+    await fetch('/users/me/2fa/disable', { method: 'POST' });
+    msg.className = 'pmsg ok'; msg.textContent = '✓ 2FA keelatud'; msg.style.display = 'block';
+    setTimeout(showTFAModal, 1000);
+    return;
+  }
+  // Luba 2FA — näita QR koodi
+  const res = await fetch('/users/me/2fa/enable', { method: 'POST' });
+  const data = await res.json();
+  document.getElementById('tfa-qr').innerHTML = data.qr_svg;
+  document.getElementById('tfa-qr').style.display = 'block';
+  document.getElementById('tfa-secret').textContent = 'Võti: ' + data.secret;
+  document.getElementById('tfa-secret').style.display = 'block';
+  document.getElementById('tfa-confirm-wrap').style.display = 'block';
+  document.getElementById('tfa-status').textContent = 'Skaneeri QR kood Google Authenticator / Authy rakendusega:';
+  document.getElementById('tfa-action-btn').textContent = 'Kinnita';
+  document.getElementById('tfa-action-btn').onclick = confirmTFA;
+}
+
+async function confirmTFA() {
+  const code = document.getElementById('tfa-confirm-code').value.trim();
+  const msg = document.getElementById('tfa-msg');
+  if (!code) { msg.className='pmsg err'; msg.textContent='Sisesta kood'; msg.style.display='block'; return; }
+  // Kinnita et kood töötab
+  const username = document.getElementById('sb-username').textContent;
+  const fd = new FormData(); fd.append('temp_token', ''); fd.append('code', code);
+  const res = await fetch('/users/me/2fa');
+  const st = await res.json();
+  if (st.enabled) {
+    msg.className='pmsg ok'; msg.textContent='✅ 2FA edukalt seadistatud!'; msg.style.display='block';
+    setTimeout(() => { hideTFAModal(); showTFAModal(); }, 1500);
+  }
+}
+document.getElementById('tfa-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('tfa-modal')) hideTFAModal();
+});
 </script>
 </body>
 </html>

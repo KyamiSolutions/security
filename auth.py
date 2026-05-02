@@ -2,10 +2,14 @@ import hashlib
 import os
 import secrets
 import mysql.connector
-from functools import lru_cache
+import pyotp
+import qrcode
+import qrcode.image.svg
+from io import BytesIO
 from fastapi import HTTPException, Request
 
-_sessions: dict[str, str] = {}  # token -> username
+_sessions: dict[str, str] = {}       # token -> username
+_pending_2fa: dict[str, str] = {}    # temp_token -> username
 
 
 def _db():
@@ -28,9 +32,15 @@ def init_db():
             salt VARCHAR(64) NOT NULL,
             hash VARCHAR(128) NOT NULL,
             role ENUM('admin','user') DEFAULT 'user',
+            totp_secret VARCHAR(64) DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     """)
+    # Lisa totp_secret veerg kui puudub (olemasolev tabel)
+    try:
+        cur.execute("ALTER TABLE users ADD COLUMN totp_secret VARCHAR(64) DEFAULT NULL")
+    except mysql.connector.Error:
+        pass
     cur.close()
     db.close()
     _migrate_from_json()
@@ -80,14 +90,39 @@ def _hash(password: str, salt: str) -> str:
     return hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 200_000).hex()
 
 
-def login(username: str, password: str) -> str:
+def _get_user(username: str) -> dict | None:
     db = _db()
     cur = db.cursor(dictionary=True)
     cur.execute("SELECT * FROM users WHERE username=%s", (username,))
     u = cur.fetchone()
     cur.close(); db.close()
+    return u
+
+
+def login(username: str, password: str) -> dict:
+    u = _get_user(username)
     if not u or _hash(password, u["salt"]) != u["hash"]:
         raise HTTPException(401, "Vale kasutajanimi või parool")
+    if u["totp_secret"]:
+        temp = secrets.token_hex(16)
+        _pending_2fa[temp] = username
+        return {"requires_2fa": True, "temp_token": temp}
+    token = secrets.token_hex(32)
+    _sessions[token] = username
+    return {"requires_2fa": False, "token": token}
+
+
+def verify_2fa(temp_token: str, code: str) -> str:
+    username = _pending_2fa.get(temp_token)
+    if not username:
+        raise HTTPException(401, "Aegunud või vale 2FA sessioon")
+    u = _get_user(username)
+    if not u or not u["totp_secret"]:
+        raise HTTPException(401, "2FA pole seadistatud")
+    totp = pyotp.TOTP(u["totp_secret"])
+    if not totp.verify(code, valid_window=1):
+        raise HTTPException(401, "Vale 2FA kood")
+    _pending_2fa.pop(temp_token, None)
     token = secrets.token_hex(32)
     _sessions[token] = username
     return token
@@ -111,10 +146,11 @@ def get_username(token: str) -> str:
 def list_users() -> list[dict]:
     db = _db()
     cur = db.cursor(dictionary=True)
-    cur.execute("SELECT username, role, created_at FROM users ORDER BY created_at")
+    cur.execute("SELECT username, role, totp_secret, created_at FROM users ORDER BY created_at")
     rows = cur.fetchall()
     cur.close(); db.close()
     return [{"username": r["username"], "role": r["role"],
+             "totp_enabled": bool(r["totp_secret"]),
              "created_at": r["created_at"].isoformat() if r["created_at"] else None}
             for r in rows]
 
@@ -164,3 +200,31 @@ def change_password(username: str, new_password: str):
         cur.close(); db.close()
         raise HTTPException(404, "Kasutajat ei leitud")
     cur.close(); db.close()
+
+
+def enable_2fa(username: str) -> dict:
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(name=username, issuer_name="Nutikodu")
+    # QR kood SVG-na
+    img = qrcode.make(uri, image_factory=qrcode.image.svg.SvgImage)
+    buf = BytesIO()
+    img.save(buf)
+    svg = buf.getvalue().decode()
+    db = _db()
+    cur = db.cursor()
+    cur.execute("UPDATE users SET totp_secret=%s WHERE username=%s", (secret, username))
+    cur.close(); db.close()
+    return {"secret": secret, "uri": uri, "qr_svg": svg}
+
+
+def disable_2fa(username: str):
+    db = _db()
+    cur = db.cursor()
+    cur.execute("UPDATE users SET totp_secret=NULL WHERE username=%s", (username,))
+    cur.close(); db.close()
+
+
+def get_2fa_status(username: str) -> bool:
+    u = _get_user(username)
+    return bool(u and u["totp_secret"])
