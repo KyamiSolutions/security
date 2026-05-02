@@ -1,18 +1,22 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import Depends, FastAPI, HTTPException, Query
-from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from fastapi.responses import HTMLResponse, Response, StreamingResponse, FileResponse
 from pydantic import BaseModel
 
 from auth import login, logout, verify_key
 from camera import Camera, _tcp_reachable, list_usb_cameras, mjpeg_generator, probe_rtsp
+from motion import MotionDetector, list_recordings, RECORDINGS_DIR
+from devices import list_devices, add_device, remove_device, toggle_device
 
 cameras: dict[str | int, Camera] = {}
+motion_detectors: dict[str | int, MotionDetector] = {}
 
 
 def _default_source() -> str | int:
@@ -26,16 +30,22 @@ def _default_source() -> str | int:
 async def lifespan(app: FastAPI):
     source = _default_source()
     try:
-        cameras[source] = await asyncio.to_thread(Camera, source)
-        print(f"Kaamera avatud: {source}")
+        cam = await asyncio.to_thread(Camera, source)
+        cameras[source] = cam
+        md = MotionDetector(cam)
+        md.start()
+        motion_detectors[source] = md
+        print(f"Kaamera avatud ja liikumistuvastus käivitatud: {source}")
     except RuntimeError as e:
         print(f"Hoiatus: {e}")
     yield
+    for md in motion_detectors.values():
+        md.stop()
     for cam in cameras.values():
         cam.release()
 
 
-app = FastAPI(title="Nutikodu kaamera", lifespan=lifespan)
+app = FastAPI(title="Nutikodu", lifespan=lifespan)
 
 
 class LoginRequest(BaseModel):
@@ -45,6 +55,13 @@ class LoginRequest(BaseModel):
 
 class LogoutRequest(BaseModel):
     token: str
+
+
+class DeviceRequest(BaseModel):
+    name: str
+    kind: str
+    ip: str
+    port: int = 80
 
 
 def _get_camera(key: str | int) -> Camera:
@@ -66,8 +83,7 @@ def index():
 def do_login(req: LoginRequest):
     token = login(req.username, req.password)
     source = _default_source()
-    cam_key = str(source)
-    return {"token": token, "cam_key": cam_key}
+    return {"token": token, "cam_key": str(source)}
 
 
 @app.post("/logout")
@@ -76,38 +92,10 @@ def do_logout(req: LogoutRequest):
     return {"ok": True}
 
 
-@app.get("/cameras")
-def get_cameras(_: str = Depends(verify_key)):
-    usb = list_usb_cameras()
-    rtsp = [k for k in cameras if isinstance(k, str)]
-    return {"usb": usb, "rtsp": rtsp}
-
-
-@app.get("/probe")
-async def probe(
-    ip: str = Query(...),
-    user: str = Query("admin"),
-    password: str = Query("admin"),
-    port: int = Query(554),
-    _: str = Depends(verify_key),
-):
-    if not await asyncio.to_thread(_tcp_reachable, ip, port):
-        raise HTTPException(503, f"Port {port} on suletud aadressil {ip}.")
-    url = await asyncio.to_thread(probe_rtsp, ip, user, password, port)
-    if not url:
-        raise HTTPException(404, "RTSP rada ei leitud.")
-    cameras[url] = Camera(url)
-    safe = url.replace(f":{password}@", ":***@")
-    return {"url": safe, "internal_key": url}
-
-
 @app.get("/stream")
 def stream(key: str = Query(...), _: str = Depends(verify_key)):
     cam = _get_camera(key if not key.isdigit() else int(key))
-    return StreamingResponse(
-        mjpeg_generator(cam),
-        media_type="multipart/x-mixed-replace; boundary=frame",
-    )
+    return StreamingResponse(mjpeg_generator(cam), media_type="multipart/x-mixed-replace; boundary=frame")
 
 
 @app.get("/snapshot")
@@ -119,37 +107,63 @@ def snapshot(key: str = Query(...), _: str = Depends(verify_key)):
     return Response(content=frame, media_type="image/jpeg")
 
 
-@app.get("/controls")
-def get_controls(key: str = Query(...), _: str = Depends(verify_key)):
-    cam = _get_camera(key if not key.isdigit() else int(key))
-    return {"controls": cam.get_v4l2_controls()}
+@app.get("/recordings")
+def get_recordings(_: str = Depends(verify_key)):
+    return list_recordings()
 
 
-@app.post("/controls")
-def set_control(
-    key: str = Query(...),
-    control: str = Query(...),
-    value: int = Query(...),
-    _: str = Depends(verify_key),
-):
-    cam = _get_camera(key if not key.isdigit() else int(key))
-    cam.set_v4l2(control, value)
-    return {"ok": True, "control": control, "value": value}
+@app.get("/recordings/{filename}")
+def download_recording(filename: str, _: str = Depends(verify_key)):
+    path = Path(RECORDINGS_DIR) / filename
+    if not path.exists() or not filename.endswith(".mp4"):
+        raise HTTPException(404, "Salvestus ei leitud")
+    return FileResponse(path, media_type="video/mp4", filename=filename)
+
+
+@app.delete("/recordings/{filename}")
+def delete_recording(filename: str, _: str = Depends(verify_key)):
+    path = Path(RECORDINGS_DIR) / filename
+    if not path.exists():
+        raise HTTPException(404, "Salvestus ei leitud")
+    path.unlink()
+    return {"ok": True}
+
+
+@app.get("/devices")
+def get_devices(_: str = Depends(verify_key)):
+    return list_devices()
+
+
+@app.post("/devices")
+def create_device(req: DeviceRequest, _: str = Depends(verify_key)):
+    return add_device(req.name, req.kind, req.ip, req.port)
+
+
+@app.delete("/devices/{device_id}")
+def delete_device(device_id: int, _: str = Depends(verify_key)):
+    remove_device(device_id)
+    return {"ok": True}
+
+
+@app.post("/devices/{device_id}/toggle")
+async def do_toggle(device_id: int, _: str = Depends(verify_key)):
+    try:
+        return await toggle_device(device_id)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
+@app.get("/probe")
+async def probe(ip: str = Query(...), user: str = Query("admin"), password: str = Query("admin"), port: int = Query(554), _: str = Depends(verify_key)):
+    if not await asyncio.to_thread(_tcp_reachable, ip, port):
+        raise HTTPException(503, f"Port {port} suletud aadressil {ip}")
+    url = await asyncio.to_thread(probe_rtsp, ip, user, password, port)
+    if not url:
+        raise HTTPException(404, "RTSP rada ei leitud")
+    cameras[url] = Camera(url)
+    return {"url": url.replace(f":{password}@", ":***@"), "internal_key": url}
 
 
 if __name__ == "__main__":
     import uvicorn
-
-    host = os.environ.get("HOST", "0.0.0.0")
-    port = int(os.environ.get("PORT", "8080"))
-    ssl_cert = os.environ.get("SSL_CERT")
-    ssl_key = os.environ.get("SSL_KEY")
-
-    uvicorn.run(
-        "main:app",
-        host=host,
-        port=port,
-        ssl_certfile=ssl_cert or None,
-        ssl_keyfile=ssl_key or None,
-        reload=False,
-    )
+    uvicorn.run("main:app", host=os.environ.get("HOST", "0.0.0.0"), port=int(os.environ.get("PORT", "8080")), reload=False)

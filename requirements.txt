@@ -1,4 +1,7 @@
-fastapi>=0.111
-uvicorn[standard]>=0.29
-opencv-python-headless>=4.9
-python-multipart>=0.0.9
+fastapi
+uvicorn[standard]
+opencv-python-headless
+python-dotenv
+numpy
+pydantic
+httpx
