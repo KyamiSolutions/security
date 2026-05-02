@@ -768,7 +768,7 @@ select.inp { cursor: pointer; }
       </div>
       <div class="dev-grid" id="dev-grid"></div>
 
-      <div class="setup-card">
+      <div class="setup-card admin-only">
         <h3>Lisa uus seade</h3>
         <div class="fgrp">
           <label>Nimi</label>
@@ -860,6 +860,18 @@ select.inp { cursor: pointer; }
 <script>
 'use strict';
 let camKey = '';
+let userRole = 'user';
+
+function applyRole() {
+  const isAdmin = userRole === 'admin';
+  ['snav-users', 'snav-devices'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isAdmin ? '' : 'none';
+  });
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = isAdmin ? '' : 'none';
+  });
+}
 let currentPage = 'dashboard';
 let recData = [];
 let devData = [];
@@ -986,6 +998,10 @@ function showApp() {
     initCamera();
   }
 
+  fetch('/users/me').then(r => r.json()).then(d => {
+    userRole = d.role || 'user';
+    applyRole();
+  });
   loadRecordings();
   loadDevices();
   go('dashboard');

@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Streamin
 
 from auth import (login as auth_login, logout as auth_logout, verify_session,
                   get_username, list_users, add_user, delete_user, change_password,
-                  init_db, verify_2fa, enable_2fa, disable_2fa, get_2fa_status)
+                  init_db, verify_2fa, enable_2fa, disable_2fa, get_2fa_status, get_user_role)
 from camera import Camera, _tcp_reachable, mjpeg_generator, probe_rtsp
 from devices import add_device, list_devices, remove_device, toggle_device
 from motion import MotionDetector, list_recordings, RECORDINGS_DIR
@@ -85,6 +85,12 @@ def index():
         return f.read()
 
 
+def require_admin(token: str = Depends(verify_session)):
+    if get_user_role(token) != "admin":
+        raise HTTPException(403, "Ainult adminile lubatud")
+    return token
+
+
 # ── Auth ─────────────────────────────────────────────────────────────────────
 
 @app.post("/login")
@@ -122,6 +128,11 @@ def logout(token: str = Depends(verify_session)):
 
 
 # ── 2FA ──────────────────────────────────────────────────────────────────────
+
+@app.get("/users/me")
+def get_me(token: str = Depends(verify_session)):
+    return {"username": get_username(token), "role": get_user_role(token)}
+
 
 @app.get("/users/me/2fa")
 def get_my_2fa(token: str = Depends(verify_session)):
@@ -227,7 +238,7 @@ def download_recording(filename: str, _: str = Depends(verify_session)):
 
 
 @app.delete("/recordings/{filename}")
-def delete_recording(filename: str, _: str = Depends(verify_session)):
+def delete_recording(filename: str, _: str = Depends(require_admin)):
     path = os.path.join(RECORDINGS_DIR, filename)
     if not os.path.isfile(path):
         raise HTTPException(404, "Fail ei leitud")
@@ -248,13 +259,13 @@ def create_device(
     kind: str = Form(...),
     ip: str = Form(...),
     port: int = Form(80),
-    _: str = Depends(verify_session),
+    _: str = Depends(require_admin),
 ):
     return add_device(name, kind, ip, port)
 
 
 @app.delete("/devices/{device_id}")
-def delete_device(device_id: str, _: str = Depends(verify_session)):
+def delete_device(device_id: str, _: str = Depends(require_admin)):
     remove_device(device_id)
     return {"ok": True}
 
@@ -267,7 +278,7 @@ async def toggle(device_id: str, _: str = Depends(verify_session)):
 # ── Users ────────────────────────────────────────────────────────────────────
 
 @app.get("/users")
-def get_users(token: str = Depends(verify_session)):
+def get_users(_: str = Depends(require_admin)):
     return list_users()
 
 
@@ -276,14 +287,14 @@ def create_user(
     username: str = Form(...),
     password: str = Form(...),
     role: str = Form("user"),
-    _: str = Depends(verify_session),
+    _: str = Depends(require_admin),
 ):
     add_user(username, password, role)
     return {"ok": True}
 
 
 @app.delete("/users/{username}")
-def remove_user(username: str, token: str = Depends(verify_session)):
+def remove_user(username: str, token: str = Depends(require_admin)):
     current = get_username(token)
     delete_user(username, current)
     return {"ok": True}

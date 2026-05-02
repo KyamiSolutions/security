@@ -228,3 +228,11 @@ def disable_2fa(username: str):
 def get_2fa_status(username: str) -> bool:
     u = _get_user(username)
     return bool(u and u["totp_secret"])
+
+
+def get_user_role(token: str) -> str:
+    username = _sessions.get(token, "")
+    if not username:
+        return "user"
+    u = _get_user(username)
+    return u["role"] if u else "user"
