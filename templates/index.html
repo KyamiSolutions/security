@@ -37,53 +37,107 @@ button { font-family: inherit; }
 /* ════════════════════ LOGIN ════════════════════ */
 #login-page {
   min-height: 100vh;
+  display: flex;
+}
+.l-left {
+  flex: 3;
+  background: linear-gradient(135deg, #1a1d2e 0%, #2d2060 60%, #1a1d2e 100%);
+  display: flex; flex-direction: column;
+  padding: 2.5rem 3rem;
+  position: relative; overflow: hidden;
+}
+.l-left::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(79,110,247,0.18) 0%, transparent 65%),
+              radial-gradient(ellipse at 80% 20%, rgba(168,85,247,0.12) 0%, transparent 50%);
+}
+.l-logo {
+  display: flex; align-items: center; gap: 0.75rem;
+  position: relative; z-index: 1;
+}
+.l-logo-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--sb-accent);
   display: flex; align-items: center; justify-content: center;
-  background: var(--sb-bg);
-  padding: 1rem;
+  font-size: 1.1rem;
+}
+.l-logo-name { font-size: 1.05rem; font-weight: 800; color: #fff; }
+.l-hero {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  position: relative; z-index: 1;
+  padding: 2rem 0;
+}
+.l-headline {
+  font-size: 2.4rem; font-weight: 900; color: #fff;
+  line-height: 1.15; letter-spacing: -1px;
+  margin-bottom: 1.25rem;
+  max-width: 420px;
+}
+.l-features { display: flex; flex-direction: column; gap: 0.85rem; }
+.l-feature {
+  display: flex; align-items: center; gap: 0.85rem;
+  color: rgba(255,255,255,0.75); font-size: 0.9rem;
+}
+.l-feature-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; flex-shrink: 0;
+}
+.l-foot {
+  position: relative; z-index: 1;
+  font-size: 0.73rem; color: rgba(255,255,255,0.3);
+}
+.l-right {
+  flex: 2;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2.5rem 2rem;
+  min-width: 320px;
 }
 .lcard {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 16px;
-  padding: 2.5rem 2.25rem;
   width: 100%; max-width: 360px;
-  display: flex; flex-direction: column; gap: 1.5rem;
+  display: flex; flex-direction: column; gap: 1.4rem;
 }
-.lbrand { display: flex; align-items: center; gap: 0.9rem; }
-.lbrand-icon {
-  width: 44px; height: 44px;
-  background: var(--sb-accent);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.4rem;
-}
-.lbrand-name { font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
-.lbrand-sub { font-size: 0.72rem; color: var(--sb-text); margin-top: 2px; }
+.lcard-title { font-size: 1.4rem; font-weight: 800; color: var(--text); letter-spacing: -0.4px; }
+.lcard-sub { font-size: 0.83rem; color: var(--muted); margin-top: 3px; }
 .lfields { display: flex; flex-direction: column; gap: 0.85rem; }
 .lfield { display: flex; flex-direction: column; gap: 0.3rem; }
-.lfield label { font-size: 0.73rem; font-weight: 600; color: var(--sb-text); text-transform: uppercase; letter-spacing: 0.5px; }
+.lfield label { font-size: 0.73rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .lfield input {
-  padding: 0.65rem 0.9rem; border-radius: 9px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: #fff; font-size: 0.9rem; outline: none;
-  transition: border-color 0.15s;
+  padding: 0.7rem 0.95rem; border-radius: 9px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+  color: var(--text); font-size: 0.9rem; outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
 }
-.lfield input::placeholder { color: var(--sb-text); }
-.lfield input:focus { border-color: var(--sb-accent); }
+.lfield input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+  background: #fff;
+}
 .lbtn {
-  padding: 0.75rem; border-radius: 9px; border: none;
-  background: var(--sb-accent); color: #fff;
+  padding: 0.8rem; border-radius: 9px; border: none;
+  background: var(--blue); color: #fff;
   font-size: 0.95rem; font-weight: 700; cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s; font-family: inherit;
+  letter-spacing: 0.2px;
 }
 .lbtn:hover { opacity: 0.88; }
 .lerr {
-  font-size: 0.82rem; color: #fca5a5;
-  background: rgba(239,68,68,0.1);
+  font-size: 0.82rem; color: #b91c1c;
+  background: rgba(239,68,68,0.07);
   border: 1px solid rgba(239,68,68,0.2);
   border-radius: 8px; padding: 0.5rem 0.85rem;
   display: none;
+}
+@media (max-width: 700px) {
+  #login-page { flex-direction: column; }
+  .l-left { flex: none; padding: 2rem 1.5rem; min-height: 220px; }
+  .l-headline { font-size: 1.6rem; }
+  .l-right { flex: 1; }
 }
 
 /* ════════════════════ APP SHELL ════════════════════ */
@@ -449,26 +503,56 @@ select.inp { cursor: pointer; }
 
 <!-- ═══ LOGIN ═══ -->
 <div id="login-page">
-  <div class="lcard">
-    <div class="lbrand">
-      <div class="lbrand-icon">🔒</div>
+  <!-- Left panel -->
+  <div class="l-left">
+    <div class="l-logo">
+      <div class="l-logo-icon">🔒</div>
+      <div class="l-logo-name">Nutikodu</div>
+    </div>
+    <div class="l-hero">
+      <div class="l-headline">Halda oma kodu turvaliselt.</div>
+      <div class="l-features">
+        <div class="l-feature">
+          <div class="l-feature-icon">📹</div>
+          IP-kaamera live vaade ja snapshot
+        </div>
+        <div class="l-feature">
+          <div class="l-feature-icon">🏃</div>
+          Liikumistuvastus ja automaatne salvestamine
+        </div>
+        <div class="l-feature">
+          <div class="l-feature-icon">💡</div>
+          Nutiseadmete juhtimine (Shelly, Tasmota)
+        </div>
+        <div class="l-feature">
+          <div class="l-feature-icon">🔐</div>
+          Turvaline kaugjuurdepääs Tailscale'iga
+        </div>
+      </div>
+    </div>
+    <div class="l-foot">© 2026 Nutikodu · Turvakaamera süsteem</div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="l-right">
+    <div class="lcard">
       <div>
-        <div class="lbrand-name">Nutikodu</div>
-        <div class="lbrand-sub">Turvakaamera süsteem</div>
+        <div class="lcard-title">Sisselogimine</div>
+        <div class="lcard-sub">Sisesta oma andmed jätkamiseks</div>
       </div>
+      <div class="lfields">
+        <div class="lfield">
+          <label>Kasutajanimi</label>
+          <input type="text" id="lu" autocomplete="username" placeholder="admin">
+        </div>
+        <div class="lfield">
+          <label>Parool</label>
+          <input type="password" id="lp" autocomplete="current-password" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="lerr" id="lerr"></div>
+      <button class="lbtn" onclick="doLogin()">Sisene →</button>
     </div>
-    <div class="lfields">
-      <div class="lfield">
-        <label>Kasutajanimi</label>
-        <input type="text" id="lu" autocomplete="username" placeholder="admin">
-      </div>
-      <div class="lfield">
-        <label>Parool</label>
-        <input type="password" id="lp" autocomplete="current-password" placeholder="••••••••">
-      </div>
-    </div>
-    <div class="lerr" id="lerr"></div>
-    <button class="lbtn" onclick="doLogin()">Sisene →</button>
   </div>
 </div>
 
