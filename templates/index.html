@@ -136,9 +136,8 @@ button { font-family: inherit; }
 }
 @media (max-width: 700px) {
   #login-page { flex-direction: column; }
-  .l-left { flex: none; padding: 2rem 1.5rem; min-height: 220px; }
-  .l-headline { font-size: 1.6rem; }
-  .l-right { flex: 1; }
+  .l-left { display: none; }
+  .l-right { flex: 1; min-height: 100vh; justify-content: center; }
 }
 
 /* ════════════════════ APP SHELL ════════════════════ */
@@ -488,15 +487,27 @@ select.inp { cursor: pointer; }
   .sb { display: none; }
   .topbar { display: none; }
   .topbar-mob { display: flex; }
-  .main { margin-left: 0; padding-top: var(--topbar-h); padding-bottom: 70px; }
-  .page { padding: 1rem; }
+  .main { margin-left: 0; padding-top: var(--topbar-h); padding-bottom: 75px; }
+  .page { padding: 0.85rem; }
   .mob-nav { display: block; }
   .two-col { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .cam-wrap { border-radius: 10px; }
+  .cam-bar { gap: 0.5rem; }
+  .cam-bar .btn { padding: 0.6rem 1rem; font-size: 0.9rem; min-height: 44px; }
+  .btn-outline, .btn-primary { min-height: 44px; }
+  .rec-card { padding: 0.9rem 1rem; }
+  .dev-card { padding: 0.9rem 1rem; }
+  .setup-card { padding: 1rem; }
+  .page-title { font-size: 1.15rem; }
+  .stats-row .stat-card { padding: 0.85rem; }
+  .stat-val { font-size: 1.5rem; }
+  .rec-actions a, .rec-actions button { min-height: 40px; font-size: 0.82rem; }
 }
 @media (max-width: 440px) {
   .rec-grid, .dev-grid { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: 1fr 1fr; }
+  .page { padding: 0.7rem; }
 }
 </style>
 </head>
