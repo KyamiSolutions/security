@@ -39,7 +39,7 @@ class Camera:
     def _open(self):
         if self.is_rtsp:
             # threads;1 väldib libavcodec pthread_frame assertion crash'i
-            os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|threads;1"
+            os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|threads;1|fflags;nobuffer|flags;low_delay|max_delay;0|reorder_queue_size;0"
             self.cap = cv2.VideoCapture()
             self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 8000)
             self.cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 8000)
