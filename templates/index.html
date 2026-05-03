@@ -35,6 +35,39 @@ html, body { height: 100%; background: var(--main-bg); color: var(--text); font-
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; }
 
+
+/* ── NUTIKODU ── */
+.nk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 1rem; margin-top: 0.5rem; }
+.nk-card {
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 1.4rem 1.2rem 1.2rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.8rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  transition: box-shadow 0.2s;
+  border: 2px solid transparent;
+}
+.nk-card.on { border-color: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+.nk-icon { font-size: 2.4rem; line-height: 1; transition: filter 0.2s; }
+.nk-card:not(.on) .nk-icon { filter: grayscale(1) opacity(0.4); }
+.nk-name { font-size: 0.88rem; font-weight: 600; color: var(--text); text-align: center; }
+.nk-status { font-size: 0.75rem; color: var(--muted); }
+.nk-card.on .nk-status { color: var(--green); font-weight: 600; }
+.nk-toggle {
+  width: 60px; height: 32px; border-radius: 16px;
+  background: #d1d5db; border: none; cursor: pointer;
+  position: relative; transition: background 0.2s;
+}
+.nk-toggle::after {
+  content: ''; position: absolute; top: 4px; left: 4px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #fff; transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.nk-toggle.on { background: var(--green); }
+.nk-toggle.on::after { transform: translateX(28px); }
+@media (max-width: 700px) { .nk-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); } }
+
 /* ════════════════════ LOGIN ════════════════════ */
 #login-page {
   min-height: 100vh;
@@ -650,8 +683,11 @@ select.inp { cursor: pointer; }
       </div>
 
       <div class="sb-section">Nutikodu</div>
+      <div class="nav-btn" id="snav-nutikodu" onclick="go('nutikodu')">
+        <span class="nav-icon">🏠</span> Nutikodu
+      </div>
       <div class="nav-btn" id="snav-devices" onclick="go('devices')">
-        <span class="nav-icon">💡</span> Seadmed
+        <span class="nav-icon">⚙️</span> Seadmed
       </div>
 
       <div class="sb-section">Haldus</div>
@@ -847,6 +883,7 @@ select.inp { cursor: pointer; }
           <select class="inp" id="dk">
             <option value="shelly">Shelly</option>
             <option value="tasmota">Tasmota</option>
+            <option value="sonoff">Sonoff DIY</option>
             <option value="http">HTTP</option>
           </select>
         </div>
@@ -862,6 +899,19 @@ select.inp { cursor: pointer; }
         </div>
         <button class="btn btn-primary" onclick="addDevice()">+ Lisa seade</button>
       </div>
+    </div>
+
+
+    <!-- ── NUTIKODU ── -->
+    <div class="page" id="page-nutikodu">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Nutikodu</div>
+          <div class="page-sub" id="nk-sub">Lülitid ja tuled</div>
+        </div>
+        <button class="btn btn-outline" onclick="loadNutikodu()" style="font-size:0.82rem">⟳ Uuenda</button>
+      </div>
+      <div id="nk-grid" class="nk-grid"></div>
     </div>
 
     <!-- ── USERS ── -->
@@ -917,8 +967,11 @@ select.inp { cursor: pointer; }
         <span class="mi">🎬</span><span>Klipid</span>
         <span class="mob-badge" id="mbadge"></span>
       </div>
+      <div class="mob-btn" id="mnav-nutikodu" onclick="go('nutikodu')">
+        <span class="mi">🏠</span><span>Nutikodu</span>
+      </div>
       <div class="mob-btn" id="mnav-devices" onclick="go('devices')">
-        <span class="mi">💡</span><span>Seadmed</span>
+        <span class="mi">⚙️</span><span>Seadmed</span>
       </div>
       <div class="mob-btn" id="mnav-users" onclick="go('users')">
         <span class="mi">👤</span><span>Kasutajad</span>
@@ -951,6 +1004,7 @@ const PAGE_TITLES = {
   dashboard: 'Töölaud',
   camera: 'Kaamera',
   recordings: 'Salvestused',
+  nutikodu: 'Nutikodu',
   devices: 'Seadmed',
   users: 'Kasutajad',
 };
@@ -1093,6 +1147,7 @@ function go(name) {
   document.getElementById('topbar-title').textContent = PAGE_TITLES[name] || name;
   if (name === 'recordings') loadRecordings();
   if (name === 'devices') loadDevices();
+  if (name === 'nutikodu') loadNutikodu();
   if (name === 'users') loadUsers();
   if (name === 'dashboard') refreshDashboard();
 }
@@ -1238,6 +1293,48 @@ async function delDev(id) {
   if (!confirm('Eemaldan seadme?')) return;
   await fetch('/devices/' + id, { method: 'DELETE' });
   loadDevices();
+}
+
+
+// ── Nutikodu ──────────────────────────────────────────────────────────────────
+
+const NK_ICONS = { shelly: '💡', tasmota: '💡', sonoff: '💡', http: '🔌' };
+
+async function loadNutikodu() {
+  const res = await fetch('/devices');
+  if (!res.ok) return;
+  const devices = await res.json();
+  const grid = document.getElementById('nk-grid');
+  const sub = document.getElementById('nk-sub');
+  const onCount = devices.filter(d => d.state).length;
+  sub.textContent = `${devices.length} seadet · ${onCount} sees`;
+  if (!devices.length) {
+    grid.innerHTML = '<div class="empty">Nutikodu seadmeid pole lisatud.<br><small>Lisa seadmed "Seadmed" lehel.</small></div>';
+    return;
+  }
+  grid.innerHTML = devices.map(d => {
+    const icon = NK_ICONS[d.kind] || '🔌';
+    const on = d.state;
+    return `<div class="nk-card${on ? ' on' : ''}" id="nkcard-${d.id}">
+      <div class="nk-icon">${icon}</div>
+      <div class="nk-name">${d.name}</div>
+      <div class="nk-status">${on ? 'Sees' : 'Väljas'}</div>
+      <button class="nk-toggle${on ? ' on' : ''}" onclick="nkToggle('${d.id}', this)" title="Lülita"></button>
+    </div>`;
+  }).join('');
+}
+
+async function nkToggle(id, btn) {
+  const res = await fetch('/devices/' + id + '/toggle', { method: 'POST' });
+  if (!res.ok) return;
+  const d = await res.json();
+  const card = document.getElementById('nkcard-' + id);
+  if (!card) return;
+  btn.classList.toggle('on', !!d.state);
+  card.classList.toggle('on', !!d.state);
+  card.querySelector('.nk-status').textContent = d.state ? 'Sees' : 'Väljas';
+  // update subtitle
+  loadNutikodu();
 }
 
 // ── Users ─────────────────────────────────────────────────────────────────────
