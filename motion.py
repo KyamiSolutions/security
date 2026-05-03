@@ -5,6 +5,8 @@ from datetime import datetime
 
 import cv2
 import numpy as np
+import urllib.request
+import json
 
 RECORDINGS_DIR = "recordings"
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
@@ -86,12 +88,34 @@ class MotionDetector:
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         self._writer = cv2.VideoWriter(path, fourcc, self.fps, (w, h))
         self._recording_until = time.monotonic() + RECORD_SECONDS
+        threading.Thread(target=_send_discord, args=(now,), daemon=True).start()
 
     def _stop_recording(self):
         if self._writer:
             self._writer.release()
             self._writer = None
         self._recording_until = time.monotonic() + COOLDOWN_SECONDS
+
+
+def _send_discord(ts: datetime):
+    url = os.environ.get("DISCORD_WEBHOOK_URL", "")
+    if not url:
+        return
+    payload = json.dumps({
+        "username": "Nutikodu",
+        "embeds": [{
+            "title": "🚨 Liikumine tuvastatud!",
+            "description": f"Kaamera tuvastas liikumise kell **{ts.strftime('%H:%M:%S')}**",
+            "color": 0xe74c3c,
+            "footer": {"text": ts.strftime("%d.%m.%Y")}
+        }]
+    }).encode()
+    try:
+        req = urllib.request.Request(url, data=payload,
+                                     headers={"Content-Type": "application/json"})
+        urllib.request.urlopen(req, timeout=5)
+    except Exception:
+        pass
 
 
 def list_recordings() -> list[dict]:
