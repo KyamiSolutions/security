@@ -31,7 +31,7 @@
   --topbar-h: 56px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; background: var(--main-bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; }
+html, body { height: 100%; background: var(--main-bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; overflow-x: hidden; max-width: 100vw; }
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; }
 
@@ -488,22 +488,24 @@ select.inp { cursor: pointer; }
   .sb { display: none; }
   .topbar { display: none; }
   .topbar-mob { display: flex; }
-  .main { margin-left: 0; padding-top: var(--topbar-h); padding-bottom: 75px; }
-  .page { padding: 0.85rem; }
+  .main { margin-left: 0; padding-top: var(--topbar-h); padding-bottom: 75px; overflow-x: hidden; }
+  .page { padding: 0.85rem; overflow-x: hidden; }
   .mob-nav { display: block; }
   .two-col { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
-  .cam-wrap { border-radius: 10px; }
-  .cam-bar { gap: 0.5rem; }
+  .cam-wrap { border-radius: 10px; max-width: 100%; }
+  .cam-bar { gap: 0.5rem; flex-wrap: wrap; }
   .cam-bar .btn { padding: 0.6rem 1rem; font-size: 0.9rem; min-height: 44px; }
   .btn-outline, .btn-primary { min-height: 44px; }
   .rec-card { padding: 0.9rem 1rem; }
   .dev-card { padding: 0.9rem 1rem; }
-  .setup-card { padding: 1rem; }
+  .setup-card { padding: 1rem; max-width: 100%; }
   .page-title { font-size: 1.15rem; }
   .stats-row .stat-card { padding: 0.85rem; }
   .stat-val { font-size: 1.5rem; }
   .rec-actions a, .rec-actions button { min-height: 40px; font-size: 0.82rem; }
+  .panel { max-width: 100% !important; }
+  .frow { flex-wrap: wrap; }
 }
 @media (max-width: 440px) {
   .rec-grid, .dev-grid { grid-template-columns: 1fr; }
