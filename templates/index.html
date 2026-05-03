@@ -498,77 +498,56 @@ select.inp { cursor: pointer; }
 }
 
 @media (max-width: 768px) {
-  /* ── Shell ── */
-  .sb { display: none; }
-  .topbar { display: none; }
+  .sb { display: none !important; }
+  .topbar { display: none !important; }
   .topbar-mob { display: flex; }
   .mob-nav { display: block; }
 
-  #app {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    overflow: hidden;
-  }
   .main {
-    margin-left: 0;
-    padding-top: 0;
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    margin-top: var(--topbar-h);
-    margin-bottom: calc(58px + env(safe-area-inset-bottom));
+    margin-left: 0 !important;
+    padding-top: var(--topbar-h);
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+    min-height: 100svh;
+    width: 100vw;
+    overflow-x: hidden;
   }
   .page {
-    display: none;
-    flex: 1;
     padding: 0.85rem;
-    overflow-y: auto;
+    width: 100%;
+    box-sizing: border-box;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
   }
-  .page.on { display: flex; flex-direction: column; }
 
-  /* ── Dashboard ── */
-  .stats-row {
-    grid-template-columns: 1fr 1fr;
-    gap: 0.6rem;
-    margin-bottom: 0.75rem;
-  }
-  .stat-card { padding: 0.7rem 0.85rem; gap: 0.6rem; }
-  .stat-icon { width: 32px; height: 32px; font-size: 0.9rem; }
-  .stat-num { font-size: 1.3rem; }
-  .stat-label { font-size: 0.68rem; }
-  .two-col { grid-template-columns: 1fr; gap: 0.6rem; }
-  .panel { max-width: 100% !important; }
-  .page-header { margin-bottom: 0.75rem; }
+  .page-header { margin-bottom: 0.85rem; }
   .page-title { font-size: 1.05rem; }
   .page-sub { font-size: 0.75rem; }
   .page-date { display: none; }
 
-  /* ── Camera ── */
-  #page-camera { padding: 0.6rem; }
-  .cam-wrap { border-radius: 10px; max-width: 100%; }
-  .cam-wrap img, .cam-wrap video { min-height: 200px; width: 100%; }
-  .cam-bar { gap: 0.5rem; margin-top: 0.6rem; }
-  .cam-bar .btn { flex: 1; justify-content: center; padding: 0.65rem 0.5rem; font-size: 0.82rem; min-height: 44px; }
-  #setup-view { padding: 0.75rem; }
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.85rem; }
+  .stat-card { padding: 0.7rem 0.8rem; gap: 0.55rem; }
+  .stat-icon { width: 32px; height: 32px; font-size: 0.88rem; }
+  .stat-num { font-size: 1.25rem; }
+  .stat-label { font-size: 0.67rem; }
 
-  /* ── Buttons ── */
+  .two-col { grid-template-columns: 1fr; gap: 0.65rem; }
+  .panel { max-width: 100% !important; }
+
+  .cam-wrap { max-width: 100%; border-radius: 8px; }
+  .cam-wrap img, .cam-wrap video { min-height: 190px; width: 100%; }
+  .cam-bar { gap: 0.5rem; margin-top: 0.6rem; }
+  .cam-bar .btn { flex: 1; justify-content: center; min-height: 44px; font-size: 0.82rem; }
+
   .btn { min-height: 44px; }
   .inp { font-size: 16px; min-height: 44px; }
 
-  /* ── Recordings ── */
   .rec-grid { grid-template-columns: 1fr; gap: 0.55rem; }
   .rec-card { padding: 0.8rem 0.9rem; }
   .rec-actions { gap: 0.4rem; }
   .rec-actions a, .rec-actions button { flex: 1; justify-content: center; min-height: 42px; font-size: 0.8rem; }
 
-  /* ── Devices ── */
-  .dev-grid { grid-template-columns: 1fr; gap: 0.55rem; margin-bottom: 0.75rem; }
+  .dev-grid { grid-template-columns: 1fr; gap: 0.55rem; margin-bottom: 0.85rem; }
   .dev-card { padding: 0.85rem 1rem; }
-  .setup-card { max-width: 100%; padding: 0.9rem; }
+  .setup-card { max-width: 100% !important; padding: 0.9rem; }
   .frow { flex-wrap: wrap; gap: 0.5rem; }
   .frow .fgrp { flex: 1 1 calc(50% - 0.25rem); min-width: 110px; }
 }
