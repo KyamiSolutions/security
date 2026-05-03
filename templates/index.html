@@ -463,96 +463,114 @@ select.inp { cursor: pointer; }
 /* ── Mobile bottom nav ── */
 .mob-nav {
   display: none; position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--topbar-bg); border-top: 1px solid var(--border);
-  z-index: 200; padding-bottom: env(safe-area-inset-bottom);
+  background: #fff; border-top: 1px solid var(--border);
+  z-index: 200;
+  padding-bottom: env(safe-area-inset-bottom);
 }
-.mob-nav-inner { display: flex; }
+.mob-nav-inner {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+.mob-nav-inner::-webkit-scrollbar { display: none; }
 .mob-btn {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  padding: 0.55rem 0.2rem; cursor: pointer; color: var(--muted);
-  font-size: 0.58rem; gap: 0.15rem; transition: color 0.12s;
-  position: relative; user-select: none; min-width: 0;
+  flex: 0 0 20%; min-width: 64px;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0.5rem 0.25rem 0.4rem; cursor: pointer; color: var(--muted);
+  font-size: 0.6rem; gap: 0.18rem;
+  position: relative; user-select: none;
+  scroll-snap-align: start;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.mob-btn span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.mob-btn .mi { font-size: 1.2rem; }
+.mob-btn .mi { font-size: 1.35rem; line-height: 1; }
+.mob-btn span:last-child { white-space: nowrap; font-weight: 500; }
 .mob-btn.on { color: var(--blue); }
+.mob-btn.on .mi { transform: scale(1.1); }
 .mob-badge {
-  position: absolute; top: 5px; right: calc(50% - 16px);
-  background: var(--blue); color: #fff;
-  font-size: 0.58rem; font-weight: 800;
-  min-width: 15px; padding: 0 3px; text-align: center;
+  position: absolute; top: 4px; right: calc(50% - 20px);
+  background: var(--red); color: #fff;
+  font-size: 0.55rem; font-weight: 800;
+  min-width: 14px; padding: 1px 3px; text-align: center;
   border-radius: 99px; display: none;
 }
 
 @media (max-width: 768px) {
-  /* Shell */
+  /* ── Shell ── */
   .sb { display: none; }
   .topbar { display: none; }
   .topbar-mob { display: flex; }
   .mob-nav { display: block; }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
   .main {
     margin-left: 0;
-    padding-top: var(--topbar-h);
-    padding-bottom: calc(65px + env(safe-area-inset-bottom));
-    min-height: 100vh;
-    width: 100%;
-    overflow-x: hidden;
+    padding-top: 0;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin-top: var(--topbar-h);
+    margin-bottom: calc(58px + env(safe-area-inset-bottom));
   }
   .page {
-    padding: 0.9rem;
-    width: 100%;
-    box-sizing: border-box;
+    display: none;
+    flex: 1;
+    padding: 0.85rem;
+    overflow-y: auto;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
+  .page.on { display: flex; flex-direction: column; }
 
-  /* Typography */
-  .page-title { font-size: 1.1rem; }
-  .page-sub { font-size: 0.78rem; }
-  .page-header { margin-bottom: 1rem; }
-
-  /* Stats */
+  /* ── Dashboard ── */
   .stats-row {
     grid-template-columns: 1fr 1fr;
     gap: 0.6rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
   }
-  .stat-card { padding: 0.75rem; gap: 0.6rem; }
-  .stat-icon { width: 34px; height: 34px; font-size: 0.95rem; }
-  .stat-num { font-size: 1.4rem; }
-  .stat-label { font-size: 0.7rem; }
-
-  /* Dashboard panels */
-  .two-col { grid-template-columns: 1fr; gap: 0.75rem; }
+  .stat-card { padding: 0.7rem 0.85rem; gap: 0.6rem; }
+  .stat-icon { width: 32px; height: 32px; font-size: 0.9rem; }
+  .stat-num { font-size: 1.3rem; }
+  .stat-label { font-size: 0.68rem; }
+  .two-col { grid-template-columns: 1fr; gap: 0.6rem; }
   .panel { max-width: 100% !important; }
+  .page-header { margin-bottom: 0.75rem; }
+  .page-title { font-size: 1.05rem; }
+  .page-sub { font-size: 0.75rem; }
+  .page-date { display: none; }
 
-  /* Camera */
-  .cam-wrap { border-radius: 8px; max-width: 100%; }
-  .cam-wrap img, .cam-wrap video { min-height: 200px; }
-  .cam-bar { gap: 0.5rem; margin-top: 0.75rem; }
-  .cam-bar .btn { flex: 1; justify-content: center; min-height: 44px; font-size: 0.85rem; }
+  /* ── Camera ── */
+  #page-camera { padding: 0.6rem; }
+  .cam-wrap { border-radius: 10px; max-width: 100%; }
+  .cam-wrap img, .cam-wrap video { min-height: 200px; width: 100%; }
+  .cam-bar { gap: 0.5rem; margin-top: 0.6rem; }
+  .cam-bar .btn { flex: 1; justify-content: center; padding: 0.65rem 0.5rem; font-size: 0.82rem; min-height: 44px; }
+  #setup-view { padding: 0.75rem; }
 
-  /* Buttons */
-  .btn { min-height: 44px; padding: 0.6rem 1rem; }
-  .btn-outline, .btn-primary { min-height: 44px; }
+  /* ── Buttons ── */
+  .btn { min-height: 44px; }
+  .inp { font-size: 16px; min-height: 44px; }
 
-  /* Recordings */
-  .rec-grid { grid-template-columns: 1fr; gap: 0.6rem; }
-  .rec-card { padding: 0.85rem 1rem; }
-  .rec-actions { gap: 0.5rem; }
-  .rec-actions a, .rec-actions button { flex: 1; justify-content: center; min-height: 42px; font-size: 0.82rem; }
+  /* ── Recordings ── */
+  .rec-grid { grid-template-columns: 1fr; gap: 0.55rem; }
+  .rec-card { padding: 0.8rem 0.9rem; }
+  .rec-actions { gap: 0.4rem; }
+  .rec-actions a, .rec-actions button { flex: 1; justify-content: center; min-height: 42px; font-size: 0.8rem; }
 
-  /* Devices */
-  .dev-grid { grid-template-columns: 1fr; gap: 0.6rem; margin-bottom: 1rem; }
-  .dev-card { padding: 0.9rem 1rem; }
-
-  /* Forms */
-  .setup-card { max-width: 100%; padding: 1rem; }
-  .frow { flex-wrap: wrap; gap: 0.6rem; }
-  .frow .fgrp { flex: 1 1 calc(50% - 0.3rem); min-width: 120px; }
-  .inp { font-size: 16px; min-height: 44px; } /* 16px prevents iOS zoom */
-
-  /* Users table */
-  .users-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* ── Devices ── */
+  .dev-grid { grid-template-columns: 1fr; gap: 0.55rem; margin-bottom: 0.75rem; }
+  .dev-card { padding: 0.85rem 1rem; }
+  .setup-card { max-width: 100%; padding: 0.9rem; }
+  .frow { flex-wrap: wrap; gap: 0.5rem; }
+  .frow .fgrp { flex: 1 1 calc(50% - 0.25rem); min-width: 110px; }
 }
 </style>
 </head>
