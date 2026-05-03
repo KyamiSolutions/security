@@ -1325,16 +1325,38 @@ async function loadNutikodu() {
 }
 
 async function nkToggle(id, btn) {
-  const res = await fetch('/devices/' + id + '/toggle', { method: 'POST' });
-  if (!res.ok) return;
-  const d = await res.json();
-  const card = document.getElementById('nkcard-' + id);
-  if (!card) return;
-  btn.classList.toggle('on', !!d.state);
-  card.classList.toggle('on', !!d.state);
-  card.querySelector('.nk-status').textContent = d.state ? 'Sees' : 'Väljas';
-  // update subtitle
-  loadNutikodu();
+  btn.disabled = true;
+  try {
+    const res = await fetch('/devices/' + id + '/toggle', { method: 'POST' });
+    const d = await res.json();
+    if (d.error) {
+      showNkError(d.error);
+      return;
+    }
+    const card = document.getElementById('nkcard-' + id);
+    if (!card) return;
+    btn.classList.toggle('on', !!d.state);
+    card.classList.toggle('on', !!d.state);
+    card.querySelector('.nk-status').textContent = d.state ? 'Sees' : 'Väljas';
+    loadNutikodu();
+  } catch (e) {
+    showNkError(e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function showNkError(msg) {
+  let el = document.getElementById('nk-error');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'nk-error';
+    el.style.cssText = 'background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:0.6rem 1rem;margin:0.5rem 0;font-size:0.9rem;';
+    document.getElementById('nk-grid').before(el);
+  }
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 8000);
 }
 
 // ── Users ─────────────────────────────────────────────────────────────────────

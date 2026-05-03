@@ -64,7 +64,7 @@ async def toggle_device(device_id: str) -> dict:
                 cmd = "on" if new_state else "off"
                 await client.post(
                     f"{base}/zeroconf/switch",
-                    json={"data": {"switch": cmd}},
+                    json={"deviceid": "", "data": {"switch": cmd}},
                     headers={"Content-Type": "application/json"},
                 )
             elif device["kind"] == "http":
