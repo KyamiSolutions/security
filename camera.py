@@ -29,7 +29,12 @@ class Camera:
         self.is_rtsp = isinstance(source, str) and source.startswith("rtsp://")
         self.cap = None
         self.lock = threading.Lock()
+        self._latest: bytes | None = None
+        self._latest_lock = threading.Lock()
+        self._running = True
         self._open()
+        self._reader = threading.Thread(target=self._reader_loop, daemon=True)
+        self._reader.start()
 
     def _open(self):
         if self.is_rtsp:
@@ -45,24 +50,33 @@ class Camera:
             label = self.source if self.is_rtsp else f"/dev/video{self.source}"
             raise RuntimeError(f"Kaamerat ei leitud: {label}")
 
+    def _reader_loop(self):
+        # Loeb pidevalt kaadreid et tühjendada OpenCV buffer — tagastab alati viimase kaadri
+        while self._running:
+            with self.lock:
+                ok, frame = self.cap.read()
+            if not ok:
+                if self.is_rtsp:
+                    try:
+                        with self.lock:
+                            self.cap.release()
+                            self._open()
+                    except RuntimeError:
+                        time.sleep(1)
+                continue
+            _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+            with self._latest_lock:
+                self._latest = buf.tobytes()
+
     def read_frame(self) -> bytes | None:
-        with self.lock:
-            ok, frame = self.cap.read()
-        if not ok:
-            if self.is_rtsp:
-                try:
-                    self.cap.release()
-                    self._open()
-                except RuntimeError:
-                    pass
-            return None
-        _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
-        return buf.tobytes()
+        with self._latest_lock:
+            return self._latest
 
     def snapshot(self) -> bytes | None:
         return self.read_frame()
 
     def release(self):
+        self._running = False
         if self.cap:
             self.cap.release()
 
