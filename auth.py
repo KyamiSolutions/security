@@ -10,6 +10,7 @@ from fastapi import HTTPException, Request
 
 _sessions: dict[str, str] = {}       # token -> username
 _pending_2fa: dict[str, str] = {}    # temp_token -> username
+_pending_totp: dict[str, str] = {}   # username -> secret (enne kinnitamist)
 
 
 def _db():
@@ -206,16 +207,26 @@ def enable_2fa(username: str) -> dict:
     secret = pyotp.random_base32()
     totp = pyotp.TOTP(secret)
     uri = totp.provisioning_uri(name=username, issuer_name="Nutikodu")
-    # QR kood SVG-na
     img = qrcode.make(uri)
     buf = BytesIO()
     img.save(buf, format="PNG")
     qr_b64 = base64.b64encode(buf.getvalue()).decode()
+    _pending_totp[username] = secret  # salvesta ajutiselt, mitte DB-sse
+    return {"secret": secret, "uri": uri, "qr_png": qr_b64}
+
+
+def confirm_2fa(username: str, code: str) -> bool:
+    secret = _pending_totp.get(username)
+    if not secret:
+        return False
+    if not pyotp.TOTP(secret).verify(code, valid_window=1):
+        return False
     db = _db()
     cur = db.cursor()
     cur.execute("UPDATE users SET totp_secret=%s WHERE username=%s", (secret, username))
     cur.close(); db.close()
-    return {"secret": secret, "uri": uri, "qr_png": qr_b64}
+    _pending_totp.pop(username, None)
+    return True
 
 
 def disable_2fa(username: str):
