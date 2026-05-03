@@ -503,7 +503,7 @@ select.inp { cursor: pointer; }
 <body>
 
 <!-- ═══ LOGIN ═══ -->
-<div id="login-page">
+<div id="login-page" style="display:none">
   <!-- Left panel -->
   <div class="l-left">
     <div class="l-logo">
@@ -984,11 +984,10 @@ document.getElementById('lu').addEventListener('keydown', e => { if (e.key === '
 
 // ── App ──────────────────────────────────────────────────────────────────────
 
-function showApp() {
+function showApp(page) {
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('app').style.display = 'block';
 
-  // Date for dashboard
   const d = new Date();
   document.getElementById('dash-date').textContent =
     d.toLocaleDateString('et-EE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -1004,13 +1003,14 @@ function showApp() {
   });
   loadRecordings();
   loadDevices();
-  go('dashboard');
+  go(page || 'dashboard');
 }
 
 // ── Navigation ───────────────────────────────────────────────────────────────
 
 function go(name) {
   currentPage = name;
+  localStorage.setItem('lastPage', name);
   document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
   document.querySelectorAll('.nav-btn').forEach(n => n.classList.remove('on'));
   document.querySelectorAll('.mob-btn').forEach(n => n.classList.remove('on'));
@@ -1330,15 +1330,18 @@ function _fallbackMJPEG() {
 
 // ── Session restore ───────────────────────────────────────────────────────────
 (async () => {
-  const res = await fetch('/recordings');
+  const res = await fetch('/users/me');
   if (res.ok) {
+    const me = await res.json();
     camKey = localStorage.getItem('camKey') || '';
-    const stored = localStorage.getItem('username') || 'admin';
-    document.getElementById('sb-username').textContent = stored;
-    document.getElementById('topbar-username').textContent = stored;
-    document.getElementById('topbar-initial').textContent = stored[0].toUpperCase();
-    showApp();
+    document.getElementById('sb-username').textContent = me.username;
+    document.getElementById('topbar-username').textContent = me.username;
+    document.getElementById('topbar-initial').textContent = me.username[0].toUpperCase();
+    const lastPage = localStorage.getItem('lastPage') || 'dashboard';
+    showApp(lastPage);
     initCamera();
+  } else {
+    document.getElementById('login-page').style.display = 'flex';
   }
 })();
 </script>
