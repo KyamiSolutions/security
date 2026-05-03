@@ -1276,14 +1276,11 @@ async function initCamera() {
   document.getElementById('setup-view').style.display = 'none';
   document.getElementById('live-view').style.display = 'block';
 
-  // Proovi HLS esimesena (GPU-kiirendatud)
+  // Alusta kohe MJPEG-ga, uuenda HLS-ile kui valmis
+  _fallbackMJPEG();
   const status = await fetch('/hls-status').then(r => r.json()).catch(() => ({ready: false}));
-  if (status.ready) {
-    _startHLS();
-  } else {
-    // HLS pole veel valmis — oota ja proovi uuesti
-    _waitForHLS();
-  }
+  if (status.ready) _startHLS();
+  else _waitForHLS();
 }
 
 function _startHLS() {
