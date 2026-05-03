@@ -30,6 +30,7 @@ class Camera:
         self.cap = None
         self.lock = threading.Lock()
         self._latest: bytes | None = None
+        self._latest_id: int = 0
         self._latest_lock = threading.Lock()
         self._running = True
         self._open()
@@ -67,10 +68,16 @@ class Camera:
             _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
             with self._latest_lock:
                 self._latest = buf.tobytes()
+                self._latest_id += 1
 
     def read_frame(self) -> bytes | None:
         with self._latest_lock:
             return self._latest
+
+    def read_new_frame(self, last_id: int) -> tuple[bytes | None, int]:
+        """Tagastab (kaader, uus_id) ainult kui on uus kaader võrreldes last_id-ga."""
+        with self._latest_lock:
+            return self._latest, self._latest_id
 
     def snapshot(self) -> bytes | None:
         return self.read_frame()

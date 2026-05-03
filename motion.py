@@ -38,10 +38,12 @@ class MotionDetector:
 
     def _loop(self):
         interval = 1.0 / self.fps
+        last_id = 0
         while self._running:
             start = time.monotonic()
-            frame_bytes = self.camera.read_frame()
-            if frame_bytes:
+            frame_bytes, frame_id = self.camera.read_new_frame(last_id)
+            if frame_bytes and frame_id != last_id:
+                last_id = frame_id
                 self._process(frame_bytes)
             elapsed = time.monotonic() - start
             remaining = interval - elapsed
