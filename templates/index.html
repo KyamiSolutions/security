@@ -694,6 +694,9 @@ select.inp { cursor: pointer; }
       <div class="nav-btn" id="snav-users" onclick="go('users')">
         <span class="nav-icon">👥</span> Kasutajad
       </div>
+      <div class="nav-btn" id="snav-settings" onclick="go('settings')">
+        <span class="nav-icon">🛠️</span> Seaded
+      </div>
     </nav>
     <div class="sb-foot">
       <div class="sb-user" onclick="showPwModal()">
@@ -952,6 +955,58 @@ select.inp { cursor: pointer; }
       </div>
     </div>
 
+    <!-- ── SEADED ── -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Seaded</div>
+          <div class="page-sub">Süsteemi konfiguratsioon</div>
+        </div>
+      </div>
+
+      <div class="setup-card" style="max-width:560px;margin-bottom:1.5rem">
+        <h3>📷 Kaamera</h3>
+        <div class="fgrp">
+          <label>RTSP URL</label>
+          <input class="inp" id="set-camera-url" placeholder="rtsp://admin:parool@192.168.1.x:554/...">
+        </div>
+        <div id="set-camera-msg" class="pmsg" style="display:none"></div>
+      </div>
+
+      <div class="setup-card" style="max-width:560px;margin-bottom:1.5rem">
+        <h3>🚨 Liikumistuvastus</h3>
+        <div class="fgrp">
+          <label>Tundlikkus (threshold) — väiksem = tundlikum</label>
+          <input class="inp" id="set-threshold" type="number" min="500" max="50000" step="500">
+        </div>
+        <div class="fgrp">
+          <label>Salvestuse pikkus (sekundit)</label>
+          <input class="inp" id="set-record-sec" type="number" min="5" max="300">
+        </div>
+        <div class="fgrp">
+          <label>Ooteaeg häirete vahel (sekundit)</label>
+          <input class="inp" id="set-cooldown" type="number" min="0" max="300">
+        </div>
+      </div>
+
+      <div class="setup-card" style="max-width:560px;margin-bottom:1.5rem">
+        <h3>🔔 Teavitused</h3>
+        <div class="fgrp" style="display:flex;align-items:center;gap:0.7rem">
+          <input type="checkbox" id="set-notif-enabled" style="width:18px;height:18px;accent-color:var(--primary)">
+          <label for="set-notif-enabled" style="margin:0">Teavitused sisse lülitatud</label>
+        </div>
+        <div class="fgrp">
+          <label>Discord Webhook URL</label>
+          <input class="inp" id="set-discord" placeholder="https://discord.com/api/webhooks/...">
+        </div>
+      </div>
+
+      <div style="max-width:560px;display:flex;gap:0.7rem;align-items:center">
+        <button class="btn" onclick="saveSettings()">💾 Salvesta seaded</button>
+        <div id="set-msg" class="pmsg" style="display:none;flex:1"></div>
+      </div>
+    </div>
+
   </div><!-- /main -->
 
   <!-- Mobile bottom nav -->
@@ -1005,6 +1060,7 @@ const PAGE_TITLES = {
   camera: 'Kaamera',
   recordings: 'Salvestused',
   nutikodu: 'Nutikodu',
+  settings: 'Seaded',
   devices: 'Seadmed',
   users: 'Kasutajad',
 };
@@ -1148,6 +1204,7 @@ function go(name) {
   if (name === 'recordings') loadRecordings();
   if (name === 'devices') loadDevices();
   if (name === 'nutikodu') loadNutikodu();
+  if (name === 'settings') loadSettings();
   if (name === 'users') loadUsers();
   if (name === 'dashboard') refreshDashboard();
 }
@@ -1537,6 +1594,45 @@ function _fallbackMJPEG() {
     document.getElementById('login-page').style.display = 'flex';
   }
 })();
+
+async function loadSettings() {
+  const res = await fetch('/settings');
+  if (!res.ok) return;
+  const s = await res.json();
+  document.getElementById('set-camera-url').value = s.camera_url || '';
+  document.getElementById('set-threshold').value = s.motion_threshold ?? 8000;
+  document.getElementById('set-record-sec').value = s.motion_record_seconds ?? 30;
+  document.getElementById('set-cooldown').value = s.motion_cooldown_seconds ?? 10;
+  document.getElementById('set-discord').value = s.discord_webhook_url || '';
+  document.getElementById('set-notif-enabled').checked = s.notifications_enabled !== false;
+}
+
+async function saveSettings() {
+  const msg = document.getElementById('set-msg');
+  msg.style.display = 'none';
+  const data = {
+    camera_url: document.getElementById('set-camera-url').value.trim(),
+    motion_threshold: parseInt(document.getElementById('set-threshold').value) || 8000,
+    motion_record_seconds: parseInt(document.getElementById('set-record-sec').value) || 30,
+    motion_cooldown_seconds: parseInt(document.getElementById('set-cooldown').value) || 10,
+    discord_webhook_url: document.getElementById('set-discord').value.trim(),
+    notifications_enabled: document.getElementById('set-notif-enabled').checked,
+  };
+  const res = await fetch('/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data),
+  });
+  const d = await res.json();
+  msg.style.display = 'block';
+  if (d.ok) {
+    msg.className = 'pmsg ok';
+    msg.textContent = '✓ Seaded salvestatud';
+  } else {
+    msg.className = 'pmsg err';
+    msg.textContent = d.detail || 'Viga';
+  }
+}
 </script>
 <!-- Paroolimuutmise modaal -->
 <div id="pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center">

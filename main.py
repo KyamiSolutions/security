@@ -15,6 +15,7 @@ from auth import (login as auth_login, logout as auth_logout, verify_session,
                   verify_totp_code, confirm_2fa)
 from camera import Camera, _tcp_reachable, mjpeg_generator, probe_rtsp
 from devices import add_device, list_devices, remove_device, toggle_device
+import settings as _settings
 from motion import MotionDetector, list_recordings, RECORDINGS_DIR
 from hls_stream import HLSStream, HLS_DIR
 
@@ -322,6 +323,30 @@ def update_password(
     if current != username and current_role != "admin":
         raise HTTPException(403, "Pole lubatud")
     change_password(username, password)
+    return {"ok": True}
+
+
+# ── Settings ─────────────────────────────────────────────────────────────────
+
+@app.get("/settings")
+def get_settings(_: str = Depends(require_admin)):
+    return _settings.load()
+
+
+@app.post("/settings")
+async def update_settings(request: Request, _: str = Depends(require_admin)):
+    data = await request.json()
+    _settings.save(data)
+    new_url = data.get("camera_url", "")
+    if new_url and new_url not in cameras:
+        try:
+            cam = await asyncio.to_thread(Camera, new_url)
+            cameras[new_url] = cam
+            det = MotionDetector(cam)
+            det.start()
+            detectors[new_url] = det
+        except Exception:
+            pass
     return {"ok": True}
 
 

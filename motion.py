@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import urllib.request
 import json
+import settings as _settings
 
 RECORDINGS_DIR = "recordings"
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
@@ -81,24 +82,26 @@ class MotionDetector:
                 self._stop_recording()
 
     def _start_recording(self, frame):
+        cfg = _settings.load()
         now = datetime.now()
         filename = now.strftime("motion_%Y%m%d_%H%M%S.mp4")
         path = os.path.join(RECORDINGS_DIR, filename)
         h, w = frame.shape[:2]
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         self._writer = cv2.VideoWriter(path, fourcc, self.fps, (w, h))
-        self._recording_until = time.monotonic() + RECORD_SECONDS
-        threading.Thread(target=_send_discord, args=(now,), daemon=True).start()
+        self._recording_until = time.monotonic() + cfg.get("motion_record_seconds", RECORD_SECONDS)
+        if cfg.get("notifications_enabled", True):
+            threading.Thread(target=_send_discord, args=(now, cfg.get("discord_webhook_url", "")), daemon=True).start()
 
     def _stop_recording(self):
+        cfg = _settings.load()
         if self._writer:
             self._writer.release()
             self._writer = None
-        self._recording_until = time.monotonic() + COOLDOWN_SECONDS
+        self._recording_until = time.monotonic() + cfg.get("motion_cooldown_seconds", COOLDOWN_SECONDS)
 
 
-def _send_discord(ts: datetime):
-    url = os.environ.get("DISCORD_WEBHOOK_URL", "")
+def _send_discord(ts: datetime, url: str = ""):
     if not url:
         return
     payload = json.dumps({
