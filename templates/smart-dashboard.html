@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nutikodu</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+<style>
+:root {
+  --primary: #4f46e5;
+  --primary-light: rgba(79,70,229,.12);
+  --sidebar-bg: #1e1b4b;
+  --sidebar-text: rgba(255,255,255,.65);
+  --sidebar-active: #fff;
+  --sidebar-hover: rgba(255,255,255,.08);
+  --topbar-h: 60px;
+  --sidebar-w: 240px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: #f5f5fb; color: #1a1d2e; overflow-x: hidden; }
+a { text-decoration: none; color: inherit; }
+
+/* ── Sidebar ── */
+#sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: var(--sidebar-w); background: var(--sidebar-bg);
+  display: flex; flex-direction: column; z-index: 200;
+  transition: transform .25s;
+}
+.sb-logo {
+  display: flex; align-items: center; gap: .75rem;
+  padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.sb-logo .logo-icon { font-size: 1.6rem; color: #a5b4fc; }
+.sb-logo .logo-text { font-size: 1rem; font-weight: 700; color: #fff; line-height: 1.1; }
+.sb-logo .logo-text small { font-size: .65rem; color: rgba(255,255,255,.45); display: block; font-weight: 400; }
+.sb-nav { flex: 1; overflow-y: auto; padding: .75rem 0; }
+.sb-section { font-size: .65rem; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 1px; text-transform: uppercase; padding: .9rem 1.25rem .4rem; }
+.sb-item {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .62rem 1.25rem; margin: 1px .5rem; border-radius: 10px;
+  color: var(--sidebar-text); font-size: .875rem; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.sb-item:hover { background: var(--sidebar-hover); color: var(--sidebar-active); }
+.sb-item.active { background: rgba(165,180,252,.15); color: #a5b4fc; font-weight: 600; }
+.sb-item i { font-size: 1.05rem; flex-shrink: 0; }
+.sb-badge { margin-left: auto; background: #ef4444; color: #fff; font-size: .65rem; border-radius: 99px; padding: 1px 6px; font-weight: 700; }
+.sb-bottom { padding: .75rem .5rem; border-top: 1px solid rgba(255,255,255,.07); }
+
+/* ── Main ── */
+#main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+
+/* ── Topbar ── */
+#topbar {
+  position: sticky; top: 0; z-index: 100;
+  height: var(--topbar-h);
+  background: #fff; border-bottom: 1px solid #e9e9f0;
+  display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+}
+.topbar-title { font-size: 1.05rem; font-weight: 700; flex: 1; }
+.topbar-user { display: flex; align-items: center; gap: .5rem; font-size: .85rem; color: #555; cursor: pointer; }
+.topbar-user .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; }
+#burger { display: none; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #555; }
+
+/* ── Content ── */
+.content { padding: 1.5rem; flex: 1; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── Stat cards ── */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card {
+  background: #fff; border-radius: 14px; padding: 1.1rem 1.25rem;
+  border: 1px solid #e9e9f0;
+  display: flex; flex-direction: column; gap: .4rem;
+}
+.stat-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: .25rem; }
+.stat-label { font-size: .72rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .5px; }
+.stat-value { font-size: 1.45rem; font-weight: 800; line-height: 1; }
+.stat-sub { font-size: .72rem; color: #888; margin-top: .1rem; }
+
+/* ── Section header ── */
+.sec-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.sec-hdr h5 { font-size: .95rem; font-weight: 700; margin: 0; }
+
+/* ── Camera card ── */
+.cam-card { background: #fff; border-radius: 14px; border: 1px solid #e9e9f0; overflow: hidden; margin-bottom: 1.5rem; }
+.cam-card .cam-hdr { display: flex; align-items: center; justify-content: space-between; padding: .9rem 1.25rem; border-bottom: 1px solid #f0f0f7; }
+.cam-card .cam-hdr h6 { margin: 0; font-size: .9rem; font-weight: 700; }
+.cam-body { background: #000; position: relative; padding-top: 56.25%; }
+.cam-body img, .cam-body video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+.cam-footer { padding: .75rem 1.25rem; display: flex; gap: .5rem; flex-wrap: wrap; }
+.live-badge { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 700; color: #22c55e; background: rgba(34,197,94,.1); padding: 3px 10px; border-radius: 99px; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: blink 1.2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── Device cards ── */
+.dev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.dev-card {
+  background: #fff; border-radius: 14px; border: 1px solid #e9e9f0; padding: 1.1rem 1.25rem;
+  display: flex; flex-direction: column; gap: .75rem;
+  transition: border-color .15s, box-shadow .15s;
+}
+.dev-card.on { border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.1); }
+.dev-card .d-icon { font-size: 1.6rem; }
+.dev-card .d-name { font-size: .9rem; font-weight: 700; }
+.dev-card .d-kind { font-size: .7rem; color: #888; text-transform: uppercase; letter-spacing: .5px; }
+.dev-card .d-footer { display: flex; align-items: center; justify-content: space-between; }
+.dev-card .d-status { font-size: .75rem; color: #888; }
+.dev-card.on .d-status { color: #22c55e; font-weight: 600; }
+.nk-toggle {
+  width: 46px; height: 26px; border-radius: 13px;
+  background: #d1d5db; border: none; cursor: pointer; position: relative;
+  transition: background .2s; flex-shrink: 0;
+}
+.nk-toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s;
+}
+.nk-toggle.on { background: #22c55e; }
+.nk-toggle.on::after { transform: translateX(20px); }
+
+/* ── Recordings ── */
+.rec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1rem; }
+.rec-card {
+  background: #fff; border-radius: 14px; border: 1px solid #e9e9f0;
+  padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: .6rem;
+}
+.rec-name { font-size: .875rem; font-weight: 700; display: flex; align-items: center; gap: .4rem; }
+.rec-meta { font-size: .72rem; color: #888; }
+.rec-actions { display: flex; gap: .5rem; margin-top: .25rem; }
+
+/* ── Users table ── */
+.user-table { background: #fff; border-radius: 14px; border: 1px solid #e9e9f0; overflow: hidden; }
+.user-table table { width: 100%; border-collapse: collapse; }
+.user-table th { font-size: .72rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .5px; padding: .75rem 1.25rem; border-bottom: 1px solid #f0f0f7; background: #fafafa; }
+.user-table td { padding: .75rem 1.25rem; border-bottom: 1px solid #f5f5fb; font-size: .875rem; }
+.user-table tr:last-child td { border-bottom: none; }
+
+/* ── Settings ── */
+.settings-card { background: #fff; border-radius: 14px; border: 1px solid #e9e9f0; padding: 1.5rem; max-width: 600px; }
+.settings-card .fgrp { margin-bottom: 1rem; }
+.settings-card label { font-size: .72rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: .35rem; }
+.settings-card input[type=text], .settings-card input[type=password], .settings-card input[type=number] {
+  width: 100%; padding: .6rem .9rem; border: 1px solid #e9e9f0; border-radius: 9px;
+  font-size: .875rem; font-family: inherit; outline: none; transition: border-color .15s;
+}
+.settings-card input:focus { border-color: var(--primary); }
+
+/* ── Buttons ── */
+.btn-prim { background: var(--primary); color: #fff; border: none; border-radius: 9px; padding: .55rem 1.2rem; font-size: .85rem; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+.btn-prim:hover { opacity: .88; }
+.btn-sec { background: #f5f5fb; color: #444; border: 1px solid #e9e9f0; border-radius: 9px; padding: .5rem 1rem; font-size: .82rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+.btn-sec:hover { background: #ededf5; }
+.btn-danger { background: rgba(239,68,68,.08); color: #ef4444; border: 1px solid rgba(239,68,68,.2); border-radius: 9px; padding: .45rem .9rem; font-size: .8rem; font-weight: 600; cursor: pointer; }
+.btn-danger:hover { background: rgba(239,68,68,.15); }
+.badge-role { display: inline-block; font-size: .65rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: .5px; }
+.badge-admin { background: rgba(79,70,229,.12); color: var(--primary); }
+.badge-user { background: rgba(34,197,94,.1); color: #15803d; }
+.pmsg { font-size: .8rem; padding: .5rem .9rem; border-radius: 8px; display: none; margin-top: .5rem; }
+.pmsg.ok { background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.25); color: #15803d; }
+.pmsg.err { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25); color: #b91c1c; }
+.empty-state { color: #888; font-size: .875rem; padding: 1.5rem 0; text-align: center; }
+
+/* ── Mobile ── */
+#overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 199; }
+@media (max-width: 768px) {
+  :root { --sidebar-w: 240px; }
+  #sidebar { transform: translateX(-100%); }
+  #sidebar.open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,.3); }
+  #overlay.open { display: block; }
+  #main { margin-left: 0; }
+  #burger { display: block; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .dev-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .dev-grid { grid-template-columns: 1fr 1fr; }
+  .rec-grid { grid-template-columns: 1fr; }
+  .content { padding: 1rem; }
+}
+
+/* ── Modal ── */
+.modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 500; display: none; align-items: center; justify-content: center; }
+.modal-backdrop-custom.open { display: flex; }
+.modal-box { background: #fff; border-radius: 16px; padding: 1.75rem; max-width: 420px; width: 90%; }
+.modal-box h5 { margin: 0 0 1rem; font-size: 1rem; font-weight: 700; }
+.modal-box .fgrp { margin-bottom: .9rem; }
+.modal-box label { font-size: .72rem; font-weight: 700; color: #888; text-transform: uppercase; display: block; margin-bottom: .3rem; }
+.modal-box input, .modal-box select { width: 100%; padding: .6rem .9rem; border: 1px solid #e9e9f0; border-radius: 9px; font-family: inherit; font-size: .875rem; outline: none; }
+.modal-box input:focus, .modal-box select:focus { border-color: var(--primary); }
+.modal-footer-custom { display: flex; gap: .6rem; justify-content: flex-end; margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="sb-logo">
+    <i class="bi bi-shield-check logo-icon"></i>
+    <div class="logo-text">Nutikodu<small>Turvakaamera süsteem</small></div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-section">Pealeht</div>
+    <div class="sb-item active" onclick="showPage('dashboard')">
+      <i class="bi bi-house-heart"></i> Armatuurlaud
+    </div>
+    <div class="sb-item" onclick="showPage('camera')">
+      <i class="bi bi-camera-video"></i> Kaamera
+    </div>
+    <div class="sb-section">Seadmed</div>
+    <div class="sb-item" onclick="showPage('devices')">
+      <i class="bi bi-plug"></i> Nutiseadmed
+    </div>
+    <div class="sb-section">Turve</div>
+    <div class="sb-item" onclick="showPage('recordings')">
+      <i class="bi bi-camera-reels"></i> Salvestused
+      <span class="sb-badge" id="rec-count" style="display:none">0</span>
+    </div>
+    <div class="sb-section">Haldus</div>
+    <div class="sb-item" id="nav-users" onclick="showPage('users')" style="display:none">
+      <i class="bi bi-people"></i> Kasutajad
+    </div>
+    <div class="sb-item" id="nav-settings" onclick="showPage('settings')" style="display:none">
+      <i class="bi bi-gear"></i> Seaded
+    </div>
+  </div>
+  <div class="sb-bottom">
+    <div class="sb-item" onclick="doLogout()">
+      <i class="bi bi-box-arrow-left"></i> Logi välja
+    </div>
+  </div>
+</nav>
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<!-- Main -->
+<div id="main">
+  <div id="topbar">
+    <button id="burger" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <span class="topbar-title" id="page-title">Armatuurlaud</span>
+    <div class="topbar-user" onclick="showPage('settings')">
+      <div class="avatar" id="avatar-initials">?</div>
+      <span id="topbar-username" style="font-size:.82rem"></span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(79,70,229,.1);color:var(--primary)"><i class="bi bi-camera-video"></i></div>
+          <div class="stat-label">Kaamera</div>
+          <div class="stat-value" id="s-cam">–</div>
+          <div class="stat-sub" id="s-cam-sub">kontrollimine...</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(34,197,94,.1);color:#22c55e"><i class="bi bi-plug"></i></div>
+          <div class="stat-label">Nutiseadmed</div>
+          <div class="stat-value" id="s-dev">–</div>
+          <div class="stat-sub" id="s-dev-sub">laadin...</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(239,68,68,.1);color:#ef4444"><i class="bi bi-camera-reels"></i></div>
+          <div class="stat-label">Salvestused</div>
+          <div class="stat-value" id="s-rec">–</div>
+          <div class="stat-sub">liikumisest käivitatud</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(245,158,11,.1);color:#f59e0b"><i class="bi bi-shield-check"></i></div>
+          <div class="stat-label">Süsteem</div>
+          <div class="stat-value" style="color:#22c55e">OK</div>
+          <div class="stat-sub">kõik töötab</div>
+        </div>
+      </div>
+
+      <!-- Camera preview -->
+      <div class="sec-hdr"><h5><i class="bi bi-camera-video me-2"></i>Kaamera otsevaade</h5>
+        <button class="btn-sec" onclick="showPage('camera')">Ava täisvaates</button>
+      </div>
+      <div class="cam-card" style="margin-bottom:1.5rem">
+        <div class="cam-hdr">
+          <h6>Kaamera 1</h6>
+          <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+        </div>
+        <div class="cam-body"><img id="dash-stream" alt="Kaamera"></div>
+        <div class="cam-footer">
+          <button class="btn-sec" onclick="takeSnapshot('dash-snap')"><i class="bi bi-camera me-1"></i>Pilt</button>
+        </div>
+      </div>
+
+      <!-- Devices preview -->
+      <div class="sec-hdr">
+        <h5><i class="bi bi-house-heart me-2"></i>Nutikodu</h5>
+        <button class="btn-sec" onclick="showPage('devices')">Kõik seadmed</button>
+      </div>
+      <div class="dev-grid" id="dash-devices">
+        <div class="empty-state">Laadin seadmeid...</div>
+      </div>
+    </div>
+
+    <!-- ── CAMERA ── -->
+    <div class="page" id="page-camera">
+      <div class="cam-card">
+        <div class="cam-hdr">
+          <h6>Otsevaade</h6>
+          <span class="live-badge" id="cam-live-badge"><span class="live-dot"></span>LIVE</span>
+        </div>
+        <div class="cam-body">
+          <img id="cam-stream" alt="Kaamera">
+          <video id="cam-hls" playsinline muted style="display:none"></video>
+        </div>
+        <div class="cam-footer">
+          <button class="btn-prim" id="btn-hls" onclick="switchHLS()" style="display:none"><i class="bi bi-collection-play me-1"></i>HLS</button>
+          <button class="btn-sec" onclick="takeSnapshotFull()"><i class="bi bi-camera me-1"></i>Pilt</button>
+          <button class="btn-sec" id="btn-probe" onclick="document.getElementById('probe-panel').style.display='block'"><i class="bi bi-search me-1"></i>Lisa RTSP</button>
+        </div>
+      </div>
+      <div id="probe-panel" style="display:none" class="settings-card mt-3">
+        <h6 style="font-weight:700;margin-bottom:1rem">Lisa IP-kaamera</h6>
+        <div class="row g-2">
+          <div class="col-6 fgrp"><label>IP</label><input type="text" id="probe-ip" placeholder="192.168.1.x" class="form-control"></div>
+          <div class="col-3 fgrp"><label>Port</label><input type="number" id="probe-port" value="554" class="form-control"></div>
+          <div class="col-3 fgrp"><label>Kasutaja</label><input type="text" id="probe-user" value="admin" class="form-control"></div>
+          <div class="col-6 fgrp"><label>Parool</label><input type="password" id="probe-pass" value="admin" class="form-control"></div>
+          <div class="col-6 d-flex align-items-end"><button class="btn-prim w-100" onclick="doProbe()"><i class="bi bi-search me-1"></i>Otsi</button></div>
+        </div>
+        <div id="probe-result" class="pmsg mt-2"></div>
+      </div>
+    </div>
+
+    <!-- ── DEVICES ── -->
+    <div class="page" id="page-devices">
+      <div class="sec-hdr">
+        <h5><i class="bi bi-plug me-2"></i>Nutiseadmed</h5>
+        <button class="btn-prim" id="btn-add-dev" onclick="openAddDevice()" style="display:none">
+          <i class="bi bi-plus-lg me-1"></i>Lisa seade
+        </button>
+      </div>
+      <div class="dev-grid" id="devices-grid">
+        <div class="empty-state">Laadin seadmeid...</div>
+      </div>
+    </div>
+
+    <!-- ── RECORDINGS ── -->
+    <div class="page" id="page-recordings">
+      <div class="sec-hdr">
+        <h5><i class="bi bi-camera-reels me-2"></i>Salvestused</h5>
+        <button class="btn-sec" onclick="loadRecordings()"><i class="bi bi-arrow-clockwise me-1"></i>Uuenda</button>
+      </div>
+      <div class="rec-grid" id="rec-grid">
+        <div class="empty-state">Laadin salvestusi...</div>
+      </div>
+    </div>
+
+    <!-- ── USERS ── -->
+    <div class="page" id="page-users">
+      <div class="sec-hdr">
+        <h5><i class="bi bi-people me-2"></i>Kasutajad</h5>
+        <button class="btn-prim" onclick="openAddUser()"><i class="bi bi-person-plus me-1"></i>Lisa kasutaja</button>
+      </div>
+      <div class="user-table">
+        <table>
+          <thead><tr><th>Kasutajanimi</th><th>Roll</th><th>2FA</th><th></th></tr></thead>
+          <tbody id="users-tbody"><tr><td colspan="4" class="empty-state">Laadin...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="page" id="page-settings">
+      <h5 style="font-weight:700;margin-bottom:1.25rem"><i class="bi bi-gear me-2"></i>Seaded</h5>
+      <div class="settings-card">
+        <div class="fgrp">
+          <label>Kaamera URL (RTSP)</label>
+          <input type="password" id="set-cam-url" placeholder="rtsp://admin:parool@192.168.1.x:554/...">
+        </div>
+        <div class="fgrp">
+          <label>Liikumistuvastuse lävi (pikselid)</label>
+          <input type="number" id="set-threshold" value="8000">
+        </div>
+        <div class="fgrp">
+          <label>Salvestusaeg liikumisel (sekundit)</label>
+          <input type="number" id="set-record-sec" value="30">
+        </div>
+        <div class="fgrp">
+          <label>Ooteaeg pärast salvestust (sekundit)</label>
+          <input type="number" id="set-cooldown" value="10">
+        </div>
+        <div class="fgrp">
+          <label>Discord Webhook URL</label>
+          <input type="text" id="set-discord" placeholder="https://discord.com/api/webhooks/...">
+        </div>
+        <div class="fgrp" style="display:flex;align-items:center;gap:.75rem">
+          <input type="checkbox" id="set-notif" style="width:18px;height:18px;accent-color:var(--primary)">
+          <label style="margin:0;text-transform:none;font-size:.875rem;font-weight:600;color:#333">Discord teavitused lubatud</label>
+        </div>
+        <div class="pmsg" id="set-msg"></div>
+        <div style="display:flex;gap:.6rem;margin-top:1rem">
+          <button class="btn-prim" onclick="saveSettings()"><i class="bi bi-check-lg me-1"></i>Salvesta</button>
+          <button class="btn-sec" onclick="changeMyPassword()"><i class="bi bi-key me-1"></i>Muuda parool</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add Device Modal -->
+<div class="modal-backdrop-custom" id="modal-device">
+  <div class="modal-box">
+    <h5>Lisa seade</h5>
+    <div class="fgrp"><label>Nimi</label><input type="text" id="dev-name" placeholder="Hoovivalgustus"></div>
+    <div class="fgrp"><label>Tüüp</label>
+      <select id="dev-kind">
+        <option value="switch">Lüliti</option>
+        <option value="light">Valgustus</option>
+        <option value="sonoff">Sonoff DIY</option>
+        <option value="other">Muu</option>
+      </select>
+    </div>
+    <div class="fgrp"><label>IP-aadress</label><input type="text" id="dev-ip" placeholder="192.168.1.x"></div>
+    <div class="fgrp"><label>Port</label><input type="number" id="dev-port" value="80"></div>
+    <div class="pmsg" id="dev-msg"></div>
+    <div class="modal-footer-custom">
+      <button class="btn-sec" onclick="closeModal('modal-device')">Tühista</button>
+      <button class="btn-prim" onclick="submitAddDevice()">Lisa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-backdrop-custom" id="modal-user">
+  <div class="modal-box">
+    <h5>Lisa kasutaja</h5>
+    <div class="fgrp"><label>Kasutajanimi</label><input type="text" id="usr-name"></div>
+    <div class="fgrp"><label>Parool</label><input type="password" id="usr-pass"></div>
+    <div class="fgrp"><label>Roll</label>
+      <select id="usr-role"><option value="user">Kasutaja</option><option value="admin">Admin</option></select>
+    </div>
+    <div class="pmsg" id="usr-msg"></div>
+    <div class="modal-footer-custom">
+      <button class="btn-sec" onclick="closeModal('modal-user')">Tühista</button>
+      <button class="btn-prim" onclick="submitAddUser()">Lisa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-backdrop-custom" id="modal-pw">
+  <div class="modal-box">
+    <h5>Muuda parool</h5>
+    <div class="fgrp"><label>Uus parool</label><input type="password" id="new-pw"></div>
+    <div class="pmsg" id="pw-msg"></div>
+    <div class="modal-footer-custom">
+      <button class="btn-sec" onclick="closeModal('modal-pw')">Tühista</button>
+      <button class="btn-prim" onclick="submitPwChange()">Salvesta</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let me = null;
+let camKey = localStorage.getItem('camKey') || '';
+let hlsMode = false;
+let hls = null;
+const PAGE_TITLES = {
+  dashboard: 'Armatuurlaud', camera: 'Kaamera',
+  devices: 'Nutiseadmed', recordings: 'Salvestused',
+  users: 'Kasutajad', settings: 'Seaded',
+};
+
+// ── Auth ──────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const r = await fetch('/users/me');
+    if (!r.ok) { window.location.href = '/'; return; }
+    me = await r.json();
+  } catch { window.location.href = '/'; return; }
+
+  document.getElementById('topbar-username').textContent = me.username;
+  document.getElementById('avatar-initials').textContent = me.username[0].toUpperCase();
+
+  if (me.role === 'admin') {
+    document.getElementById('nav-users').style.display = '';
+    document.getElementById('nav-settings').style.display = '';
+    document.getElementById('btn-add-dev').style.display = '';
+  }
+
+  loadDashboard();
+}
+
+async function doLogout() {
+  await fetch('/logout', { method: 'POST' });
+  window.location.href = '/';
+}
+
+// ── Navigation ────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('page-title').textContent = PAGE_TITLES[name] || name;
+  document.querySelectorAll('.sb-item').forEach(i => {
+    if (i.textContent.trim() === (PAGE_TITLES[name] || name)) i.classList.add('active');
+  });
+  closeSidebar();
+
+  if (name === 'camera') initCamera();
+  if (name === 'recordings') loadRecordings();
+  if (name === 'devices') loadDevices();
+  if (name === 'users') loadUsers();
+  if (name === 'settings') loadSettings();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+
+// ── Dashboard ─────────────────────────────────────────────────────────
+async function loadDashboard() {
+  // camera stat
+  if (camKey) {
+    document.getElementById('s-cam').textContent = 'Sees';
+    document.getElementById('s-cam').style.color = '#22c55e';
+    document.getElementById('s-cam-sub').textContent = 'ühendatud';
+    document.getElementById('dash-stream').src = `/stream?key=${encodeURIComponent(camKey)}`;
+  } else {
+    document.getElementById('s-cam').textContent = 'Väljas';
+    document.getElementById('s-cam-sub').textContent = 'kaamera puudub';
+  }
+
+  // devices
+  try {
+    const devs = await fetch('/devices').then(r => r.json());
+    document.getElementById('s-dev').textContent = devs.length;
+    document.getElementById('s-dev-sub').textContent = devs.filter(d => d.state).length + ' sees';
+    renderDashDevices(devs);
+  } catch { document.getElementById('s-dev').textContent = '?'; }
+
+  // recordings
+  try {
+    const recs = await fetch('/recordings').then(r => r.json());
+    document.getElementById('s-rec').textContent = recs.length;
+    document.getElementById('rec-count').textContent = recs.length;
+    document.getElementById('rec-count').style.display = recs.length ? '' : 'none';
+  } catch {}
+}
+
+function renderDashDevices(devs) {
+  const el = document.getElementById('dash-devices');
+  if (!devs.length) { el.innerHTML = '<div class="empty-state">Seadmeid pole lisatud</div>'; return; }
+  el.innerHTML = devs.slice(0, 6).map(d => deviceCard(d)).join('');
+}
+
+function deviceCard(d) {
+  const icons = { light: '💡', switch: '🔌', sonoff: '⚡', other: '📦' };
+  const icon = icons[d.kind] || '📦';
+  const on = d.state ? 'on' : '';
+  return `<div class="dev-card ${on}" id="dc-${d.id}">
+    <div class="d-icon">${icon}</div>
+    <div><div class="d-name">${esc(d.name)}</div><div class="d-kind">${esc(d.kind)} · ${esc(d.ip)}</div></div>
+    <div class="d-footer">
+      <span class="d-status">${d.state ? 'Sees' : 'Väljas'}</span>
+      <button class="nk-toggle ${on}" onclick="nkToggle('${d.id}',this)"></button>
+    </div>
+  </div>`;
+}
+
+// ── Camera ────────────────────────────────────────────────────────────
+function initCamera() {
+  if (!camKey) return;
+  document.getElementById('cam-stream').src = `/stream?key=${encodeURIComponent(camKey)}`;
+
+  // check HLS
+  fetch('/hls-status').then(r => r.json()).then(d => {
+    if (d.ready) document.getElementById('btn-hls').style.display = '';
+  }).catch(() => {});
+}
+
+async function switchHLS() {
+  if (!hlsMode) {
+    const v = document.getElementById('cam-hls');
+    document.getElementById('cam-stream').style.display = 'none';
+    v.style.display = '';
+    if (Hls.isSupported()) {
+      hls = new Hls({ lowLatencyMode: true, liveSyncDurationCount: 1 });
+      hls.loadSource('/hls/stream.m3u8');
+      hls.attachMedia(v);
+    } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
+      v.src = '/hls/stream.m3u8';
+    }
+    v.play().catch(() => {});
+    hlsMode = true;
+    document.getElementById('btn-hls').innerHTML = '<i class="bi bi-camera-video me-1"></i>MJPEG';
+  } else {
+    if (hls) { hls.destroy(); hls = null; }
+    document.getElementById('cam-hls').style.display = 'none';
+    document.getElementById('cam-stream').style.display = '';
+    document.getElementById('cam-stream').src = `/stream?key=${encodeURIComponent(camKey)}`;
+    hlsMode = false;
+    document.getElementById('btn-hls').innerHTML = '<i class="bi bi-collection-play me-1"></i>HLS';
+  }
+}
+
+async function doProbe() {
+  const ip = document.getElementById('probe-ip').value.trim();
+  const port = document.getElementById('probe-port').value;
+  const user = document.getElementById('probe-user').value;
+  const pass = document.getElementById('probe-pass').value;
+  const res = document.getElementById('probe-result');
+  res.className = 'pmsg'; res.style.display = 'none';
+  if (!ip) return;
+  try {
+    const r = await fetch(`/probe?ip=${encodeURIComponent(ip)}&port=${port}&user=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`);
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Viga');
+    camKey = d.internal_key;
+    localStorage.setItem('camKey', camKey);
+    res.className = 'pmsg ok'; res.style.display = '';
+    res.textContent = 'Leitud: ' + d.url;
+    document.getElementById('cam-stream').src = `/stream?key=${encodeURIComponent(camKey)}`;
+    document.getElementById('probe-panel').style.display = 'none';
+  } catch(e) {
+    res.className = 'pmsg err'; res.style.display = '';
+    res.textContent = e.message;
+  }
+}
+
+function takeSnapshotFull() {
+  if (!camKey) return;
+  window.open(`/snapshot?key=${encodeURIComponent(camKey)}`);
+}
+function takeSnapshot(imgId) {
+  if (!camKey) return;
+  window.open(`/snapshot?key=${encodeURIComponent(camKey)}`);
+}
+
+// ── Devices ───────────────────────────────────────────────────────────
+async function loadDevices() {
+  const g = document.getElementById('devices-grid');
+  try {
+    const devs = await fetch('/devices').then(r => r.json());
+    if (!devs.length) { g.innerHTML = '<div class="empty-state">Seadmeid pole. Lisa esimene seade.</div>'; return; }
+    g.innerHTML = devs.map(d => deviceCardFull(d)).join('');
+  } catch { g.innerHTML = '<div class="empty-state">Viga seadmete laadimisel</div>'; }
+}
+
+function deviceCardFull(d) {
+  const icons = { light: '💡', switch: '🔌', sonoff: '⚡', other: '📦' };
+  const icon = icons[d.kind] || '📦';
+  const on = d.state ? 'on' : '';
+  const adminBtn = me && me.role === 'admin'
+    ? `<button class="btn-danger" onclick="removeDevice('${d.id}')"><i class="bi bi-trash"></i></button>` : '';
+  return `<div class="dev-card ${on}" id="dc-${d.id}">
+    <div class="d-icon">${icon}</div>
+    <div><div class="d-name">${esc(d.name)}</div><div class="d-kind">${esc(d.kind)} · ${esc(d.ip)}:${d.port}</div></div>
+    <div class="d-footer">
+      <span class="d-status">${d.state ? 'Sees' : 'Väljas'}</span>
+      <div style="display:flex;gap:.4rem;align-items:center">
+        ${adminBtn}
+        <button class="nk-toggle ${on}" onclick="nkToggle('${d.id}',this)"></button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function nkToggle(id, btn) {
+  try {
+    const r = await fetch(`/devices/${id}/toggle`, { method: 'POST' });
+    if (!r.ok) throw new Error('Viga');
+    const card = document.getElementById('dc-' + id);
+    if (!card) return;
+    const on = card.classList.toggle('on');
+    btn.classList.toggle('on', on);
+    card.querySelector('.d-status').textContent = on ? 'Sees' : 'Väljas';
+  } catch(e) { alert('Lülitamine ebaõnnestus: ' + e.message); }
+}
+
+function openAddDevice() { openModal('modal-device'); }
+
+async function submitAddDevice() {
+  const name = document.getElementById('dev-name').value.trim();
+  const kind = document.getElementById('dev-kind').value;
+  const ip = document.getElementById('dev-ip').value.trim();
+  const port = document.getElementById('dev-port').value;
+  const msg = document.getElementById('dev-msg');
+  msg.style.display = 'none';
+  if (!name || !ip) { msg.className = 'pmsg err'; msg.style.display = ''; msg.textContent = 'Täida kõik väljad'; return; }
+  const fd = new FormData();
+  fd.append('name', name); fd.append('kind', kind);
+  fd.append('ip', ip); fd.append('port', port);
+  const r = await fetch('/devices', { method: 'POST', body: fd });
+  if (r.ok) {
+    closeModal('modal-device');
+    document.getElementById('dev-name').value = '';
+    document.getElementById('dev-ip').value = '';
+    loadDevices();
+  } else {
+    const d = await r.json().catch(() => ({}));
+    msg.className = 'pmsg err'; msg.style.display = '';
+    msg.textContent = d.detail || 'Viga';
+  }
+}
+
+async function removeDevice(id) {
+  if (!confirm('Kustuta seade?')) return;
+  const r = await fetch('/devices/' + id, { method: 'DELETE' });
+  if (r.ok) loadDevices();
+}
+
+// ── Recordings ────────────────────────────────────────────────────────
+async function loadRecordings() {
+  const g = document.getElementById('rec-grid');
+  try {
+    const recs = await fetch('/recordings').then(r => r.json());
+    document.getElementById('s-rec').textContent = recs.length;
+    document.getElementById('rec-count').textContent = recs.length;
+    document.getElementById('rec-count').style.display = recs.length ? '' : 'none';
+    if (!recs.length) { g.innerHTML = '<div class="empty-state">Salvestusi pole veel</div>'; return; }
+    g.innerHTML = recs.map(r => {
+      const date = new Date(r.mtime * 1000).toLocaleString('et-EE');
+      const kb = Math.round(r.size / 1024);
+      const adminBtn = me && me.role === 'admin'
+        ? `<button class="btn-danger" onclick="deleteRec('${esc(r.filename)}')"><i class="bi bi-trash"></i></button>` : '';
+      return `<div class="rec-card">
+        <div class="rec-name"><i class="bi bi-film" style="color:#ef4444"></i>${esc(r.filename)}</div>
+        <div class="rec-meta">${date} · ${kb} KB</div>
+        <div class="rec-actions">
+          <a href="/recordings/${encodeURIComponent(r.filename)}" download class="btn-sec" style="display:inline-flex;align-items:center;gap:.3rem;font-size:.8rem;padding:.45rem .9rem;border-radius:9px;text-decoration:none;border:1px solid #e9e9f0;background:#f5f5fb;font-weight:600">
+            <i class="bi bi-download"></i> Laadi alla
+          </a>
+          ${adminBtn}
+        </div>
+      </div>`;
+    }).join('');
+  } catch { g.innerHTML = '<div class="empty-state">Viga salvestuste laadimisel</div>'; }
+}
+
+async function deleteRec(filename) {
+  if (!confirm('Kustuta salvestus?')) return;
+  const r = await fetch('/recordings/' + encodeURIComponent(filename), { method: 'DELETE' });
+  if (r.ok) loadRecordings();
+}
+
+// ── Users ─────────────────────────────────────────────────────────────
+async function loadUsers() {
+  const tbody = document.getElementById('users-tbody');
+  try {
+    const users = await fetch('/users').then(r => r.json());
+    tbody.innerHTML = users.map(u => `<tr>
+      <td>${esc(u.username)}</td>
+      <td><span class="badge-role badge-${u.role}">${u.role}</span></td>
+      <td>${u.two_fa_enabled ? '<span style="color:#22c55e">✓</span>' : '<span style="color:#ccc">–</span>'}</td>
+      <td style="text-align:right">
+        ${u.username !== me.username ? `<button class="btn-danger" onclick="deleteUser('${esc(u.username)}')"><i class="bi bi-trash"></i></button>` : ''}
+      </td>
+    </tr>`).join('');
+  } catch { tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Viga</td></tr>'; }
+}
+
+function openAddUser() { openModal('modal-user'); }
+
+async function submitAddUser() {
+  const name = document.getElementById('usr-name').value.trim();
+  const pass = document.getElementById('usr-pass').value;
+  const role = document.getElementById('usr-role').value;
+  const msg = document.getElementById('usr-msg');
+  msg.style.display = 'none';
+  const fd = new FormData();
+  fd.append('username', name); fd.append('password', pass); fd.append('role', role);
+  const r = await fetch('/users', { method: 'POST', body: fd });
+  if (r.ok) { closeModal('modal-user'); loadUsers(); }
+  else {
+    const d = await r.json().catch(() => ({}));
+    msg.className = 'pmsg err'; msg.style.display = '';
+    msg.textContent = d.detail || 'Viga';
+  }
+}
+
+async function deleteUser(username) {
+  if (!confirm(`Kustuta kasutaja "${username}"?`)) return;
+  const r = await fetch('/users/' + encodeURIComponent(username), { method: 'DELETE' });
+  if (r.ok) loadUsers();
+}
+
+// ── Settings ──────────────────────────────────────────────────────────
+async function loadSettings() {
+  try {
+    const s = await fetch('/settings').then(r => r.json());
+    document.getElementById('set-cam-url').value = s.camera_url || '';
+    document.getElementById('set-threshold').value = s.motion_threshold ?? 8000;
+    document.getElementById('set-record-sec').value = s.motion_record_seconds ?? 30;
+    document.getElementById('set-cooldown').value = s.motion_cooldown_seconds ?? 10;
+    document.getElementById('set-discord').value = s.discord_webhook_url || '';
+    document.getElementById('set-notif').checked = s.notifications_enabled !== false;
+  } catch {}
+}
+
+async function saveSettings() {
+  const data = {
+    camera_url: document.getElementById('set-cam-url').value.trim(),
+    motion_threshold: parseInt(document.getElementById('set-threshold').value) || 8000,
+    motion_record_seconds: parseInt(document.getElementById('set-record-sec').value) || 30,
+    motion_cooldown_seconds: parseInt(document.getElementById('set-cooldown').value) || 10,
+    discord_webhook_url: document.getElementById('set-discord').value.trim(),
+    notifications_enabled: document.getElementById('set-notif').checked,
+  };
+  const msg = document.getElementById('set-msg');
+  const r = await fetch('/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+  if (r.ok) {
+    msg.className = 'pmsg ok'; msg.style.display = '';
+    msg.textContent = 'Seaded salvestatud!';
+    setTimeout(() => msg.style.display = 'none', 2500);
+    if (data.camera_url) { camKey = data.camera_url; localStorage.setItem('camKey', camKey); }
+  } else {
+    msg.className = 'pmsg err'; msg.style.display = '';
+    msg.textContent = 'Viga salvestamisel';
+  }
+}
+
+function changeMyPassword() { openModal('modal-pw'); }
+
+async function submitPwChange() {
+  const pw = document.getElementById('new-pw').value;
+  const msg = document.getElementById('pw-msg');
+  msg.style.display = 'none';
+  const fd = new FormData(); fd.append('password', pw);
+  const r = await fetch(`/users/${encodeURIComponent(me.username)}/password`, { method: 'POST', body: fd });
+  if (r.ok) {
+    msg.className = 'pmsg ok'; msg.style.display = '';
+    msg.textContent = 'Parool muudetud!';
+    setTimeout(() => closeModal('modal-pw'), 1500);
+  } else {
+    msg.className = 'pmsg err'; msg.style.display = '';
+    msg.textContent = 'Viga';
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

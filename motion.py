@@ -72,7 +72,7 @@ class MotionDetector:
 
             if changed > self.threshold:
                 self._last_motion = now
-                if self._writer is None and (now - self._recording_until) > 0:
+                if self._ffmpeg is None and (now - self._recording_until) > 0:
                     self._start_recording(frame)
 
         self._prev_gray = gray

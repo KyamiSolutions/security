@@ -93,8 +93,7 @@ def index():
 
 @app.get("/smart-dashboard", response_class=HTMLResponse, include_in_schema=False)
 def smart_dashboard():
-    with open("templates/smart-dashboard.html", encoding="utf-8") as f:
-        return f.read()
+    return Path("templates/smart-dashboard.html").read_text(encoding="utf-8")
 
 @app.get("/{page}.html", response_class=HTMLResponse, include_in_schema=False)
 def serve_html(page: str):
