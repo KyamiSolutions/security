@@ -97,7 +97,7 @@ def smart_dashboard(request: Request):
     try:
         verify_session(request.cookies.get("session", ""))
     except HTTPException:
-        return RedirectResponse(url="/")
+        return RedirectResponse(url="/smart-login.html")
     return Path("templates/smart-dashboard.html").read_text(encoding="utf-8")
 
 _PUBLIC_PAGES = {"smart-login", "smart-signup", "smart-forgot-password", "smart-onboarding", "smart-splash"}
@@ -109,7 +109,7 @@ def serve_html(page: str, request: Request):
         try:
             verify_session(request.cookies.get("session", ""))
         except HTTPException:
-            return RedirectResponse(url="/")
+            return RedirectResponse(url="/smart-login.html")
     path = Path("templates") / f"{page}.html"
     if not path.exists():
         return RedirectResponse(url="/smart-dashboard.html")
