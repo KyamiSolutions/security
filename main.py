@@ -99,7 +99,8 @@ def smart_dashboard():
 def serve_html(page: str):
     path = Path("templates") / f"{page}.html"
     if not path.exists():
-        raise HTTPException(404, "Leht ei leitud")
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/smart-dashboard.html")
     return path.read_text(encoding="utf-8")
 
 
