@@ -92,14 +92,21 @@ def index():
         return f.read()
 
 @app.get("/smart-dashboard", response_class=HTMLResponse, include_in_schema=False)
-def smart_dashboard():
+def smart_dashboard(_: str = Depends(verify_session)):
     return Path("templates/smart-dashboard.html").read_text(encoding="utf-8")
 
+_PUBLIC_PAGES = {"smart-login", "smart-signup", "smart-forgot-password", "smart-onboarding", "smart-splash"}
+
 @app.get("/{page}.html", response_class=HTMLResponse, include_in_schema=False)
-def serve_html(page: str):
+def serve_html(page: str, request: Request):
+    from fastapi.responses import RedirectResponse
+    if page not in _PUBLIC_PAGES:
+        try:
+            verify_session(request.cookies.get("session", ""))
+        except HTTPException:
+            return RedirectResponse(url="/")
     path = Path("templates") / f"{page}.html"
     if not path.exists():
-        from fastapi.responses import RedirectResponse
         return RedirectResponse(url="/smart-dashboard.html")
     return path.read_text(encoding="utf-8")
 
