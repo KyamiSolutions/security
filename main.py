@@ -91,6 +91,11 @@ def index():
     with open("templates/index.html", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/smart-dashboard", response_class=HTMLResponse, include_in_schema=False)
+def smart_dashboard():
+    with open("templates/smart-dashboard.html", encoding="utf-8") as f:
+        return f.read()
+
 
 def require_admin(token: str = Depends(verify_session)):
     if get_user_role(token) != "admin":
