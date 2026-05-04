@@ -96,6 +96,13 @@ def smart_dashboard():
     with open("templates/smart-dashboard.html", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/{page}.html", response_class=HTMLResponse, include_in_schema=False)
+def serve_html(page: str):
+    path = Path("templates") / f"{page}.html"
+    if not path.exists():
+        raise HTTPException(404, "Leht ei leitud")
+    return path.read_text(encoding="utf-8")
+
 
 def require_admin(token: str = Depends(verify_session)):
     if get_user_role(token) != "admin":
