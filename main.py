@@ -8,6 +8,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from auth import (login as auth_login, logout as auth_logout, verify_session,
                   get_username, list_users, add_user, delete_user, change_password,
@@ -63,6 +64,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="KyamiSecurity", lifespan=lifespan)
+
+_static = Path(__file__).parent / "static"
+if _static.exists():
+    app.mount("/static", StaticFiles(directory=str(_static)), name="static")
 
 
 def _cam(key: str) -> Camera:
