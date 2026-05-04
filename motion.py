@@ -1,4 +1,5 @@
 import os
+import subprocess
 import threading
 import time
 from datetime import datetime
@@ -23,7 +24,7 @@ class MotionDetector:
         self.threshold = threshold
         self.fps = fps
         self._prev_gray = None
-        self._writer = None
+        self._ffmpeg = None
         self._recording_until = 0.0
         self._last_motion = 0.0
         self._thread = None
@@ -50,7 +51,7 @@ class MotionDetector:
             remaining = interval - elapsed
             if remaining > 0:
                 time.sleep(remaining)
-        if self._writer:
+        if self._ffmpeg:
             self._stop_recording()
 
     def _process(self, frame_bytes: bytes):
@@ -76,8 +77,11 @@ class MotionDetector:
 
         self._prev_gray = gray
 
-        if self._writer is not None:
-            self._writer.write(frame)
+        if self._ffmpeg is not None:
+            try:
+                self._ffmpeg.stdin.write(frame.tobytes())
+            except Exception:
+                pass
             if now > self._recording_until:
                 self._stop_recording()
 
@@ -87,17 +91,33 @@ class MotionDetector:
         filename = now.strftime("motion_%Y%m%d_%H%M%S.mp4")
         path = os.path.join(RECORDINGS_DIR, filename)
         h, w = frame.shape[:2]
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        self._writer = cv2.VideoWriter(path, fourcc, self.fps, (w, h))
+        self._ffmpeg = subprocess.Popen(
+            [
+                "ffmpeg", "-y",
+                "-f", "rawvideo", "-vcodec", "rawvideo",
+                "-s", f"{w}x{h}", "-pix_fmt", "bgr24",
+                "-r", str(self.fps), "-i", "-",
+                "-vcodec", "libx264", "-pix_fmt", "yuv420p",
+                "-preset", "fast", "-crf", "23",
+                path,
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         self._recording_until = time.monotonic() + cfg.get("motion_record_seconds", RECORD_SECONDS)
         if cfg.get("notifications_enabled", True):
             threading.Thread(target=_send_discord, args=(now, cfg.get("discord_webhook_url", "")), daemon=True).start()
 
     def _stop_recording(self):
         cfg = _settings.load()
-        if self._writer:
-            self._writer.release()
-            self._writer = None
+        if self._ffmpeg:
+            try:
+                self._ffmpeg.stdin.close()
+                self._ffmpeg.wait(timeout=10)
+            except Exception:
+                self._ffmpeg.kill()
+            self._ffmpeg = None
         self._recording_until = time.monotonic() + cfg.get("motion_cooldown_seconds", COOLDOWN_SECONDS)
 
 
