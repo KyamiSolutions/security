@@ -95,7 +95,7 @@ def index():
 def smart_dashboard(request: Request):
     from fastapi.responses import RedirectResponse
     try:
-        verify_session(request.cookies.get("session", ""))
+        verify_session(request)
     except HTTPException:
         return RedirectResponse(url="/smart-login.html")
     return Path("templates/smart-dashboard.html").read_text(encoding="utf-8")
@@ -107,7 +107,7 @@ def serve_html(page: str, request: Request):
     from fastapi.responses import RedirectResponse
     if page not in _PUBLIC_PAGES:
         try:
-            verify_session(request.cookies.get("session", ""))
+            verify_session(request)
         except HTTPException:
             return RedirectResponse(url="/smart-login.html")
     path = Path("templates") / f"{page}.html"
