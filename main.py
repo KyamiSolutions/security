@@ -532,6 +532,8 @@ def get_stats(_: str = Depends(verify_session)):
         "camera": bool(cameras),
         "motion": any(d._running for d in detectors.values()) if detectors else False,
         "hls": bool(hls_stream and hls_stream.ready()),
+        "hls_mode": hls_stream.mode if hls_stream else None,
+        "hls_error": hls_stream.last_error if hls_stream and not hls_stream.ready() else "",
         "tunnel": _service_active("cloudflared"),
     }
 

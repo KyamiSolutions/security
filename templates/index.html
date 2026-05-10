@@ -2204,10 +2204,11 @@ async function refreshStats() {
 
     // Health
     if (s.health) {
+      const hlsLabel = s.health.hls_mode === 'sw' ? 'HLS (sw)' : 'HLS stream';
       const items = [
         ['📹', 'Kaamera', s.health.camera],
         ['🏃', 'Motion', s.health.motion],
-        ['📺', 'HLS stream', s.health.hls],
+        ['📺', hlsLabel, s.health.hls],
         ['🔌', 'Cloudflare tunnel', s.health.tunnel],
       ];
       document.getElementById('dash-health').innerHTML = items.map(([emoji, name, ok]) =>
