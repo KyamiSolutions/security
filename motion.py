@@ -1,3 +1,4 @@
+import logging
 import os
 import subprocess
 import threading
@@ -7,8 +8,11 @@ from datetime import datetime
 import cv2
 import numpy as np
 import urllib.request
+import urllib.error
 import json
 import settings as _settings
+
+log = logging.getLogger("nutikodu.motion")
 
 RECORDINGS_DIR = "recordings"
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
@@ -107,7 +111,7 @@ class MotionDetector:
         )
         self._recording_until = time.monotonic() + cfg.get("motion_record_seconds", RECORD_SECONDS)
         if cfg.get("notifications_enabled", True):
-            threading.Thread(target=_send_discord, args=(now, cfg.get("discord_webhook_url", "")), daemon=True).start()
+            threading.Thread(target=_send_discord_motion, args=(now, cfg.get("discord_webhook_url", "")), daemon=True).start()
 
     def _stop_recording(self):
         cfg = _settings.load()
@@ -121,24 +125,44 @@ class MotionDetector:
         self._recording_until = time.monotonic() + cfg.get("motion_cooldown_seconds", COOLDOWN_SECONDS)
 
 
-def _send_discord(ts: datetime, url: str = ""):
+def send_discord(url: str, title: str, description: str) -> tuple[bool, str]:
+    """Saadab Discordi webhooki teate. Tagastab (õnnestumine, sõnum)."""
     if not url:
-        return
+        return False, "Discord webhook URL puudub"
+    if not url.startswith(("https://discord.com/api/webhooks/", "https://discordapp.com/api/webhooks/")):
+        return False, "Vigane Discord webhook URL"
     payload = json.dumps({
         "username": "Nutikodu",
         "embeds": [{
-            "title": "🚨 Liikumine tuvastatud!",
-            "description": f"Kaamera tuvastas liikumise kell **{ts.strftime('%H:%M:%S')}**",
+            "title": title,
+            "description": description,
             "color": 0xe74c3c,
-            "footer": {"text": ts.strftime("%d.%m.%Y")}
+            "footer": {"text": datetime.now().strftime("%d.%m.%Y %H:%M:%S")}
         }]
     }).encode()
     try:
         req = urllib.request.Request(url, data=payload,
                                      headers={"Content-Type": "application/json"})
-        urllib.request.urlopen(req, timeout=5)
-    except Exception:
-        pass
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            log.info("Discord teade saadetud: HTTP %s", resp.status)
+            return True, f"OK (HTTP {resp.status})"
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")[:200]
+        msg = f"Discord HTTP {e.code}: {body}"
+        log.warning(msg)
+        return False, msg
+    except Exception as e:
+        msg = f"Discord viga: {e.__class__.__name__}: {e}"
+        log.warning(msg)
+        return False, msg
+
+
+def _send_discord_motion(ts: datetime, url: str = ""):
+    send_discord(
+        url,
+        "🚨 Liikumine tuvastatud!",
+        f"Kaamera tuvastas liikumise kell **{ts.strftime('%H:%M:%S')}**",
+    )
 
 
 def list_recordings() -> list[dict]:

@@ -399,7 +399,10 @@ a { text-decoration: none; color: inherit; }
         </div>
         <div class="fgrp">
           <label>Discord Webhook URL</label>
-          <input type="text" id="set-discord" placeholder="https://discord.com/api/webhooks/...">
+          <div style="display:flex;gap:.5rem">
+            <input type="text" id="set-discord" placeholder="https://discord.com/api/webhooks/..." style="flex:1">
+            <button class="btn-sec" type="button" onclick="testDiscord()" style="white-space:nowrap"><i class="bi bi-send me-1"></i>Test</button>
+          </div>
         </div>
         <div class="fgrp" style="display:flex;align-items:center;gap:.75rem">
           <input type="checkbox" id="set-notif" style="width:18px;height:18px;accent-color:var(--primary)">
@@ -834,6 +837,29 @@ async function saveSettings() {
   } else {
     msg.className = 'pmsg err'; msg.style.display = '';
     msg.textContent = 'Viga salvestamisel';
+  }
+}
+
+async function testDiscord() {
+  const msg = document.getElementById('set-msg');
+  msg.style.display = '';
+  msg.className = 'pmsg';
+  msg.textContent = 'Saadan testteadet…';
+  // Salvesta enne saatmist, et test kasutaks just sisestatud URL'i
+  await saveSettings();
+  try {
+    const r = await fetch('/settings/test-discord', { method: 'POST' });
+    const j = await r.json();
+    if (j.ok) {
+      msg.className = 'pmsg ok';
+      msg.textContent = '✅ Discord test õnnestus — ' + j.message;
+    } else {
+      msg.className = 'pmsg err';
+      msg.textContent = '❌ Discord test ebaõnnestus: ' + j.message;
+    }
+  } catch (e) {
+    msg.className = 'pmsg err';
+    msg.textContent = '❌ Päring ebaõnnestus: ' + e;
   }
 }
 

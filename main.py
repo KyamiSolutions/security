@@ -17,7 +17,7 @@ from auth import (login as auth_login, logout as auth_logout, verify_session,
 from camera import Camera, _tcp_reachable, mjpeg_generator, probe_rtsp
 from devices import add_device, list_devices, remove_device, toggle_device
 import settings as _settings
-from motion import MotionDetector, list_recordings, RECORDINGS_DIR
+from motion import MotionDetector, list_recordings, RECORDINGS_DIR, send_discord
 from hls_stream import HLSStream, HLS_DIR
 import hosting
 
@@ -375,9 +375,30 @@ async def update_settings(request: Request, _: str = Depends(require_admin)):
             det = MotionDetector(cam)
             det.start()
             detectors[new_url] = det
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Hoiatus: kaamera lisamine ebaõnnestus ({new_url}): {e}")
     return {"ok": True}
+
+
+@app.post("/settings/test-discord")
+def settings_test_discord(_: str = Depends(require_admin)):
+    cfg = _settings.load()
+    url = cfg.get("discord_webhook_url", "")
+    ok, msg = send_discord(
+        url,
+        "✅ Test teade",
+        "See on testteade Nutikodu seadete lehelt — kui näed seda, siis Discord webhook töötab.",
+    )
+    return {"ok": ok, "message": msg}
+
+
+@app.get("/motion-status")
+def motion_status(_: str = Depends(verify_session)):
+    return {
+        "active_detectors": [str(k) for k in detectors.keys()],
+        "active_cameras": [str(k) for k in cameras.keys()],
+        "hls_running": bool(hls_stream and hls_stream.ready()),
+    }
 
 
 # ── Hosting ──────────────────────────────────────────────────────────────────
