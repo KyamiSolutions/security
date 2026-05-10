@@ -1,6 +1,8 @@
 import asyncio
 import os
+import shutil
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -390,6 +392,60 @@ def motion_status(_: str = Depends(verify_session)):
         "active_detectors": [str(k) for k in detectors.keys()],
         "active_cameras": [str(k) for k in cameras.keys()],
         "hls_running": bool(hls_stream and hls_stream.ready()),
+    }
+
+
+@app.get("/stats")
+def get_stats(_: str = Depends(verify_session)):
+    recs = list_recordings()
+    now = datetime.now()
+    today_start = datetime(now.year, now.month, now.day)
+
+    by_day = []
+    for offset in range(6, -1, -1):
+        day = today_start - timedelta(days=offset)
+        day_end = day + timedelta(days=1)
+        count = sum(1 for r in recs if day.timestamp() <= r["mtime"] < day_end.timestamp())
+        by_day.append({
+            "date": day.strftime("%Y-%m-%d"),
+            "label": day.strftime("%a") if offset > 0 else "Täna",
+            "count": count,
+        })
+
+    by_hour = [{"hour": h, "count": 0} for h in range(24)]
+    today_recs = [r for r in recs if r["mtime"] >= today_start.timestamp()]
+    for r in today_recs:
+        hour = datetime.fromtimestamp(r["mtime"]).hour
+        by_hour[hour]["count"] += 1
+
+    peak_hour = max(by_hour, key=lambda x: x["count"]) if any(h["count"] for h in by_hour) else None
+
+    total_size = sum(r["size"] for r in recs)
+    try:
+        usage = shutil.disk_usage(RECORDINGS_DIR if os.path.isdir(RECORDINGS_DIR) else ".")
+        disk_total = usage.total
+        disk_free = usage.free
+    except OSError:
+        disk_total = 0
+        disk_free = 0
+
+    today_count = len(today_recs)
+    yesterday_start = today_start - timedelta(days=1)
+    yesterday_count = sum(
+        1 for r in recs
+        if yesterday_start.timestamp() <= r["mtime"] < today_start.timestamp()
+    )
+
+    return {
+        "by_day": by_day,
+        "by_hour": by_hour,
+        "today_count": today_count,
+        "yesterday_count": yesterday_count,
+        "peak_hour": peak_hour,
+        "total_recordings": len(recs),
+        "recordings_size_bytes": total_size,
+        "disk_total_bytes": disk_total,
+        "disk_free_bytes": disk_free,
     }
 
 

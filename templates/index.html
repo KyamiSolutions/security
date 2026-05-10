@@ -600,6 +600,80 @@ select.inp { cursor: pointer; }
   .panel[style*="max-width"] { max-width: 100% !important; }
 }
 
+/* ── Stats / charts ── */
+.chart-bars {
+  display: flex; align-items: flex-end; gap: 0.4rem;
+  height: 110px; padding: 0.4rem 0 0.2rem;
+}
+.chart-bar {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0.35rem;
+  position: relative;
+}
+.chart-bar-fill {
+  width: 100%; background: linear-gradient(180deg, var(--blue), rgba(79,110,247,0.5));
+  border-radius: 5px 5px 0 0;
+  min-height: 3px; transition: height 0.3s ease;
+  position: relative;
+}
+.chart-bar.peak .chart-bar-fill { background: linear-gradient(180deg, var(--orange), rgba(249,115,22,0.5)); }
+.chart-bar.zero .chart-bar-fill { background: var(--border); opacity: 0.5; }
+.chart-bar-count {
+  position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+  font-size: 0.68rem; font-weight: 700; color: var(--text);
+  white-space: nowrap;
+}
+.chart-bar-label { font-size: 0.66rem; color: var(--muted); font-weight: 600; }
+
+.hour-grid {
+  display: grid; grid-template-columns: repeat(24, 1fr);
+  gap: 2px; height: 60px; align-items: flex-end;
+  margin-top: 0.5rem;
+}
+.hour-cell {
+  background: var(--border);
+  border-radius: 2px;
+  transition: background 0.15s;
+  min-height: 4px;
+  position: relative;
+}
+.hour-cell[title]:hover { background: var(--blue); }
+.hour-axis {
+  display: grid; grid-template-columns: repeat(24, 1fr);
+  font-size: 0.6rem; color: var(--muted);
+  margin-top: 4px; text-align: center;
+}
+.hour-axis div { white-space: nowrap; }
+
+.disk-bar {
+  height: 10px; background: var(--main-bg); border-radius: 5px;
+  overflow: hidden; margin: 0.7rem 0 0.4rem;
+  border: 1px solid var(--border);
+}
+.disk-bar-fill {
+  height: 100%; background: var(--green);
+  transition: width 0.3s, background 0.3s;
+}
+.disk-bar-fill.warn { background: var(--orange); }
+.disk-bar-fill.crit { background: var(--red); }
+
+.insight {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(79,110,247,0.06);
+  border-radius: 9px; border-left: 3px solid var(--blue);
+  font-size: 0.83rem; color: var(--text);
+}
+.insight.warn { background: rgba(249,115,22,0.08); border-left-color: var(--orange); }
+.insight-emoji { font-size: 1.1rem; flex-shrink: 0; }
+.insight-text strong { font-weight: 700; }
+
+.stat-trend { font-size: 0.7rem; margin-top: 2px; }
+.stat-trend.up { color: var(--red); }
+.stat-trend.down { color: var(--green); }
+.stat-trend.flat { color: var(--muted); }
+
 /* ── Hosting page ── */
 .host-steps { display: grid; gap: 0.7rem; }
 .host-step {
@@ -826,10 +900,62 @@ select.inp { cursor: pointer; }
         </div>
         <div class="stat-card orange">
           <div class="stat-icon">🏃</div>
-          <div>
+          <div style="min-width:0">
             <div class="stat-num" id="stat-motion">0</div>
             <div class="stat-label">Liikumist täna</div>
+            <div class="stat-trend flat" id="stat-trend">vs eile</div>
           </div>
+        </div>
+      </div>
+
+      <!-- Insights -->
+      <div id="dash-insights" style="margin-bottom:1rem;display:flex;flex-direction:column;gap:0.6rem"></div>
+
+      <!-- Charts row -->
+      <div class="two-col" style="margin-bottom:1rem">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">📊 Liikumised — viimased 7 päeva</div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-bars" id="chart-week">
+              <div class="empty" style="margin:0 auto;color:var(--muted);font-size:0.85rem">Laen…</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">⏰ Tänane jaotus tundide kaupa</div>
+          </div>
+          <div class="panel-body">
+            <div class="hour-grid" id="chart-hours"></div>
+            <div class="hour-axis">
+              <div>0</div><div></div><div></div><div>3</div><div></div><div></div>
+              <div>6</div><div></div><div></div><div>9</div><div></div><div></div>
+              <div>12</div><div></div><div></div><div>15</div><div></div><div></div>
+              <div>18</div><div></div><div></div><div>21</div><div></div><div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Storage panel -->
+      <div class="panel" style="margin-bottom:1rem">
+        <div class="panel-head">
+          <div class="panel-title">💾 Salvestusruum</div>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:0.85rem">
+            <div>
+              <strong id="stat-rec-size">–</strong> salvestusi
+              <span style="color:var(--muted)"> · <span id="stat-rec-count">0</span> faili</span>
+            </div>
+            <div style="color:var(--muted);font-size:0.78rem">
+              Kettal vaba: <strong id="stat-disk-free" style="color:var(--text)">–</strong> / <span id="stat-disk-total">–</span>
+            </div>
+          </div>
+          <div class="disk-bar"><div class="disk-bar-fill" id="stat-disk-bar" style="width:0%"></div></div>
+          <div style="font-size:0.72rem;color:var(--muted);text-align:right" id="stat-disk-pct">0% kasutusel</div>
         </div>
       </div>
 
@@ -1724,6 +1850,89 @@ function refreshDashboardDevs() {
 function refreshDashboard() {
   refreshDashboardRecs();
   refreshDashboardDevs();
+  refreshStats();
+}
+
+function _fmtBytes(n) {
+  if (!n) return '0 B';
+  const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return n.toFixed(n < 10 && i > 0 ? 1 : 0) + ' ' + u[i];
+}
+
+async function refreshStats() {
+  try {
+    const r = await fetch('/stats');
+    if (!r.ok) return;
+    const s = await r.json();
+
+    // Trend (today vs yesterday)
+    const trend = document.getElementById('stat-trend');
+    const diff = s.today_count - s.yesterday_count;
+    if (diff > 0) {
+      trend.className = 'stat-trend up';
+      trend.textContent = `↑ +${diff} vs eile`;
+    } else if (diff < 0) {
+      trend.className = 'stat-trend down';
+      trend.textContent = `↓ ${diff} vs eile`;
+    } else {
+      trend.className = 'stat-trend flat';
+      trend.textContent = `= ${s.yesterday_count} eile`;
+    }
+
+    // 7-day bar chart
+    const week = document.getElementById('chart-week');
+    const maxDay = Math.max(1, ...s.by_day.map(d => d.count));
+    const peakDay = s.by_day.reduce((p, d) => d.count > p.count ? d : p, s.by_day[0]);
+    week.innerHTML = s.by_day.map(d => {
+      const pct = (d.count / maxDay) * 100;
+      const isPeak = d.count > 0 && d.count === peakDay.count;
+      const cls = d.count === 0 ? 'zero' : (isPeak ? 'peak' : '');
+      return `<div class="chart-bar ${cls}" title="${d.date}: ${d.count} liikumist">
+        <div class="chart-bar-fill" style="height:${pct}%">
+          ${d.count > 0 ? `<div class="chart-bar-count">${d.count}</div>` : ''}
+        </div>
+        <div class="chart-bar-label">${d.label}</div>
+      </div>`;
+    }).join('');
+
+    // Hour grid
+    const hours = document.getElementById('chart-hours');
+    const maxHour = Math.max(1, ...s.by_hour.map(h => h.count));
+    hours.innerHTML = s.by_hour.map(h => {
+      const pct = h.count > 0 ? Math.max(15, (h.count / maxHour) * 100) : 0;
+      const c = h.count > 0 ? '#4f6ef7' : '#e5e7eb';
+      const op = h.count > 0 ? 0.4 + 0.6 * (h.count / maxHour) : 1;
+      return `<div class="hour-cell" style="height:${pct || 8}%;background:${c};opacity:${op}" title="${String(h.hour).padStart(2,'0')}:00 — ${h.count} liikumist"></div>`;
+    }).join('');
+
+    // Storage
+    document.getElementById('stat-rec-size').textContent = _fmtBytes(s.recordings_size_bytes);
+    document.getElementById('stat-rec-count').textContent = s.total_recordings;
+    document.getElementById('stat-disk-free').textContent = _fmtBytes(s.disk_free_bytes);
+    document.getElementById('stat-disk-total').textContent = _fmtBytes(s.disk_total_bytes);
+    const used = s.disk_total_bytes - s.disk_free_bytes;
+    const usedPct = s.disk_total_bytes > 0 ? (used / s.disk_total_bytes) * 100 : 0;
+    const bar = document.getElementById('stat-disk-bar');
+    bar.style.width = usedPct.toFixed(1) + '%';
+    bar.className = 'disk-bar-fill' + (usedPct > 90 ? ' crit' : usedPct > 75 ? ' warn' : '');
+    document.getElementById('stat-disk-pct').textContent = usedPct.toFixed(1) + '% kasutusel';
+
+    // Insights
+    const ins = document.getElementById('dash-insights');
+    const items = [];
+    if (s.peak_hour && s.peak_hour.count > 0) {
+      const h = String(s.peak_hour.hour).padStart(2, '0');
+      items.push(`<div class="insight"><div class="insight-emoji">🔥</div><div class="insight-text">Tänane aktiivseim tund: <strong>${h}:00</strong> (${s.peak_hour.count} liikumist)</div></div>`);
+    }
+    if (usedPct > 90) {
+      items.push(`<div class="insight warn"><div class="insight-emoji">⚠️</div><div class="insight-text">Ketas <strong>${usedPct.toFixed(0)}%</strong> täis. Vähenda <em>retention</em> päevi Seadetes või kustuta vanu salvestusi.</div></div>`);
+    } else if (s.today_count === 0 && s.yesterday_count > 0) {
+      items.push(`<div class="insight"><div class="insight-emoji">🌙</div><div class="insight-text">Täna pole veel liikumist. (Eile: ${s.yesterday_count})</div></div>`);
+    }
+    ins.innerHTML = items.join('');
+  } catch {}
 }
 
 // ── Camera live setup ────────────────────────────────────────────────────────
