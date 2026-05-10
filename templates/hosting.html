@@ -6,83 +6,282 @@
 <title>Hosting · Nutikodu</title>
 <style>
 :root {
-  --bg: #f4f5f7;
-  --card: #fff;
+  --main-bg: #f4f5f7;
+  --card-bg: #fff;
   --text: #1a1d2e;
   --muted: #6b7280;
   --border: #e5e7eb;
   --blue: #4f6ef7;
   --green: #22c55e;
+  --orange: #f97316;
   --red: #ef4444;
+  --purple: #a855f7;
+  --hero-grad: linear-gradient(135deg, #1a1d2e 0%, #2d2060 60%, #1a1d2e 100%);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg); color: var(--text);
+html, body {
+  background: var(--main-bg); color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: 100vh; padding: 2rem;
+  font-size: 14px; min-height: 100vh;
 }
-.wrap { max-width: 880px; margin: 0 auto; }
-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-h1 { font-size: 1.5rem; }
-a.back { color: var(--blue); text-decoration: none; font-size: 0.9rem; }
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font-family: inherit; }
+
+.hero {
+  background: var(--hero-grad);
+  color: #fff;
+  padding: 1.6rem 1.5rem;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(79,110,247,0.18) 0%, transparent 65%),
+              radial-gradient(ellipse at 80% 20%, rgba(168,85,247,0.12) 0%, transparent 50%);
+}
+.hero-inner { max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.hero h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.4px; }
+.hero p.lead { font-size: 0.9rem; color: rgba(255,255,255,0.72); max-width: 640px; }
+.back-link { color: rgba(255,255,255,0.78); font-size: 0.83rem; }
+.back-link:hover { color: #fff; }
+
+.wrap { max-width: 920px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+
 .card {
-  background: var(--card); border-radius: 12px; padding: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 1.25rem;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.4rem;
+  margin-bottom: 1.1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-.card h2 { font-size: 1.05rem; margin-bottom: 1rem; }
-.row { display: flex; gap: 0.5rem; align-items: stretch; }
-input[type=text] {
-  flex: 1; padding: 0.7rem 0.85rem; border: 1px solid var(--border);
-  border-radius: 8px; font-size: 0.95rem;
+.card h2 {
+  font-size: 1rem; font-weight: 700; color: var(--text);
+  margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.5rem;
 }
-.suffix { display: flex; align-items: center; color: var(--muted); padding: 0 0.5rem; }
-button {
-  padding: 0.7rem 1.2rem; background: var(--blue); color: #fff;
-  border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+.card h2 .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; background: var(--main-bg); color: var(--muted); font-weight: 600; }
+.card .sub { font-size: 0.83rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.5; }
+
+/* Steps */
+.steps { display: grid; gap: 0.8rem; }
+.step {
+  display: flex; gap: 0.85rem; padding: 0.85rem 1rem;
+  background: var(--main-bg); border-radius: 10px;
+  border: 1px solid transparent;
 }
-button:disabled { opacity: 0.5; cursor: wait; }
-button.danger { background: var(--red); padding: 0.4rem 0.8rem; font-size: 0.85rem; }
-.msg { margin-top: 0.85rem; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; display: none; }
-.msg.ok { background: #dcfce7; color: #166534; display: block; }
-.msg.err { background: #fee2e2; color: #991b1b; display: block; }
-.msg code { background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px; font-family: ui-monospace, monospace; }
-table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; }
-.empty { color: var(--muted); text-align: center; padding: 2rem 0; }
-.hint { color: var(--muted); font-size: 0.85rem; margin-top: 0.5rem; }
+.step-num {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--blue); color: #fff; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+}
+.step-body { flex: 1; }
+.step-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 3px; }
+.step-desc { font-size: 0.83rem; color: var(--muted); line-height: 1.5; }
+.step-desc code, .sub code, .hint code {
+  background: rgba(0,0,0,0.06); padding: 1px 6px; border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+}
+
+/* Form */
+.frow { display: flex; gap: 0.7rem; align-items: stretch; flex-wrap: wrap; }
+.fgrp { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 220px; }
+.fgrp label { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.inp {
+  padding: 0.65rem 0.9rem; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--main-bg);
+  color: var(--text); font-size: 0.9rem; outline: none; width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+.inp:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(79,110,247,0.12); background: #fff; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 0.4rem; justify-content: center;
+  padding: 0.65rem 1.2rem; border-radius: 8px;
+  font-size: 0.85rem; font-weight: 600; cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  border: none; white-space: nowrap;
+}
+.btn:disabled { opacity: 0.5; cursor: wait; }
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover:not(:disabled) { opacity: 0.88; }
+.btn-outline { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); }
+.btn-outline:hover:not(:disabled) { background: #f0f1f3; }
+.btn-danger { background: rgba(239,68,68,0.08); color: var(--red); border: 1px solid rgba(239,68,68,0.2); padding: 0.4rem 0.85rem; font-size: 0.78rem; }
+.btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.15); }
+
+.hint { color: var(--muted); font-size: 0.8rem; margin-top: 0.7rem; line-height: 1.5; }
+
+.pmsg { font-size: 0.85rem; padding: 0.7rem 0.95rem; border-radius: 8px; display: none; margin-top: 0.85rem; line-height: 1.5; }
+.pmsg.ok { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); color: #15803d; display: block; }
+.pmsg.err { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #b91c1c; display: block; }
+.pmsg.info { background: rgba(79,110,247,0.07); border: 1px solid rgba(79,110,247,0.2); color: #1e40af; display: block; }
+.pmsg code {
+  background: rgba(0,0,0,0.07); padding: 1px 6px; border-radius: 4px;
+  font-family: ui-monospace, monospace; font-size: 0.92em;
+}
+
+/* Sites table */
+.sites { display: grid; gap: 0.7rem; }
+.site {
+  display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem;
+  background: var(--main-bg); border-radius: 10px;
+  border: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+.site:hover { border-color: var(--border); }
+.site-icon {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 9px;
+  background: rgba(79,110,247,0.1); color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 700;
+}
+.site-body { flex: 1; min-width: 0; }
+.site-name { font-weight: 700; font-size: 0.92rem; word-break: break-all; }
+.site-link { font-size: 0.78rem; color: var(--muted); }
+.site-actions { flex-shrink: 0; }
+.empty { color: var(--muted); text-align: center; padding: 2rem 1rem; font-size: 0.9rem; background: var(--main-bg); border-radius: 10px; }
+
+/* FAQ */
+.faq-item { border-top: 1px solid var(--border); padding: 0.9rem 0; }
+.faq-item:first-child { border-top: none; padding-top: 0; }
+.faq-q { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.4rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.faq-q::after { content: '+'; font-size: 1.2rem; color: var(--muted); transition: transform 0.15s; }
+.faq-item.open .faq-q::after { transform: rotate(45deg); }
+.faq-a { display: none; font-size: 0.85rem; color: var(--muted); line-height: 1.6; padding-top: 0.4rem; }
+.faq-item.open .faq-a { display: block; }
+
+@media (max-width: 700px) {
+  .frow { flex-direction: column; }
+  .btn { width: 100%; }
+  .hero-top { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+}
 </style>
 </head>
 <body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-top">
+      <h1>🌐 Hosting</h1>
+      <a class="back-link" href="/">← Tagasi dashboardi</a>
+    </div>
+    <p class="lead">
+      Loo automaatselt veebimajutus oma domeenile — Cloudflare DNS, tunnel ja Virtualmini virtuaalserver seadistatakse ühe nupuvajutusega.
+    </p>
+  </div>
+</div>
+
 <div class="wrap">
-  <header>
-    <h1>Hosting</h1>
-    <a class="back" href="/">← Tagasi dashboardi</a>
-  </header>
 
   <div class="card">
-    <h2>Lisa uus domeen</h2>
-    <form id="add-form">
-      <div class="row">
-        <input type="text" id="domain" name="domain" placeholder="näiteks: blogi.mrnux.ee või kalle.ee" required autocomplete="off">
-        <button type="submit" id="add-btn">Loo</button>
+    <h2>📋 Kuidas see töötab</h2>
+    <div class="sub">Kolm sammu, ~1-2 minutit ühe domeeni jaoks. Pärast loomist on sait kohe Internetis, oma SSL-i ja FTP-ga.</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Lisa domeen Cloudflare'i (ühekordne)</div>
+          <div class="step-desc">
+            Mine <a href="https://dash.cloudflare.com" target="_blank">Cloudflare</a> → <code>Add Site</code> → sisesta domeen (nt <code>kalle.ee</code>) → vali Free plaan.
+            Cloudflare annab kaks nameserverit. Mine oma domeeni registrari (Elkdata, Namecheap, jne) → asenda <em>Nameservers</em> Cloudflare omadega.
+            Propageerub 5 min — 24 h.
+          </div>
+        </div>
       </div>
-      <p class="hint">
-        Sisesta täisdomeen — kas alamdomeen mrnux.ee all (nt <code>blogi.mrnux.ee</code>) või täiesti oma domeen (nt <code>kalle.ee</code>, <code>www.kalle.ee</code>).
-        Oma domeen peab olema eelnevalt Cloudflare'is lisatud (Add Site) ja registrari nameservers Cloudflare omadeks muudetud.
-        Loob Virtualmini virtuaalserveri + Cloudflare tunneli ja DNS kirje automaatselt. Halduspaneel: <a href="https://panel.mrnux.ee" target="_blank">panel.mrnux.ee</a>.
-      </p>
-      <div id="msg" class="msg"></div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Sisesta domeen all olevasse vormi</div>
+          <div class="step-desc">
+            Kirjuta täisdomeen — <code>blogi.mrnux.ee</code>, <code>kalle.ee</code> või <code>www.kalle.ee</code> — ja vajuta <strong>Loo</strong>.
+            Süsteem teeb taustal: leiab Cloudflare tsooni, loob DNS CNAME tunnelisse, lisab tunneli routele, käivitab Virtualmini virtuaalserveri.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Halda saiti Virtualminis</div>
+          <div class="step-desc">
+            Kuvatakse loodud Virtualmini parool — kirjuta turvalisse kohta üles. Logi sisse aadressil
+            <a href="https://panel.mrnux.ee" target="_blank">panel.mrnux.ee</a> ja halda faile, andmebaase, e-mailid jne.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>➕ Lisa uus domeen</h2>
+    <div class="sub">Sisesta täisdomeen. Vajab et domeen oleks juba <strong>sinu Cloudflare kontol</strong> (vt samm 1).</div>
+    <form id="add-form">
+      <div class="frow">
+        <div class="fgrp" style="flex:3">
+          <label for="domain">Domeen</label>
+          <input class="inp" type="text" id="domain" name="domain" placeholder="näiteks blogi.mrnux.ee või kalle.ee" required autocomplete="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <div class="fgrp" style="flex:0 0 auto; min-width: auto; align-self: flex-end">
+          <button type="submit" class="btn btn-primary" id="add-btn">🚀 Loo virtuaalserver</button>
+        </div>
+      </div>
+      <div id="msg" class="pmsg"></div>
+      <div class="hint">
+        💡 <strong>Näiteks:</strong> kui sa just registreerisid <code>kalle.ee</code> ja muutsid nameservers Cloudflare'is, võib siia kirjutada nii <code>kalle.ee</code> (apex domeen) kui ka <code>www.kalle.ee</code> või suvalise alamdomeeni.
+      </div>
     </form>
   </div>
 
   <div class="card">
-    <h2>Olemasolevad domeenid</h2>
-    <table>
-      <thead><tr><th>Domeen</th><th>URL</th><th></th></tr></thead>
-      <tbody id="sites"><tr><td colspan="3" class="empty">Laen…</td></tr></tbody>
-    </table>
+    <h2>🗂 Olemasolevad domeenid <span class="badge" id="count">0</span></h2>
+    <div class="sites" id="sites">
+      <div class="empty">Laen…</div>
+    </div>
   </div>
+
+  <div class="card">
+    <h2>❓ Korduvad küsimused</h2>
+    <div class="faq-item">
+      <div class="faq-q">Mis juhtub kui ma sisestan domeeni, mille tsoon pole minu Cloudflare kontol?</div>
+      <div class="faq-a">
+        Saad veateate <em>"Cloudflare tsooni ei leitud"</em>. Süsteem ei saa programmiselt teiste kontode tsoone hallata.
+        Lahendus: lisa domeen oma Cloudflare kontosse (Add Site) ja muuda registrari nameservers — siis õnnestub.
+      </div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Saan ma hostida ka kellegi teise domeeni?</div>
+      <div class="faq-a">
+        Jah — tehnikaliselt domeeni omanik ei pea Cloudflare kontot omama. Sina lisad domeeni <strong>oma</strong> Cloudflare'i,
+        omanik vaid muudab oma registraris (Elkdata jms) nameservers Cloudflare omadeks. Pärast seda saad sa selle
+        domeeni siit ka virtuaalserverit luua.
+      </div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Kuidas SSL töötab?</div>
+      <div class="faq-a">
+        SSL'i pakub Cloudflare automaatselt (Flexible SSL). Brauser → Cloudflare HTTPS, Cloudflare → tunnel HTTP.
+        Kui soovid otsast-otsasest TLS-i (HTTPS ka tunneli sees), seadista Virtualmini all Let's Encrypt sertifikaat.
+      </div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Mis juhtub kui kustutan domeeni siit?</div>
+      <div class="faq-a">
+        Kõik korraga: DNS kirje (Cloudflare), tunnel route, Virtualmini virtuaalserver + kõik selle failid ja andmebaasid.
+        Tegevus on <strong>pöördumatu</strong> — varundamise kohustus on sinul.
+      </div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Kuidas vaadata kas DNS on propageerunud?</div>
+      <div class="faq-a">
+        Kui pärast loomist sait ei avane, kontrolli: <code>dig kalle.ee</code> peab tagastama Cloudflare IP'd
+        (104.21.x.x või 172.67.x.x). Kui mitte — registraris pole nameservers veel Cloudflare omadeks vahetatud,
+        või muudatus pole veel propageerunud (kuni 24 h, tavaliselt &lt; 1 h).
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -90,28 +289,44 @@ const $ = (sel) => document.querySelector(sel);
 const msg = $('#msg');
 
 function showMsg(text, type) {
-  msg.className = 'msg ' + type;
+  msg.className = 'pmsg ' + type;
   msg.innerHTML = text;
+}
+function clearMsg() {
+  msg.className = 'pmsg';
+  msg.innerHTML = '';
 }
 
 async function loadSites() {
-  const tbody = $('#sites');
+  const list = $('#sites');
+  const count = $('#count');
   try {
     const r = await fetch('/hosting/sites', { credentials: 'same-origin' });
     if (!r.ok) throw new Error('Laadimine ebaõnnestus');
     const data = await r.json();
+    count.textContent = data.length;
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="3" class="empty">Veel ühtegi domeeni pole loodud.</td></tr>';
+      list.innerHTML = '<div class="empty">Veel ühtegi domeeni pole loodud. Sisesta esimene ülevalpool.</div>';
       return;
     }
-    tbody.innerHTML = data.map(s =>
-      `<tr>
-        <td><strong>${s.hostname}</strong></td>
-        <td><a href="https://${s.hostname}" target="_blank">${s.hostname}</a></td>
-        <td><button class="danger" data-domain="${s.hostname}">Kustuta</button></td>
-      </tr>`).join('');
+    list.innerHTML = data.map(s => {
+      const initial = s.hostname[0].toUpperCase();
+      return `
+        <div class="site">
+          <div class="site-icon">${initial}</div>
+          <div class="site-body">
+            <div class="site-name">${s.hostname}</div>
+            <div class="site-link"><a href="https://${s.hostname}" target="_blank">https://${s.hostname}</a></div>
+          </div>
+          <div class="site-actions">
+            <button class="btn btn-danger" data-domain="${s.hostname}">Kustuta</button>
+          </div>
+        </div>
+      `;
+    }).join('');
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="3" class="empty">Viga: ${e.message}</td></tr>`;
+    list.innerHTML = `<div class="empty" style="color:var(--red)">Viga: ${e.message}</div>`;
+    count.textContent = '–';
   }
 }
 
@@ -121,29 +336,45 @@ $('#add-form').addEventListener('submit', async (e) => {
   const dom = $('#domain').value.trim().toLowerCase();
   if (!dom) return;
   btn.disabled = true;
-  showMsg('Loon… see võib kesta minuti.', 'ok');
+  btn.innerHTML = '⏳ Loon…';
+  showMsg('🛠 Seadistan Cloudflare DNS-i, tunneli ja Virtualmini virtuaalserverit. Võib kesta kuni minuti.', 'info');
   try {
     const fd = new FormData();
     fd.append('domain', dom);
     const r = await fetch('/hosting/sites', { method: 'POST', body: fd, credentials: 'same-origin' });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || 'Tundmatu viga');
-    showMsg(`Loodud: <strong>${data.hostname}</strong><br>Virtualmin parool: <code>${data.password}</code><br>Halduspaneel: <a href="${data.panel}" target="_blank">${data.panel}</a>`, 'ok');
+    showMsg(
+      `✅ <strong>Loodud: ${data.hostname}</strong><br>`
+      + `Virtualmini parool: <code>${data.password}</code> &nbsp; <em>(kirjuta üles, ei saa hiljem näha)</em><br>`
+      + `Halduspaneel: <a href="${data.panel}" target="_blank">${data.panel}</a><br>`
+      + `Sait: <a href="https://${data.hostname}" target="_blank">https://${data.hostname}</a>`,
+      'ok'
+    );
     $('#domain').value = '';
     loadSites();
   } catch (err) {
-    showMsg('Viga: ' + err.message, 'err');
+    showMsg('❌ Viga: ' + err.message, 'err');
   } finally {
     btn.disabled = false;
+    btn.innerHTML = '🚀 Loo virtuaalserver';
   }
 });
 
 document.addEventListener('click', async (e) => {
+  // FAQ toggle
+  const q = e.target.closest('.faq-q');
+  if (q) {
+    q.parentElement.classList.toggle('open');
+    return;
+  }
+  // Delete
   const b = e.target.closest('button[data-domain]');
   if (!b) return;
   const dom = b.dataset.domain;
-  if (!confirm(`Kustutada ${dom}? See eemaldab ka Virtualmini virtuaalserveri ja kõik failid.`)) return;
+  if (!confirm(`Kustutada ${dom}?\n\nSee eemaldab DNS kirje, tunneli route ja Virtualmini virtuaalserveri koos KÕIKIDE failide ja andmebaasidega. Tegevus on pöördumatu.`)) return;
   b.disabled = true;
+  b.textContent = 'Kustutan…';
   try {
     const r = await fetch('/hosting/sites/' + encodeURIComponent(dom), { method: 'DELETE', credentials: 'same-origin' });
     const data = await r.json();
@@ -152,6 +383,7 @@ document.addEventListener('click', async (e) => {
   } catch (err) {
     alert('Viga: ' + err.message);
     b.disabled = false;
+    b.textContent = 'Kustuta';
   }
 });
 
