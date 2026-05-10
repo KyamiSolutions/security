@@ -61,22 +61,25 @@ th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: 
   </header>
 
   <div class="card">
-    <h2>Lisa uus alamdomeen</h2>
+    <h2>Lisa uus domeen</h2>
     <form id="add-form">
       <div class="row">
-        <input type="text" id="sub" name="subdomain" placeholder="näiteks: blogi" required pattern="[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?" autocomplete="off">
-        <span class="suffix">.mrnux.ee</span>
+        <input type="text" id="domain" name="domain" placeholder="näiteks: blogi.mrnux.ee või kalle.ee" required autocomplete="off">
         <button type="submit" id="add-btn">Loo</button>
       </div>
-      <p class="hint">Loob Virtualmin virtuaalserveri + Cloudflare tunneli ja DNS-i automaatselt. Logi sisse aadressil <a href="https://panel.mrnux.ee" target="_blank">panel.mrnux.ee</a>.</p>
+      <p class="hint">
+        Sisesta täisdomeen — kas alamdomeen mrnux.ee all (nt <code>blogi.mrnux.ee</code>) või täiesti oma domeen (nt <code>kalle.ee</code>, <code>www.kalle.ee</code>).
+        Oma domeen peab olema eelnevalt Cloudflare'is lisatud (Add Site) ja registrari nameservers Cloudflare omadeks muudetud.
+        Loob Virtualmini virtuaalserveri + Cloudflare tunneli ja DNS kirje automaatselt. Halduspaneel: <a href="https://panel.mrnux.ee" target="_blank">panel.mrnux.ee</a>.
+      </p>
       <div id="msg" class="msg"></div>
     </form>
   </div>
 
   <div class="card">
-    <h2>Olemasolevad alamdomeenid</h2>
+    <h2>Olemasolevad domeenid</h2>
     <table>
-      <thead><tr><th>Alamdomeen</th><th>URL</th><th></th></tr></thead>
+      <thead><tr><th>Domeen</th><th>URL</th><th></th></tr></thead>
       <tbody id="sites"><tr><td colspan="3" class="empty">Laen…</td></tr></tbody>
     </table>
   </div>
@@ -98,14 +101,14 @@ async function loadSites() {
     if (!r.ok) throw new Error('Laadimine ebaõnnestus');
     const data = await r.json();
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="3" class="empty">Veel ühtegi alamdomeeni pole loodud.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="3" class="empty">Veel ühtegi domeeni pole loodud.</td></tr>';
       return;
     }
     tbody.innerHTML = data.map(s =>
       `<tr>
-        <td><strong>${s.subdomain}</strong></td>
+        <td><strong>${s.hostname}</strong></td>
         <td><a href="https://${s.hostname}" target="_blank">${s.hostname}</a></td>
-        <td><button class="danger" data-sub="${s.subdomain}">Kustuta</button></td>
+        <td><button class="danger" data-domain="${s.hostname}">Kustuta</button></td>
       </tr>`).join('');
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="3" class="empty">Viga: ${e.message}</td></tr>`;
@@ -115,18 +118,18 @@ async function loadSites() {
 $('#add-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = $('#add-btn');
-  const sub = $('#sub').value.trim().toLowerCase();
-  if (!sub) return;
+  const dom = $('#domain').value.trim().toLowerCase();
+  if (!dom) return;
   btn.disabled = true;
   showMsg('Loon… see võib kesta minuti.', 'ok');
   try {
     const fd = new FormData();
-    fd.append('subdomain', sub);
+    fd.append('domain', dom);
     const r = await fetch('/hosting/sites', { method: 'POST', body: fd, credentials: 'same-origin' });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || 'Tundmatu viga');
     showMsg(`Loodud: <strong>${data.hostname}</strong><br>Virtualmin parool: <code>${data.password}</code><br>Halduspaneel: <a href="${data.panel}" target="_blank">${data.panel}</a>`, 'ok');
-    $('#sub').value = '';
+    $('#domain').value = '';
     loadSites();
   } catch (err) {
     showMsg('Viga: ' + err.message, 'err');
@@ -136,13 +139,13 @@ $('#add-form').addEventListener('submit', async (e) => {
 });
 
 document.addEventListener('click', async (e) => {
-  const b = e.target.closest('button[data-sub]');
+  const b = e.target.closest('button[data-domain]');
   if (!b) return;
-  const sub = b.dataset.sub;
-  if (!confirm(`Kustutada ${sub}.mrnux.ee? See eemaldab ka Virtualmini virtuaalserveri ja kõik failid.`)) return;
+  const dom = b.dataset.domain;
+  if (!confirm(`Kustutada ${dom}? See eemaldab ka Virtualmini virtuaalserveri ja kõik failid.`)) return;
   b.disabled = true;
   try {
-    const r = await fetch('/hosting/sites/' + encodeURIComponent(sub), { method: 'DELETE', credentials: 'same-origin' });
+    const r = await fetch('/hosting/sites/' + encodeURIComponent(dom), { method: 'DELETE', credentials: 'same-origin' });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || 'Tundmatu viga');
     loadSites();

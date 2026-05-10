@@ -7,18 +7,19 @@ import subprocess
 import httpx
 
 CF_API = "https://api.cloudflare.com/client/v4"
-DOMAIN = os.environ.get("HOSTING_DOMAIN", "mrnux.ee")
+DEFAULT_DOMAIN = os.environ.get("HOSTING_DOMAIN", "mrnux.ee")
 LOCAL_HTTP = os.environ.get("HOSTING_LOCAL_HTTP", "http://localhost:80")
+
+_RESERVED_HOSTS = {"www.mrnux.ee", "panel.mrnux.ee", "ssh.mrnux.ee", "api.mrnux.ee", "mrnux.ee"}
 
 
 def _cf():
     token = os.environ.get("CF_API_TOKEN", "")
-    zone = os.environ.get("CF_ZONE_ID", "")
     account = os.environ.get("CF_ACCOUNT_ID", "")
     tunnel = os.environ.get("CF_TUNNEL_ID", "")
-    if not all([token, zone, account, tunnel]):
-        raise RuntimeError("Cloudflare credentials puuduvad .env failis")
-    return token, zone, account, tunnel
+    if not all([token, account, tunnel]):
+        raise RuntimeError("Cloudflare credentials puuduvad .env failis (CF_API_TOKEN, CF_ACCOUNT_ID, CF_TUNNEL_ID)")
+    return token, account, tunnel
 
 
 def _request(method: str, path: str, json: dict | None = None) -> dict:
@@ -39,17 +40,36 @@ def _gen_password(length: int = 16) -> str:
     return "".join(secrets.choice(chars) for _ in range(length))
 
 
-def _valid_subdomain(name: str) -> bool:
-    return bool(re.fullmatch(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?", name))
+def _valid_hostname(name: str) -> bool:
+    if not name or len(name) > 253:
+        return False
+    label = r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?"
+    return bool(re.fullmatch(rf"{label}(\.{label})+", name))
+
+
+def _find_zone_id(hostname: str) -> str:
+    """Otsib Cloudflare tsooni mis kõige paremini sobib hostnamele.
+    Nt 'blog.kalle.ee' jaoks leiab 'kalle.ee' tsooni kui see eksisteerib."""
+    parts = hostname.split(".")
+    candidates = [".".join(parts[i:]) for i in range(len(parts) - 1)]
+    for candidate in candidates:
+        data = _request("GET", f"/zones?name={candidate}")
+        results = data.get("result") or []
+        if results:
+            return results[0]["id"]
+    raise RuntimeError(
+        f"Cloudflare tsooni ei leitud domeenile '{hostname}'. "
+        f"Lisa domeen Cloudflare'is (Add Site) ja muuda registrari nameservers Cloudflare omadeks enne uuesti proovimist."
+    )
 
 
 def _tunnel_config() -> dict:
-    _, _, account, tunnel = _cf()
+    _, account, tunnel = _cf()
     return _request("GET", f"/accounts/{account}/cfd_tunnel/{tunnel}/configurations")
 
 
 def _set_tunnel_config(config: dict) -> None:
-    _, _, account, tunnel = _cf()
+    _, account, tunnel = _cf()
     _request(
         "PUT",
         f"/accounts/{account}/cfd_tunnel/{tunnel}/configurations",
@@ -86,27 +106,25 @@ def _tunnel_remove_hostname(hostname: str) -> None:
     _set_tunnel_config(config)
 
 
-def _dns_add_cname(name: str) -> str:
-    _, zone, _, tunnel = _cf()
+def _dns_add_cname(zone_id: str, name: str) -> str:
+    _, _, tunnel = _cf()
     target = f"{tunnel}.cfargotunnel.com"
     data = _request(
         "POST",
-        f"/zones/{zone}/dns_records",
+        f"/zones/{zone_id}/dns_records",
         json={"type": "CNAME", "name": name, "content": target, "proxied": True},
     )
     return (data.get("result") or {}).get("id", "")
 
 
-def _dns_find_record(name: str) -> str | None:
-    _, zone, _, _ = _cf()
-    data = _request("GET", f"/zones/{zone}/dns_records?name={name}")
+def _dns_find_record(zone_id: str, name: str) -> str | None:
+    data = _request("GET", f"/zones/{zone_id}/dns_records?name={name}")
     results = data.get("result") or []
     return results[0]["id"] if results else None
 
 
-def _dns_delete(record_id: str) -> None:
-    _, zone, _, _ = _cf()
-    _request("DELETE", f"/zones/{zone}/dns_records/{record_id}")
+def _dns_delete(zone_id: str, record_id: str) -> None:
+    _request("DELETE", f"/zones/{zone_id}/dns_records/{record_id}")
 
 
 def _virtualmin(args: list[str]) -> str:
@@ -156,26 +174,27 @@ def list_sites() -> list[dict]:
     sites = []
     for rule in ingress:
         host = rule.get("hostname")
-        if not host or host == DOMAIN:
+        if not host or host in _RESERVED_HOSTS:
             continue
-        if not host.endswith(f".{DOMAIN}"):
-            continue
-        sub = host[: -len(DOMAIN) - 1]
-        sites.append({"subdomain": sub, "hostname": host, "service": rule.get("service", "")})
+        sites.append({"hostname": host, "service": rule.get("service", "")})
     return sites
 
 
-def add_site(subdomain: str) -> dict:
-    sub = subdomain.strip().lower()
-    if not _valid_subdomain(sub):
-        raise RuntimeError("Vigane alamdomeen — ainult tähed, numbrid ja sidekriips")
-    if sub in {"www", "panel", "ssh", "api"}:
-        raise RuntimeError(f"Alamdomeen '{sub}' on reserveeritud")
-    full = f"{sub}.{DOMAIN}"
+def add_site(domain: str) -> dict:
+    full = domain.strip().lower().rstrip(".")
+    if not _valid_hostname(full):
+        raise RuntimeError("Vigane domeen — peab olema kujul nagu 'näide.ee' või 'blog.näide.ee'")
+    if full in _RESERVED_HOSTS:
+        raise RuntimeError(f"Domeen '{full}' on reserveeritud süsteemile")
+
+    zone_id = _find_zone_id(full)
+
     if _vmin_exists(full):
         raise RuntimeError(f"Domeen {full} on Virtualminis juba olemas")
+
     password = _gen_password()
     _vmin_create(full, password)
+
     try:
         _tunnel_add_hostname(full, LOCAL_HTTP)
     except Exception as e:
@@ -184,8 +203,9 @@ def add_site(subdomain: str) -> dict:
         except Exception:
             pass
         raise RuntimeError(f"Tunneli seadistamine ebaõnnestus: {e}")
+
     try:
-        _dns_add_cname(full)
+        _dns_add_cname(zone_id, full)
     except Exception as e:
         try:
             _tunnel_remove_hostname(full)
@@ -196,17 +216,24 @@ def add_site(subdomain: str) -> dict:
         except Exception:
             pass
         raise RuntimeError(f"DNS kirje loomine ebaõnnestus: {e}")
-    return {"hostname": full, "password": password, "panel": f"https://panel.{DOMAIN}"}
+
+    return {"hostname": full, "password": password, "panel": f"https://panel.{DEFAULT_DOMAIN}"}
 
 
-def remove_site(subdomain: str) -> None:
-    sub = subdomain.strip().lower()
-    if not _valid_subdomain(sub):
-        raise RuntimeError("Vigane alamdomeen")
-    full = f"{sub}.{DOMAIN}"
-    rec_id = _dns_find_record(full)
-    if rec_id:
-        _dns_delete(rec_id)
+def remove_site(domain: str) -> None:
+    full = domain.strip().lower().rstrip(".")
+    if not _valid_hostname(full):
+        raise RuntimeError("Vigane domeen")
+
+    try:
+        zone_id = _find_zone_id(full)
+        rec_id = _dns_find_record(zone_id, full)
+        if rec_id:
+            _dns_delete(zone_id, rec_id)
+    except RuntimeError:
+        pass
+
     _tunnel_remove_hostname(full)
+
     if _vmin_exists(full):
         _vmin_delete(full)

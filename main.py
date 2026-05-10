@@ -416,17 +416,29 @@ def hosting_list(_: str = Depends(require_admin)):
 
 
 @app.post("/hosting/sites")
-def hosting_create(subdomain: str = Form(...), _: str = Depends(require_admin)):
+def hosting_create(
+    domain: str = Form(None),
+    subdomain: str = Form(None),
+    _: str = Depends(require_admin),
+):
+    target = domain or subdomain
+    if not target:
+        raise HTTPException(400, "Domeen on kohustuslik")
+    if domain is None and subdomain is not None and "." not in subdomain:
+        target = f"{subdomain}.{hosting.DEFAULT_DOMAIN}"
     try:
-        return hosting.add_site(subdomain)
+        return hosting.add_site(target)
     except Exception as e:
         raise HTTPException(400, str(e))
 
 
-@app.delete("/hosting/sites/{subdomain}")
-def hosting_delete(subdomain: str, _: str = Depends(require_admin)):
+@app.delete("/hosting/sites/{domain:path}")
+def hosting_delete(domain: str, _: str = Depends(require_admin)):
+    target = domain
+    if "." not in target:
+        target = f"{target}.{hosting.DEFAULT_DOMAIN}"
     try:
-        hosting.remove_site(subdomain)
+        hosting.remove_site(target)
         return {"ok": True}
     except Exception as e:
         raise HTTPException(400, str(e))
