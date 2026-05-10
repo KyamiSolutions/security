@@ -119,7 +119,7 @@ def _virtualmin(args: list[str]) -> str:
 
 
 def _vmin_create(domain: str, password: str) -> None:
-    _virtualmin([
+    args = [
         "create-domain",
         "--domain", domain,
         "--pass", password,
@@ -128,7 +128,11 @@ def _vmin_create(domain: str, password: str) -> None:
         "--web",
         "--mysql",
         "--limits-from-plan",
-    ])
+    ]
+    ip = os.environ.get("HOSTING_DEFAULT_IP", "").strip()
+    if ip:
+        args += ["--ip", ip]
+    _virtualmin(args)
 
 
 def _vmin_delete(domain: str) -> None:
