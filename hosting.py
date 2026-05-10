@@ -131,7 +131,7 @@ def _vmin_create(domain: str, password: str) -> None:
     ]
     ip = os.environ.get("HOSTING_DEFAULT_IP", "").strip()
     if ip:
-        args += ["--ip", ip]
+        args += ["--shared-ip", ip]
     _virtualmin(args)
 
 
