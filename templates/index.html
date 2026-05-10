@@ -600,6 +600,87 @@ select.inp { cursor: pointer; }
   .panel[style*="max-width"] { max-width: 100% !important; }
 }
 
+/* ── Recordings extras ── */
+.rec-thumb {
+  width: 100%; aspect-ratio: 16/9; background: var(--main-bg);
+  border-radius: 8px; overflow: hidden; margin-bottom: 0.5rem;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 0.72rem; cursor: pointer;
+  position: relative;
+}
+.rec-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rec-thumb::after {
+  content: '▶'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.25); color: #fff; font-size: 1.5rem;
+  opacity: 0; transition: opacity 0.15s;
+}
+.rec-thumb:hover::after { opacity: 1; }
+
+.rec-filters { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.rec-filter-btn {
+  padding: 0.4rem 0.85rem; border-radius: 999px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  color: var(--muted); font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.rec-filter-btn:hover { background: var(--main-bg); }
+.rec-filter-btn.on { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+.cal-wrap { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+.cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.7rem; font-weight: 700; font-size: 0.9rem; }
+.cal-nav { background: none; border: none; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 6px; color: var(--muted); font-size: 1rem; }
+.cal-nav:hover { background: var(--main-bg); color: var(--text); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dow { font-size: 0.65rem; color: var(--muted); text-align: center; padding: 0.3rem 0; font-weight: 700; text-transform: uppercase; }
+.cal-day {
+  aspect-ratio: 1; border-radius: 7px; background: var(--main-bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 0.78rem; color: var(--muted); cursor: pointer;
+  position: relative; transition: background 0.15s;
+}
+.cal-day:hover:not(.empty) { background: rgba(79,110,247,0.12); color: var(--text); }
+.cal-day.empty { background: transparent; cursor: default; }
+.cal-day.today { color: var(--blue); font-weight: 800; box-shadow: inset 0 0 0 2px var(--blue); }
+.cal-day.has { background: rgba(79,110,247,0.1); color: var(--text); font-weight: 700; }
+.cal-day.has.heavy { background: var(--blue); color: #fff; }
+.cal-day.selected { background: var(--orange) !important; color: #fff !important; }
+.cal-dot { position: absolute; bottom: 4px; font-size: 0.55rem; }
+
+/* ── System / health widgets ── */
+.health-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.6rem;
+}
+.health-cell {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.7rem 0.85rem; background: var(--main-bg);
+  border-radius: 9px; border: 1px solid var(--border);
+}
+.health-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.5);
+  flex-shrink: 0;
+}
+.health-dot.off { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.5); animation: none; }
+.health-dot.warn { background: var(--orange); box-shadow: 0 0 6px rgba(249,115,22,0.5); }
+.health-name { font-size: 0.85rem; font-weight: 600; flex: 1; }
+.health-state { font-size: 0.72rem; color: var(--muted); }
+.health-state.up { color: var(--green); font-weight: 700; }
+.health-state.down { color: var(--red); font-weight: 700; }
+
+.sys-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.7rem;
+}
+.sys-cell { background: var(--main-bg); border-radius: 10px; padding: 0.85rem 1rem; border: 1px solid var(--border); }
+.sys-label { font-size: 0.7rem; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 0.3px; }
+.sys-value { font-size: 1.15rem; font-weight: 800; margin-top: 4px; }
+.sys-bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 0.5rem; overflow: hidden; }
+.sys-bar-fill { height: 100%; background: var(--blue); transition: width 0.3s, background 0.3s; }
+.sys-bar-fill.warn { background: var(--orange); }
+.sys-bar-fill.crit { background: var(--red); }
+
 /* ── Stats / charts ── */
 .chart-bars {
   display: flex; align-items: flex-end; gap: 0.4rem;
@@ -959,6 +1040,43 @@ select.inp { cursor: pointer; }
         </div>
       </div>
 
+      <!-- System + Health row -->
+      <div class="two-col" style="margin-bottom:1rem">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">🖥 Süsteem</div>
+          </div>
+          <div class="panel-body">
+            <div class="sys-grid">
+              <div class="sys-cell">
+                <div class="sys-label">Uptime</div>
+                <div class="sys-value" id="sys-uptime">–</div>
+              </div>
+              <div class="sys-cell">
+                <div class="sys-label">CPU</div>
+                <div class="sys-value" id="sys-cpu">–</div>
+                <div class="sys-bar"><div class="sys-bar-fill" id="sys-cpu-bar" style="width:0%"></div></div>
+              </div>
+              <div class="sys-cell">
+                <div class="sys-label">RAM</div>
+                <div class="sys-value" id="sys-ram">–</div>
+                <div class="sys-bar"><div class="sys-bar-fill" id="sys-ram-bar" style="width:0%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">📡 Teenuste tervis</div>
+          </div>
+          <div class="panel-body">
+            <div class="health-grid" id="dash-health">
+              <div class="health-cell"><div class="health-dot off"></div><div class="health-name">Laen…</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Two panels -->
       <div class="two-col">
         <div class="panel">
@@ -1043,6 +1161,29 @@ select.inp { cursor: pointer; }
           <div class="page-sub" id="rec-count">Laen...</div>
         </div>
       </div>
+
+      <div class="cal-wrap">
+        <div class="cal-head">
+          <button class="cal-nav" onclick="calMove(-1)">‹</button>
+          <div id="cal-title">—</div>
+          <button class="cal-nav" onclick="calMove(1)">›</button>
+        </div>
+        <div class="cal-grid" id="cal-dow">
+          <div class="cal-dow">E</div><div class="cal-dow">T</div><div class="cal-dow">K</div>
+          <div class="cal-dow">N</div><div class="cal-dow">R</div><div class="cal-dow">L</div><div class="cal-dow">P</div>
+        </div>
+        <div class="cal-grid" id="cal-days"></div>
+      </div>
+
+      <div class="rec-filters" id="rec-filters">
+        <button class="rec-filter-btn on" data-filter="all" onclick="setRecFilter('all')">Kõik</button>
+        <button class="rec-filter-btn" data-filter="today" onclick="setRecFilter('today')">Täna</button>
+        <button class="rec-filter-btn" data-filter="yesterday" onclick="setRecFilter('yesterday')">Eile</button>
+        <button class="rec-filter-btn" data-filter="7days" onclick="setRecFilter('7days')">7 päeva</button>
+        <button class="rec-filter-btn" data-filter="30days" onclick="setRecFilter('30days')">30 päeva</button>
+        <button class="rec-filter-btn" id="rec-filter-day" data-filter="day" onclick="setRecFilter('all')" style="display:none"></button>
+      </div>
+
       <div class="rec-grid" id="rec-grid"></div>
     </div>
 
@@ -1570,44 +1711,159 @@ async function doSnapshot() {
 
 // ── Recordings ───────────────────────────────────────────────────────────────
 
+let recFilter = 'all';
+let recSelectedDay = null; // ISO 'YYYY-MM-DD' or null
+let calMonthOffset = 0;
+
 async function loadRecordings() {
   const res = await fetch('/recordings');
   if (!res.ok) return;
   recData = await res.json();
   const count = recData.length;
-  document.getElementById('rec-count').textContent = count ? count + ' salvestust' : 'Ühtegi salvestust pole veel';
   ['sbadge', 'mbadge'].forEach(id => {
     const el = document.getElementById(id);
     el.textContent = count; el.style.display = count ? 'inline' : 'none';
   });
   document.getElementById('stat-recs').textContent = count;
 
-  // Count today's motion
   const today = new Date(); today.setHours(0,0,0,0);
   const todayTs = today.getTime() / 1000;
   const todayCount = recData.filter(r => r.mtime >= todayTs).length;
   document.getElementById('stat-motion').textContent = todayCount;
 
+  renderRecCalendar();
+  renderRecGrid();
+  refreshDashboardRecs();
+}
+
+function _filterRecs() {
+  if (recSelectedDay) {
+    const start = new Date(recSelectedDay + 'T00:00:00').getTime() / 1000;
+    const end = start + 86400;
+    return recData.filter(r => r.mtime >= start && r.mtime < end);
+  }
+  if (recFilter === 'all') return recData;
+  const now = new Date();
+  let from;
+  if (recFilter === 'today') {
+    from = new Date(now); from.setHours(0,0,0,0);
+    return recData.filter(r => r.mtime * 1000 >= from.getTime());
+  }
+  if (recFilter === 'yesterday') {
+    const start = new Date(now); start.setHours(0,0,0,0); start.setDate(start.getDate() - 1);
+    const end = new Date(start); end.setDate(end.getDate() + 1);
+    return recData.filter(r => r.mtime * 1000 >= start.getTime() && r.mtime * 1000 < end.getTime());
+  }
+  if (recFilter === '7days') {
+    from = Date.now() - 7 * 86400000;
+    return recData.filter(r => r.mtime * 1000 >= from);
+  }
+  if (recFilter === '30days') {
+    from = Date.now() - 30 * 86400000;
+    return recData.filter(r => r.mtime * 1000 >= from);
+  }
+  return recData;
+}
+
+function setRecFilter(f) {
+  recFilter = f;
+  recSelectedDay = null;
+  document.querySelectorAll('.rec-filter-btn').forEach(b => {
+    b.classList.toggle('on', b.dataset.filter === f);
+  });
+  document.getElementById('rec-filter-day').style.display = 'none';
+  document.querySelectorAll('.cal-day.selected').forEach(d => d.classList.remove('selected'));
+  renderRecGrid();
+}
+
+function selectCalDay(iso) {
+  recSelectedDay = recSelectedDay === iso ? null : iso;
+  document.querySelectorAll('.cal-day').forEach(d => {
+    d.classList.toggle('selected', recSelectedDay && d.dataset.iso === recSelectedDay);
+  });
+  document.querySelectorAll('.rec-filter-btn').forEach(b => b.classList.remove('on'));
+  const dayBtn = document.getElementById('rec-filter-day');
+  if (recSelectedDay) {
+    dayBtn.textContent = '📅 ' + recSelectedDay;
+    dayBtn.style.display = '';
+    dayBtn.classList.add('on');
+  } else {
+    dayBtn.style.display = 'none';
+    document.querySelector('.rec-filter-btn[data-filter="all"]').classList.add('on');
+    recFilter = 'all';
+  }
+  renderRecGrid();
+}
+
+function renderRecGrid() {
   const grid = document.getElementById('rec-grid');
-  if (!count) {
-    grid.innerHTML = '<div class="empty">Liikumisest salvestusi pole veel tekkinud.</div>';
+  const filtered = _filterRecs();
+  document.getElementById('rec-count').textContent =
+    filtered.length ? filtered.length + ' salvestust' :
+    (recData.length ? 'Sellele filtrile vastavaid pole' : 'Ühtegi salvestust pole veel');
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty">' +
+      (recData.length ? 'Sellele filtrile vastavaid salvestusi pole.' : 'Liikumisest salvestusi pole veel tekkinud.') + '</div>';
     return;
   }
-  grid.innerHTML = recData.map(r => {
+  grid.innerHTML = filtered.map(r => {
     const d = new Date(r.mtime * 1000).toLocaleString('et-EE');
     const mb = (r.size / 1048576).toFixed(1);
+    const safe = encodeURIComponent(r.filename);
     return `<div class="rec-card">
-      <div class="rec-name">🎬 ${r.filename}</div>
+      <div class="rec-thumb" onclick="playRec('${r.filename}')">
+        <img loading="lazy" src="/recordings/${safe}/thumb" onerror="this.style.display='none';this.parentElement.textContent='🎬'">
+      </div>
+      <div class="rec-name">${r.filename}</div>
       <div class="rec-meta">${d} &middot; ${mb} MB</div>
       <div class="rec-actions">
         <button class="btn btn-primary" style="font-size:0.78rem" onclick="playRec('${r.filename}')">▶ Vaata</button>
-        <a class="btn btn-outline" style="font-size:0.78rem" href="/recordings/${encodeURIComponent(r.filename)}" download>⬇ Lae alla</a>
+        <a class="btn btn-outline" style="font-size:0.78rem" href="/recordings/${safe}" download>⬇ Lae alla</a>
         <button class="btn btn-danger" style="font-size:0.78rem" onclick="delRec('${r.filename}')">🗑 Kustuta</button>
       </div>
     </div>`;
   }).join('');
+}
 
-  refreshDashboardRecs();
+function calMove(delta) {
+  calMonthOffset += delta;
+  renderRecCalendar();
+}
+
+function renderRecCalendar() {
+  const now = new Date();
+  const view = new Date(now.getFullYear(), now.getMonth() + calMonthOffset, 1);
+  const monthNames = ['Jaanuar','Veebruar','Märts','Aprill','Mai','Juuni','Juuli','August','September','Oktoober','November','Detsember'];
+  document.getElementById('cal-title').textContent = monthNames[view.getMonth()] + ' ' + view.getFullYear();
+
+  // Counts per day in this month
+  const counts = {};
+  recData.forEach(r => {
+    const d = new Date(r.mtime * 1000);
+    if (d.getFullYear() === view.getFullYear() && d.getMonth() === view.getMonth()) {
+      const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      counts[iso] = (counts[iso] || 0) + 1;
+    }
+  });
+  const maxCount = Math.max(1, ...Object.values(counts));
+
+  const firstWeekday = (view.getDay() + 6) % 7; // Mon=0
+  const daysInMonth = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+  const todayIso = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+  let html = '';
+  for (let i = 0; i < firstWeekday; i++) html += '<div class="cal-day empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = view.getFullYear() + '-' + String(view.getMonth()+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const c = counts[iso] || 0;
+    const cls = ['cal-day'];
+    if (iso === todayIso) cls.push('today');
+    if (c > 0) cls.push('has');
+    if (c >= maxCount * 0.6) cls.push('heavy');
+    if (recSelectedDay === iso) cls.push('selected');
+    html += `<div class="${cls.join(' ')}" data-iso="${iso}" ${c ? `onclick="selectCalDay('${iso}')"` : ''}>${d}${c ? `<div class="cal-dot">${c}</div>` : ''}</div>`;
+  }
+  document.getElementById('cal-days').innerHTML = html;
 }
 
 async function delRec(fn) {
@@ -1918,6 +2174,50 @@ async function refreshStats() {
     bar.style.width = usedPct.toFixed(1) + '%';
     bar.className = 'disk-bar-fill' + (usedPct > 90 ? ' crit' : usedPct > 75 ? ' warn' : '');
     document.getElementById('stat-disk-pct').textContent = usedPct.toFixed(1) + '% kasutusel';
+
+    // System
+    if (s.system) {
+      const sec = s.system.uptime_seconds;
+      const days = Math.floor(sec / 86400);
+      const hours = Math.floor((sec % 86400) / 3600);
+      const mins = Math.floor((sec % 3600) / 60);
+      let up = '';
+      if (days > 0) up = `${days}p ${hours}h`;
+      else if (hours > 0) up = `${hours}h ${mins}min`;
+      else up = `${mins} min`;
+      document.getElementById('sys-uptime').textContent = up;
+
+      const cpu = s.system.cpu_percent;
+      document.getElementById('sys-cpu').textContent = cpu.toFixed(0) + '%';
+      const cpuBar = document.getElementById('sys-cpu-bar');
+      cpuBar.style.width = cpu + '%';
+      cpuBar.className = 'sys-bar-fill' + (cpu > 90 ? ' crit' : cpu > 70 ? ' warn' : '');
+
+      const ramTotal = s.system.ram_total_bytes;
+      const ramUsed = s.system.ram_used_bytes;
+      const ramPct = ramTotal > 0 ? (ramUsed / ramTotal) * 100 : 0;
+      document.getElementById('sys-ram').textContent = _fmtBytes(ramUsed) + ' / ' + _fmtBytes(ramTotal);
+      const ramBar = document.getElementById('sys-ram-bar');
+      ramBar.style.width = ramPct + '%';
+      ramBar.className = 'sys-bar-fill' + (ramPct > 90 ? ' crit' : ramPct > 75 ? ' warn' : '');
+    }
+
+    // Health
+    if (s.health) {
+      const items = [
+        ['📹', 'Kaamera', s.health.camera],
+        ['🏃', 'Motion', s.health.motion],
+        ['📺', 'HLS stream', s.health.hls],
+        ['🔌', 'Cloudflare tunnel', s.health.tunnel],
+      ];
+      document.getElementById('dash-health').innerHTML = items.map(([emoji, name, ok]) =>
+        `<div class="health-cell">
+          <div class="health-dot ${ok ? '' : 'off'}"></div>
+          <div class="health-name">${emoji} ${name}</div>
+          <div class="health-state ${ok ? 'up' : 'down'}">${ok ? 'OK' : 'OFF'}</div>
+        </div>`
+      ).join('');
+    }
 
     // Insights
     const ins = document.getElementById('dash-insights');

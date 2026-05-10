@@ -1,6 +1,8 @@
 import asyncio
 import os
 import shutil
+import subprocess
+import time as _time
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -26,6 +28,65 @@ import hosting
 cameras: dict[str | int, Camera] = {}
 detectors: dict[str | int, MotionDetector] = {}
 hls_stream: HLSStream | None = None
+
+_cpu_sample: tuple[float, float] | None = None  # (idle, total) viimasest /proc/stat lugemisest
+
+
+def _read_uptime_seconds() -> int:
+    try:
+        with open("/proc/uptime") as f:
+            return int(float(f.read().split()[0]))
+    except OSError:
+        return 0
+
+
+def _read_meminfo() -> dict:
+    try:
+        with open("/proc/meminfo") as f:
+            data = {}
+            for line in f:
+                key, _, rest = line.partition(":")
+                rest = rest.strip().split()
+                if rest:
+                    data[key] = int(rest[0]) * 1024  # kB → B
+            total = data.get("MemTotal", 0)
+            avail = data.get("MemAvailable", data.get("MemFree", 0))
+            return {"total": total, "used": total - avail, "available": avail}
+    except OSError:
+        return {"total": 0, "used": 0, "available": 0}
+
+
+def _read_cpu_percent() -> float:
+    """Tagastab CPU kasutuse % alates eelmisest kutsest. Esimene kutse on 0."""
+    global _cpu_sample
+    try:
+        with open("/proc/stat") as f:
+            line = f.readline()
+        parts = [int(x) for x in line.split()[1:]]
+        idle = parts[3] + (parts[4] if len(parts) > 4 else 0)
+        total = sum(parts)
+        prev = _cpu_sample
+        _cpu_sample = (idle, total)
+        if prev is None:
+            return 0.0
+        d_idle = idle - prev[0]
+        d_total = total - prev[1]
+        if d_total <= 0:
+            return 0.0
+        return max(0.0, min(100.0, (1 - d_idle / d_total) * 100))
+    except OSError:
+        return 0.0
+
+
+def _service_active(name: str) -> bool:
+    try:
+        r = subprocess.run(
+            ["systemctl", "is-active", "--quiet", name],
+            timeout=3,
+        )
+        return r.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
 
 
 def _default_source() -> str | int | None:
@@ -271,6 +332,33 @@ def download_recording(filename: str, _: str = Depends(verify_session)):
     return FileResponse(path, media_type="video/mp4", filename=filename)
 
 
+_THUMBS_DIR = os.path.join(RECORDINGS_DIR, ".thumbs")
+
+
+@app.get("/recordings/{filename}/thumb")
+def recording_thumb(filename: str, _: str = Depends(verify_session)):
+    if not filename.endswith(".mp4") or "/" in filename or ".." in filename:
+        raise HTTPException(400, "Vigane failinimi")
+    src = os.path.join(RECORDINGS_DIR, filename)
+    if not os.path.isfile(src):
+        raise HTTPException(404, "Fail ei leitud")
+    os.makedirs(_THUMBS_DIR, exist_ok=True)
+    thumb = os.path.join(_THUMBS_DIR, filename[:-4] + ".jpg")
+    if not os.path.isfile(thumb) or os.path.getmtime(thumb) < os.path.getmtime(src):
+        try:
+            subprocess.run(
+                ["ffmpeg", "-y", "-ss", "1", "-i", src,
+                 "-frames:v", "1", "-vf", "scale=320:-1", "-q:v", "5", thumb],
+                capture_output=True, timeout=15,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            raise HTTPException(500, "Thumbnail genereerimine ebaõnnestus")
+    if not os.path.isfile(thumb):
+        raise HTTPException(500, "Thumbnail puudub")
+    return FileResponse(thumb, media_type="image/jpeg",
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.delete("/recordings/{filename}")
 def delete_recording(filename: str, _: str = Depends(require_admin)):
     path = os.path.join(RECORDINGS_DIR, filename)
@@ -436,6 +524,17 @@ def get_stats(_: str = Depends(verify_session)):
         if yesterday_start.timestamp() <= r["mtime"] < today_start.timestamp()
     )
 
+    mem = _read_meminfo()
+    cpu_pct = _read_cpu_percent()
+    uptime_sec = _read_uptime_seconds()
+
+    health = {
+        "camera": bool(cameras),
+        "motion": any(d._running for d in detectors.values()) if detectors else False,
+        "hls": bool(hls_stream and hls_stream.ready()),
+        "tunnel": _service_active("cloudflared"),
+    }
+
     return {
         "by_day": by_day,
         "by_hour": by_hour,
@@ -446,6 +545,13 @@ def get_stats(_: str = Depends(verify_session)):
         "recordings_size_bytes": total_size,
         "disk_total_bytes": disk_total,
         "disk_free_bytes": disk_free,
+        "system": {
+            "uptime_seconds": uptime_sec,
+            "cpu_percent": round(cpu_pct, 1),
+            "ram_total_bytes": mem["total"],
+            "ram_used_bytes": mem["used"],
+        },
+        "health": health,
     }
 
 
