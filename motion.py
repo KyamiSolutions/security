@@ -141,8 +141,10 @@ def send_discord(url: str, title: str, description: str) -> tuple[bool, str]:
         }]
     }).encode()
     try:
-        req = urllib.request.Request(url, data=payload,
-                                     headers={"Content-Type": "application/json"})
+        req = urllib.request.Request(url, data=payload, headers={
+            "Content-Type": "application/json",
+            "User-Agent": "Nutikodu (https://mrnux.ee, 1.0)",
+        })
         with urllib.request.urlopen(req, timeout=5) as resp:
             log.info("Discord teade saadetud: HTTP %s", resp.status)
             return True, f"OK (HTTP {resp.status})"
