@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hosting · Nutikodu</title>
+<style>
+:root {
+  --bg: #f4f5f7;
+  --card: #fff;
+  --text: #1a1d2e;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --blue: #4f6ef7;
+  --green: #22c55e;
+  --red: #ef4444;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh; padding: 2rem;
+}
+.wrap { max-width: 880px; margin: 0 auto; }
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+h1 { font-size: 1.5rem; }
+a.back { color: var(--blue); text-decoration: none; font-size: 0.9rem; }
+.card {
+  background: var(--card); border-radius: 12px; padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 1.25rem;
+}
+.card h2 { font-size: 1.05rem; margin-bottom: 1rem; }
+.row { display: flex; gap: 0.5rem; align-items: stretch; }
+input[type=text] {
+  flex: 1; padding: 0.7rem 0.85rem; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 0.95rem;
+}
+.suffix { display: flex; align-items: center; color: var(--muted); padding: 0 0.5rem; }
+button {
+  padding: 0.7rem 1.2rem; background: var(--blue); color: #fff;
+  border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+}
+button:disabled { opacity: 0.5; cursor: wait; }
+button.danger { background: var(--red); padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+.msg { margin-top: 0.85rem; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; display: none; }
+.msg.ok { background: #dcfce7; color: #166534; display: block; }
+.msg.err { background: #fee2e2; color: #991b1b; display: block; }
+.msg code { background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px; font-family: ui-monospace, monospace; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; }
+.empty { color: var(--muted); text-align: center; padding: 2rem 0; }
+.hint { color: var(--muted); font-size: 0.85rem; margin-top: 0.5rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Hosting</h1>
+    <a class="back" href="/">← Tagasi dashboardi</a>
+  </header>
+
+  <div class="card">
+    <h2>Lisa uus alamdomeen</h2>
+    <form id="add-form">
+      <div class="row">
+        <input type="text" id="sub" name="subdomain" placeholder="näiteks: blogi" required pattern="[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?" autocomplete="off">
+        <span class="suffix">.mrnux.ee</span>
+        <button type="submit" id="add-btn">Loo</button>
+      </div>
+      <p class="hint">Loob Virtualmin virtuaalserveri + Cloudflare tunneli ja DNS-i automaatselt. Logi sisse aadressil <a href="https://panel.mrnux.ee" target="_blank">panel.mrnux.ee</a>.</p>
+      <div id="msg" class="msg"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Olemasolevad alamdomeenid</h2>
+    <table>
+      <thead><tr><th>Alamdomeen</th><th>URL</th><th></th></tr></thead>
+      <tbody id="sites"><tr><td colspan="3" class="empty">Laen…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+const msg = $('#msg');
+
+function showMsg(text, type) {
+  msg.className = 'msg ' + type;
+  msg.innerHTML = text;
+}
+
+async function loadSites() {
+  const tbody = $('#sites');
+  try {
+    const r = await fetch('/hosting/sites', { credentials: 'same-origin' });
+    if (!r.ok) throw new Error('Laadimine ebaõnnestus');
+    const data = await r.json();
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="3" class="empty">Veel ühtegi alamdomeeni pole loodud.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(s =>
+      `<tr>
+        <td><strong>${s.subdomain}</strong></td>
+        <td><a href="https://${s.hostname}" target="_blank">${s.hostname}</a></td>
+        <td><button class="danger" data-sub="${s.subdomain}">Kustuta</button></td>
+      </tr>`).join('');
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="3" class="empty">Viga: ${e.message}</td></tr>`;
+  }
+}
+
+$('#add-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#add-btn');
+  const sub = $('#sub').value.trim().toLowerCase();
+  if (!sub) return;
+  btn.disabled = true;
+  showMsg('Loon… see võib kesta minuti.', 'ok');
+  try {
+    const fd = new FormData();
+    fd.append('subdomain', sub);
+    const r = await fetch('/hosting/sites', { method: 'POST', body: fd, credentials: 'same-origin' });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Tundmatu viga');
+    showMsg(`Loodud: <strong>${data.hostname}</strong><br>Virtualmin parool: <code>${data.password}</code><br>Halduspaneel: <a href="${data.panel}" target="_blank">${data.panel}</a>`, 'ok');
+    $('#sub').value = '';
+    loadSites();
+  } catch (err) {
+    showMsg('Viga: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-sub]');
+  if (!b) return;
+  const sub = b.dataset.sub;
+  if (!confirm(`Kustutada ${sub}.mrnux.ee? See eemaldab ka Virtualmini virtuaalserveri ja kõik failid.`)) return;
+  b.disabled = true;
+  try {
+    const r = await fetch('/hosting/sites/' + encodeURIComponent(sub), { method: 'DELETE', credentials: 'same-origin' });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Tundmatu viga');
+    loadSites();
+  } catch (err) {
+    alert('Viga: ' + err.message);
+    b.disabled = false;
+  }
+});
+
+loadSites();
+</script>
+</body>
+</html>

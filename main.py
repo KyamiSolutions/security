@@ -19,6 +19,7 @@ from devices import add_device, list_devices, remove_device, toggle_device
 import settings as _settings
 from motion import MotionDetector, list_recordings, RECORDINGS_DIR
 from hls_stream import HLSStream, HLS_DIR
+import hosting
 
 cameras: dict[str | int, Camera] = {}
 detectors: dict[str | int, MotionDetector] = {}
@@ -377,6 +378,46 @@ async def update_settings(request: Request, _: str = Depends(require_admin)):
         except Exception:
             pass
     return {"ok": True}
+
+
+# ── Hosting ──────────────────────────────────────────────────────────────────
+
+@app.get("/hosting", response_class=HTMLResponse, include_in_schema=False)
+def hosting_page(request: Request):
+    from fastapi.responses import RedirectResponse
+    try:
+        verify_session(request)
+    except HTTPException:
+        return RedirectResponse(url="/")
+    path = Path("templates/hosting.html")
+    if not path.exists():
+        raise HTTPException(404, "Hosting leht puudub")
+    return path.read_text(encoding="utf-8")
+
+
+@app.get("/hosting/sites")
+def hosting_list(_: str = Depends(require_admin)):
+    try:
+        return hosting.list_sites()
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.post("/hosting/sites")
+def hosting_create(subdomain: str = Form(...), _: str = Depends(require_admin)):
+    try:
+        return hosting.add_site(subdomain)
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+
+@app.delete("/hosting/sites/{subdomain}")
+def hosting_delete(subdomain: str, _: str = Depends(require_admin)):
+    try:
+        hosting.remove_site(subdomain)
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(400, str(e))
 
 
 if __name__ == "__main__":
