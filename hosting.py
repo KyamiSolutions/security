@@ -127,6 +127,8 @@ def _vmin_create(domain: str, password: str) -> None:
         "--dir",
         "--web",
         "--mysql",
+        "--webmin",
+        "--logrotate",
         "--limits-from-plan",
     ]
     ip = os.environ.get("HOSTING_DEFAULT_IP", "").strip()
