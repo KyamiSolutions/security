@@ -997,7 +997,10 @@ select.inp { cursor: pointer; }
         </div>
         <div class="fgrp">
           <label>Discord Webhook URL</label>
-          <input class="inp" id="set-discord" placeholder="https://discord.com/api/webhooks/...">
+          <div style="display:flex;gap:.5rem">
+            <input class="inp" id="set-discord" placeholder="https://discord.com/api/webhooks/..." style="flex:1">
+            <button class="btn" type="button" onclick="testDiscord()" style="white-space:nowrap">Test</button>
+          </div>
         </div>
       </div>
 
@@ -1634,6 +1637,29 @@ async function saveSettings() {
   } else {
     msg.className = 'pmsg err';
     msg.textContent = d.detail || 'Viga';
+  }
+}
+
+async function testDiscord() {
+  const msg = document.getElementById('set-msg');
+  msg.style.display = 'block';
+  msg.className = 'pmsg';
+  msg.textContent = 'Saadan testteadet…';
+  await saveSettings();
+  try {
+    const r = await fetch('/settings/test-discord', { method: 'POST' });
+    const j = await r.json();
+    msg.style.display = 'block';
+    if (j.ok) {
+      msg.className = 'pmsg ok';
+      msg.textContent = '✓ Discord test õnnestus — ' + j.message;
+    } else {
+      msg.className = 'pmsg err';
+      msg.textContent = '✗ Discord test ebaõnnestus: ' + j.message;
+    }
+  } catch (e) {
+    msg.className = 'pmsg err';
+    msg.textContent = '✗ Päring ebaõnnestus: ' + e;
   }
 }
 </script>

@@ -92,15 +92,6 @@ def index():
     with open("templates/index.html", encoding="utf-8") as f:
         return f.read()
 
-@app.get("/smart-dashboard", response_class=HTMLResponse, include_in_schema=False)
-def smart_dashboard(request: Request):
-    from fastapi.responses import RedirectResponse
-    try:
-        verify_session(request)
-    except HTTPException:
-        return RedirectResponse(url="/smart-login.html")
-    return Path("templates/smart-dashboard.html").read_text(encoding="utf-8")
-
 _PUBLIC_PAGES = {"smart-login", "smart-signup", "smart-forgot-password", "smart-onboarding", "smart-splash"}
 
 @app.get("/{page}.html", response_class=HTMLResponse, include_in_schema=False)
@@ -113,7 +104,7 @@ def serve_html(page: str, request: Request):
             return RedirectResponse(url="/smart-login.html")
     path = Path("templates") / f"{page}.html"
     if not path.exists():
-        return RedirectResponse(url="/smart-dashboard.html")
+        return RedirectResponse(url="/")
     return path.read_text(encoding="utf-8")
 
 
