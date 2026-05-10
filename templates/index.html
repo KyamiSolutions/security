@@ -599,6 +599,58 @@ select.inp { cursor: pointer; }
 
   .panel[style*="max-width"] { max-width: 100% !important; }
 }
+
+/* ── Hosting page ── */
+.host-steps { display: grid; gap: 0.7rem; }
+.host-step {
+  display: flex; gap: 0.85rem; padding: 0.85rem 1rem;
+  background: var(--main-bg); border-radius: 10px;
+  border: 1px solid transparent;
+}
+.host-step-num {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--blue); color: #fff; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+}
+.host-step-body { flex: 1; min-width: 0; }
+.host-step-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 3px; }
+.host-step-desc { font-size: 0.83rem; color: var(--muted); line-height: 1.5; }
+.host-step-desc code, .host-hint code, .host-faq-a code, .host-msg code {
+  background: rgba(0,0,0,0.06); padding: 1px 6px; border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+}
+.host-hint { color: var(--muted); font-size: 0.8rem; margin-top: 0.7rem; line-height: 1.5; padding: 0.6rem 0.85rem; background: rgba(79,110,247,0.06); border-radius: 8px; border-left: 3px solid var(--blue); }
+.host-msg { font-size: 0.85rem; padding: 0.7rem 0.95rem; border-radius: 8px; display: none; margin-top: 0.85rem; line-height: 1.5; }
+.host-msg.ok { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); color: #15803d; display: block; }
+.host-msg.err { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #b91c1c; display: block; }
+.host-msg.info { background: rgba(79,110,247,0.07); border: 1px solid rgba(79,110,247,0.2); color: #1e40af; display: block; }
+.host-sites { display: grid; gap: 0.7rem; }
+.host-site {
+  display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem;
+  background: var(--main-bg); border-radius: 10px;
+  border: 1px solid transparent; transition: border-color 0.15s;
+}
+.host-site:hover { border-color: var(--border); }
+.host-site-icon {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 9px;
+  background: rgba(79,110,247,0.1); color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 700;
+}
+.host-site-body { flex: 1; min-width: 0; }
+.host-site-name { font-weight: 700; font-size: 0.92rem; word-break: break-all; }
+.host-site-link { font-size: 0.78rem; color: var(--muted); }
+.host-empty { color: var(--muted); text-align: center; padding: 1.5rem 1rem; font-size: 0.88rem; background: var(--main-bg); border-radius: 10px; }
+.host-faq-item { border-top: 1px solid var(--border); padding: 0.85rem 0; }
+.host-faq-item:first-child { border-top: none; padding-top: 0; }
+.host-faq-q { font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.host-faq-q::after { content: '+'; font-size: 1.2rem; color: var(--muted); transition: transform 0.15s; flex-shrink: 0; }
+.host-faq-item.open .host-faq-q::after { transform: rotate(45deg); }
+.host-faq-a { display: none; font-size: 0.85rem; color: var(--muted); line-height: 1.6; padding-top: 0.5rem; }
+.host-faq-item.open .host-faq-a { display: block; }
+.host-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; background: var(--main-bg); color: var(--muted); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -691,6 +743,9 @@ select.inp { cursor: pointer; }
       </div>
 
       <div class="sb-section">Haldus</div>
+      <div class="nav-btn" id="snav-hosting" onclick="go('hosting')">
+        <span class="nav-icon">🌐</span> Hosting
+      </div>
       <div class="nav-btn" id="snav-users" onclick="go('users')">
         <span class="nav-icon">👥</span> Kasutajad
       </div>
@@ -955,6 +1010,128 @@ select.inp { cursor: pointer; }
       </div>
     </div>
 
+    <!-- ── HOSTING ── -->
+    <div class="page" id="page-hosting">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🌐 Hosting</div>
+          <div class="page-sub">Loo automaatselt veebimajutus oma domeenile — Cloudflare DNS, tunnel ja Virtualmini virtuaalserver</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:1rem">
+        <div class="panel-head">
+          <div class="panel-title">📋 Kuidas see töötab</div>
+        </div>
+        <div class="panel-body">
+          <div class="host-steps">
+            <div class="host-step">
+              <div class="host-step-num">1</div>
+              <div class="host-step-body">
+                <div class="host-step-title">Lisa domeen Cloudflare'i (ühekordne)</div>
+                <div class="host-step-desc">
+                  Mine <a href="https://dash.cloudflare.com" target="_blank">Cloudflare</a> → <code>Add Site</code> → sisesta domeen (nt <code>kalle.ee</code>) → vali Free plaan.
+                  Cloudflare annab kaks nameserverit. Mine oma registrari (Elkdata, Namecheap jne) → asenda <em>Nameservers</em> nendega.
+                  Propageerub 5 min — 24 h.
+                </div>
+              </div>
+            </div>
+            <div class="host-step">
+              <div class="host-step-num">2</div>
+              <div class="host-step-body">
+                <div class="host-step-title">Sisesta domeen all olevasse vormi</div>
+                <div class="host-step-desc">
+                  Kirjuta täisdomeen — <code>blogi.mrnux.ee</code>, <code>kalle.ee</code> või <code>www.kalle.ee</code> — ja vajuta <strong>Loo</strong>.
+                  Süsteem teeb taustal: leiab Cloudflare tsooni, loob DNS CNAME, lisab tunneli routele, käivitab Virtualmini virtuaalserveri.
+                </div>
+              </div>
+            </div>
+            <div class="host-step">
+              <div class="host-step-num">3</div>
+              <div class="host-step-body">
+                <div class="host-step-title">Halda saiti Virtualminis</div>
+                <div class="host-step-desc">
+                  Kuvatakse loodud Virtualmini parool — kirjuta turvaliselt üles. Logi sisse aadressil
+                  <a href="https://panel.mrnux.ee" target="_blank">panel.mrnux.ee</a> ja halda faile, andmebaase, e-maile.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:1rem">
+        <div class="panel-head">
+          <div class="panel-title">➕ Lisa uus domeen</div>
+        </div>
+        <div class="panel-body">
+          <form id="host-form" onsubmit="return false">
+            <div class="frow" style="align-items:flex-end">
+              <div class="fgrp" style="flex:3">
+                <label>Domeen</label>
+                <input class="inp" type="text" id="host-domain" placeholder="näiteks blogi.mrnux.ee või kalle.ee" autocomplete="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <button type="button" class="btn btn-primary" id="host-add-btn" onclick="hostAddSite()">🚀 Loo virtuaalserver</button>
+            </div>
+            <div id="host-msg" class="host-msg"></div>
+            <div class="host-hint">
+              💡 <strong>Näide:</strong> kui registreerisid <code>kalle.ee</code> ja muutsid nameservers Cloudflare'is, saad siia kirjutada nii <code>kalle.ee</code> kui ka <code>www.kalle.ee</code> või suvalise alamdomeeni.
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:1rem">
+        <div class="panel-head">
+          <div class="panel-title">🗂 Olemasolevad domeenid <span class="host-badge" id="host-count">0</span></div>
+        </div>
+        <div class="panel-body">
+          <div class="host-sites" id="host-sites">
+            <div class="host-empty">Laen…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">❓ Korduvad küsimused</div>
+        </div>
+        <div class="panel-body" id="host-faq">
+          <div class="host-faq-item">
+            <div class="host-faq-q">Mis juhtub kui sisestan domeeni, mille tsoon pole minu Cloudflare kontol?</div>
+            <div class="host-faq-a">
+              Saad veateate <em>"Cloudflare tsooni ei leitud"</em>. Süsteem ei saa programmiselt teiste kontode tsoone hallata.
+              Lahendus: lisa domeen oma Cloudflare kontosse (Add Site) ja muuda registrari nameservers.
+            </div>
+          </div>
+          <div class="host-faq-item">
+            <div class="host-faq-q">Saan ma hostida kellegi teise domeeni?</div>
+            <div class="host-faq-a">
+              Jah — domeeni omanik ei pea Cloudflare kontot omama. Sina lisad domeeni <strong>oma</strong> Cloudflare'i, omanik vaid muudab oma registraris nameservers Cloudflare omadeks.
+            </div>
+          </div>
+          <div class="host-faq-item">
+            <div class="host-faq-q">Kuidas SSL töötab?</div>
+            <div class="host-faq-a">
+              SSL'i pakub Cloudflare automaatselt (Flexible SSL). Brauser → Cloudflare HTTPS, Cloudflare → tunnel HTTP. Otsast-otsa TLS-i jaoks: Virtualmini all Let's Encrypt sertifikaat.
+            </div>
+          </div>
+          <div class="host-faq-item">
+            <div class="host-faq-q">Mis juhtub kui kustutan domeeni siit?</div>
+            <div class="host-faq-a">
+              Kõik korraga: DNS kirje (Cloudflare), tunnel route, Virtualmini virtuaalserver + kõik failid ja andmebaasid. Tegevus on <strong>pöördumatu</strong>.
+            </div>
+          </div>
+          <div class="host-faq-item">
+            <div class="host-faq-q">Kuidas vaadata kas DNS on propageerunud?</div>
+            <div class="host-faq-a">
+              Käsk: <code>dig kalle.ee</code> peab tagastama Cloudflare IP'd (104.21.x.x või 172.67.x.x). Kui mitte — registraris pole nameservers veel Cloudflare omadeks vahetatud.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── SEADED ── -->
     <div class="page" id="page-settings">
       <div class="page-header">
@@ -1031,6 +1208,9 @@ select.inp { cursor: pointer; }
       <div class="mob-btn" id="mnav-devices" onclick="go('devices')">
         <span class="mi">⚙️</span><span>Seadmed</span>
       </div>
+      <div class="mob-btn" id="mnav-hosting" onclick="go('hosting')">
+        <span class="mi">🌐</span><span>Hosting</span>
+      </div>
       <div class="mob-btn" id="mnav-users" onclick="go('users')">
         <span class="mi">👤</span><span>Kasutajad</span>
       </div>
@@ -1069,6 +1249,7 @@ const PAGE_TITLES = {
   settings: 'Seaded',
   devices: 'Seadmed',
   users: 'Kasutajad',
+  hosting: 'Hosting',
 };
 
 // ── Clock ────────────────────────────────────────────────────────────────────
@@ -1213,6 +1394,7 @@ function go(name) {
   if (name === 'settings') loadSettings();
   if (name === 'users') loadUsers();
   if (name === 'dashboard') refreshDashboard();
+  if (name === 'hosting') loadHostingSites();
 }
 
 // ── Camera ───────────────────────────────────────────────────────────────────
@@ -1593,8 +1775,9 @@ function _fallbackMJPEG() {
     document.getElementById('sb-username').textContent = me.username;
     document.getElementById('topbar-username').textContent = me.username;
     document.getElementById('topbar-initial').textContent = me.username[0].toUpperCase();
-    const lastPage = localStorage.getItem('lastPage') || 'dashboard';
-    showApp(lastPage);
+    const hashPage = location.hash.replace('#', '');
+    const startPage = (hashPage && PAGE_TITLES[hashPage]) ? hashPage : (localStorage.getItem('lastPage') || 'dashboard');
+    showApp(startPage);
     initCamera();
   } else {
     document.getElementById('login-page').style.display = 'flex';
@@ -1662,6 +1845,98 @@ async function testDiscord() {
     msg.textContent = '✗ Päring ebaõnnestus: ' + e;
   }
 }
+
+// ── Hosting ─────────────────────────────────────────────────────────────────
+
+function hostShowMsg(text, type) {
+  const m = document.getElementById('host-msg');
+  m.className = 'host-msg ' + type;
+  m.innerHTML = text;
+}
+
+async function loadHostingSites() {
+  const list = document.getElementById('host-sites');
+  const count = document.getElementById('host-count');
+  try {
+    const r = await fetch('/hosting/sites', { credentials: 'same-origin' });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(d.detail || 'Laadimine ebaõnnestus');
+    }
+    const data = await r.json();
+    count.textContent = data.length;
+    if (!data.length) {
+      list.innerHTML = '<div class="host-empty">Veel ühtegi domeeni pole loodud. Sisesta esimene ülevalpool.</div>';
+      return;
+    }
+    list.innerHTML = data.map(s => {
+      const initial = s.hostname[0].toUpperCase();
+      return `<div class="host-site">
+          <div class="host-site-icon">${initial}</div>
+          <div class="host-site-body">
+            <div class="host-site-name">${s.hostname}</div>
+            <div class="host-site-link"><a href="https://${s.hostname}" target="_blank">https://${s.hostname}</a></div>
+          </div>
+          <button class="btn btn-danger" data-host="${s.hostname}" onclick="hostDeleteSite('${s.hostname}', this)" style="padding:0.4rem 0.85rem;font-size:0.78rem">Kustuta</button>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="host-empty" style="color:var(--red)">Viga: ${e.message}</div>`;
+    count.textContent = '–';
+  }
+}
+
+async function hostAddSite() {
+  const btn = document.getElementById('host-add-btn');
+  const inp = document.getElementById('host-domain');
+  const dom = inp.value.trim().toLowerCase();
+  if (!dom) return;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Loon…';
+  hostShowMsg('🛠 Seadistan Cloudflare DNS-i, tunneli ja Virtualmini virtuaalserverit. Võib kesta kuni minuti.', 'info');
+  try {
+    const fd = new FormData();
+    fd.append('domain', dom);
+    const r = await fetch('/hosting/sites', { method: 'POST', body: fd, credentials: 'same-origin' });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Tundmatu viga');
+    hostShowMsg(
+      `✅ <strong>Loodud: ${data.hostname}</strong><br>`
+      + `Virtualmini parool: <code>${data.password}</code> &nbsp; <em>(kirjuta üles, ei saa hiljem näha)</em><br>`
+      + `Halduspaneel: <a href="${data.panel}" target="_blank">${data.panel}</a><br>`
+      + `Sait: <a href="https://${data.hostname}" target="_blank">https://${data.hostname}</a>`,
+      'ok'
+    );
+    inp.value = '';
+    loadHostingSites();
+  } catch (err) {
+    hostShowMsg('❌ Viga: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🚀 Loo virtuaalserver';
+  }
+}
+
+async function hostDeleteSite(dom, btn) {
+  if (!confirm(`Kustutada ${dom}?\n\nSee eemaldab DNS kirje, tunneli route ja Virtualmini virtuaalserveri koos KÕIKIDE failide ja andmebaasidega. Tegevus on pöördumatu.`)) return;
+  btn.disabled = true;
+  btn.textContent = 'Kustutan…';
+  try {
+    const r = await fetch('/hosting/sites/' + encodeURIComponent(dom), { method: 'DELETE', credentials: 'same-origin' });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Tundmatu viga');
+    loadHostingSites();
+  } catch (err) {
+    alert('Viga: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Kustuta';
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const q = e.target.closest('.host-faq-q');
+  if (q) q.parentElement.classList.toggle('open');
+});
 </script>
 <!-- Paroolimuutmise modaal -->
 <div id="pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center">

@@ -394,17 +394,10 @@ def motion_status(_: str = Depends(verify_session)):
 
 # ── Hosting ──────────────────────────────────────────────────────────────────
 
-@app.get("/hosting", response_class=HTMLResponse, include_in_schema=False)
-def hosting_page(request: Request):
+@app.get("/hosting", include_in_schema=False)
+def hosting_page():
     from fastapi.responses import RedirectResponse
-    try:
-        verify_session(request)
-    except HTTPException:
-        return RedirectResponse(url="/")
-    path = Path("templates/hosting.html")
-    if not path.exists():
-        raise HTTPException(404, "Hosting leht puudub")
-    return path.read_text(encoding="utf-8")
+    return RedirectResponse(url="/#hosting")
 
 
 @app.get("/hosting/sites")
