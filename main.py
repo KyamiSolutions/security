@@ -17,7 +17,7 @@ from auth import (login as auth_login, logout as auth_logout, verify_session,
 from camera import Camera, _tcp_reachable, mjpeg_generator, probe_rtsp
 from devices import add_device, list_devices, remove_device, toggle_device
 import settings as _settings
-from motion import MotionDetector, list_recordings, RECORDINGS_DIR, send_discord
+from motion import MotionDetector, list_recordings, RECORDINGS_DIR, send_discord, start_retention_loop
 from hls_stream import HLSStream, HLS_DIR
 import hosting
 
@@ -40,6 +40,7 @@ def _default_source() -> str | int | None:
 async def lifespan(app: FastAPI):
     global hls_stream
     init_db()
+    start_retention_loop()
     source = _default_source()
     if source is not None:
         try:

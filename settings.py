@@ -11,6 +11,7 @@ DEFAULTS: dict = {
     "motion_cooldown_seconds": 10,
     "discord_webhook_url": "",
     "notifications_enabled": True,
+    "recordings_retention_days": 30,
 }
 
 

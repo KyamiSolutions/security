@@ -167,6 +167,45 @@ def _send_discord_motion(ts: datetime, url: str = ""):
     )
 
 
+def cleanup_old_recordings() -> int:
+    """Kustutab .mp4 failid mis on vanemad kui retention päevad. Tagastab kustutatud failide arvu."""
+    cfg = _settings.load()
+    retention = int(cfg.get("recordings_retention_days", 30) or 0)
+    if retention <= 0:
+        return 0
+    cutoff = time.time() - retention * 86400
+    deleted = 0
+    if not os.path.isdir(RECORDINGS_DIR):
+        return 0
+    for name in os.listdir(RECORDINGS_DIR):
+        if not name.endswith(".mp4"):
+            continue
+        path = os.path.join(RECORDINGS_DIR, name)
+        try:
+            if os.path.getmtime(path) < cutoff:
+                os.remove(path)
+                deleted += 1
+        except OSError as e:
+            log.warning("Salvestuse kustutamine ebaõnnestus %s: %s", path, e)
+    if deleted:
+        log.info("Retention cleanup: %d vana salvestust kustutatud (vanemad kui %d päeva)", deleted, retention)
+    return deleted
+
+
+def start_retention_loop(interval_hours: int = 6) -> threading.Thread:
+    """Käivitab tausta-thread'i mis kustutab vanu salvestusi iga interval_hours järel."""
+    def _loop():
+        while True:
+            try:
+                cleanup_old_recordings()
+            except Exception as e:
+                log.warning("Retention cleanup viga: %s", e)
+            time.sleep(interval_hours * 3600)
+    t = threading.Thread(target=_loop, daemon=True, name="retention-cleanup")
+    t.start()
+    return t
+
+
 def list_recordings() -> list[dict]:
     results = []
     if not os.path.isdir(RECORDINGS_DIR):

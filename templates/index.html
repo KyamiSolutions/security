@@ -1164,6 +1164,10 @@ select.inp { cursor: pointer; }
           <label>Ooteaeg häirete vahel (sekundit)</label>
           <input class="inp" id="set-cooldown" type="number" min="0" max="300">
         </div>
+        <div class="fgrp">
+          <label>Salvestuste säilitamise aeg (päeva, 0 = igavesti)</label>
+          <input class="inp" id="set-retention" type="number" min="0" max="365">
+        </div>
       </div>
 
       <div class="setup-card" style="max-width:560px;margin-bottom:1.5rem">
@@ -1470,6 +1474,7 @@ async function loadRecordings() {
       <div class="rec-name">🎬 ${r.filename}</div>
       <div class="rec-meta">${d} &middot; ${mb} MB</div>
       <div class="rec-actions">
+        <button class="btn btn-primary" style="font-size:0.78rem" onclick="playRec('${r.filename}')">▶ Vaata</button>
         <a class="btn btn-outline" style="font-size:0.78rem" href="/recordings/${encodeURIComponent(r.filename)}" download>⬇ Lae alla</a>
         <button class="btn btn-danger" style="font-size:0.78rem" onclick="delRec('${r.filename}')">🗑 Kustuta</button>
       </div>
@@ -1483,6 +1488,25 @@ async function delRec(fn) {
   if (!confirm('Kustutan salvestuse ' + fn + '?')) return;
   await fetch('/recordings/' + encodeURIComponent(fn), { method: 'DELETE' });
   loadRecordings();
+}
+
+function playRec(fn) {
+  const modal = document.getElementById('rec-modal');
+  const video = document.getElementById('rec-video');
+  const title = document.getElementById('rec-title');
+  title.textContent = fn;
+  video.src = '/recordings/' + encodeURIComponent(fn);
+  modal.style.display = 'flex';
+  video.play().catch(() => {});
+}
+
+function closeRecModal() {
+  const modal = document.getElementById('rec-modal');
+  const video = document.getElementById('rec-video');
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+  modal.style.display = 'none';
 }
 
 // ── Devices ──────────────────────────────────────────────────────────────────
@@ -1792,6 +1816,7 @@ async function loadSettings() {
   document.getElementById('set-threshold').value = s.motion_threshold ?? 8000;
   document.getElementById('set-record-sec').value = s.motion_record_seconds ?? 30;
   document.getElementById('set-cooldown').value = s.motion_cooldown_seconds ?? 10;
+  document.getElementById('set-retention').value = s.recordings_retention_days ?? 30;
   document.getElementById('set-discord').value = s.discord_webhook_url || '';
   document.getElementById('set-notif-enabled').checked = s.notifications_enabled !== false;
 }
@@ -1804,6 +1829,7 @@ async function saveSettings() {
     motion_threshold: parseInt(document.getElementById('set-threshold').value) || 8000,
     motion_record_seconds: parseInt(document.getElementById('set-record-sec').value) || 30,
     motion_cooldown_seconds: parseInt(document.getElementById('set-cooldown').value) || 10,
+    recordings_retention_days: parseInt(document.getElementById('set-retention').value) || 0,
     discord_webhook_url: document.getElementById('set-discord').value.trim(),
     notifications_enabled: document.getElementById('set-notif-enabled').checked,
   };
@@ -1939,6 +1965,17 @@ document.addEventListener('click', (e) => {
 });
 </script>
 <!-- Paroolimuutmise modaal -->
+<!-- Salvestuse vaatamise modaal -->
+<div id="rec-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:600;align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeRecModal()">
+  <div style="background:#000;border-radius:14px;padding:0.85rem;width:100%;max-width:900px;display:flex;flex-direction:column;gap:0.7rem;position:relative">
+    <div style="display:flex;align-items:center;justify-content:space-between;color:#fff;padding:0 0.3rem">
+      <div id="rec-title" style="font-size:0.85rem;font-weight:700;font-family:ui-monospace,monospace;word-break:break-all;flex:1"></div>
+      <button onclick="closeRecModal()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0 0.5rem">✕</button>
+    </div>
+    <video id="rec-video" controls autoplay playsinline style="width:100%;max-height:75vh;border-radius:8px;background:#000"></video>
+  </div>
+</div>
+
 <div id="pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:14px;padding:2rem;width:100%;max-width:380px;margin:1rem;display:flex;flex-direction:column;gap:1rem">
     <div style="font-size:1.1rem;font-weight:800;color:var(--text)">🔑 Muuda parooli</div>
