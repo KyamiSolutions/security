@@ -2270,7 +2270,11 @@ function _startHLS() {
     });
     hlsPlayer.loadSource('/hls/stream.m3u8');
     hlsPlayer.attachMedia(video);
+    hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play().catch(err => console.warn('Autoplay blokeeritud:', err));
+    });
     hlsPlayer.on(Hls.Events.ERROR, (e, d) => {
+      console.warn('HLS error:', d.type, d.details, d.fatal);
       if (!d.fatal) return;
       const isManifest = d.details && d.details.startsWith('manifest');
       if (isManifest) {
