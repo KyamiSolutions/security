@@ -2277,14 +2277,11 @@ async function refreshStats() {
 
 let hlsPlayer = null;
 
-async function initCamera() {
+function initCamera() {
   if (!camKey) return;
   document.getElementById('setup-view').style.display = 'none';
   document.getElementById('live-view').style.display = 'block';
-
-  const status = await fetch('/hls-status').then(r => r.json()).catch(() => ({ready: false}));
-  if (status.ready) _startHLS();
-  else _waitForHLS();
+  _startHLS();
 }
 
 function _startHLS() {
@@ -2311,9 +2308,10 @@ function _startHLS() {
       if (d.fatal) {
         _stopDvrTimer();
         document.getElementById('dvr-bar').style.display = 'none';
-        document.getElementById('cam-loading').style.display = 'flex';
-        document.getElementById('cam-loading').textContent = 'Ühendus katkes, ootan...';
-        setTimeout(_waitForHLS, 3000);
+        const loader = document.getElementById('cam-loading');
+        loader.style.display = 'flex';
+        loader.textContent = 'Ühendun kaameraga...';
+        setTimeout(_startHLS, 1500);
       }
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -2326,24 +2324,8 @@ function _startHLS() {
   document.getElementById('lstatus').textContent = 'Live · HLS';
 }
 
-function _waitForHLS(attempts = 0) {
-  const loader = document.getElementById('cam-loading');
-  if (loader) { loader.style.display = 'flex'; loader.textContent = 'Ühendun kaameraga...'; }
-  if (attempts > 20) {
-    if (loader) loader.textContent = 'Kaamera pole kättesaadav';
-    document.getElementById('ldot').className = 'live-dot off';
-    document.getElementById('lstatus').textContent = 'Ühendus ebaõnnestus';
-    return;
-  }
-  setTimeout(async () => {
-    const s = await fetch('/hls-status').then(r => r.json()).catch(() => ({ready: false}));
-    if (s.ready) _startHLS();
-    else _waitForHLS(attempts + 1);
-  }, 2000);
-}
-
 function _fallbackMJPEG() {
-  _waitForHLS();
+  _startHLS();
 }
 
 // ── DVR ──────────────────────────────────────────────────────────────────────
@@ -2391,8 +2373,9 @@ function onDvrSeek(val) {
 function seekToLive() {
   const video = document.getElementById('stream-video');
   if (!video || !video.seekable.length) return;
+  if (hlsPlayer) hlsPlayer.startLoad(-1);
   video.currentTime = Math.max(video.seekable.end(0) - 3, video.seekable.start(0));
-  video.play().catch(() => {});
+  if (video.paused) video.play().catch(() => {});
 }
 
 // ── Session restore ───────────────────────────────────────────────────────────
