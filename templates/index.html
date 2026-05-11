@@ -384,7 +384,7 @@ button { font-family: inherit; }
   border: 1px solid var(--border); position: relative; max-width: 960px;
 }
 .cam-wrap video { display: block; width: 100%; min-height: 240px; background: #000; }
-.cam-overlay { position: absolute; inset: 0; pointer-events: none; }
+.cam-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
 .cam-pill {
   position: absolute; top: 1rem; left: 1rem;
   display: flex; align-items: center; gap: 0.4rem;
@@ -399,11 +399,11 @@ button { font-family: inherit; }
 }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 .live-dot.off { background: var(--red); box-shadow: 0 0 6px var(--red); animation: none; }
-.cam-loader {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.5); font-size: 0.85rem; background: #000;
-}
 #stream-video { display: block; width: 100%; min-height: 240px; background: #000; }
+#stream-img {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: contain; background: #000; z-index: 1;
+}
 .live-dot.dvr { background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: none; }
 #dvr-bar {
   background: #111; border-radius: 0 0 12px 12px; max-width: 960px;
@@ -1140,7 +1140,7 @@ select.inp { cursor: pointer; }
       <div id="live-view" style="display:none">
         <div class="cam-wrap">
           <video id="stream-video" autoplay muted playsinline></video>
-          <div id="cam-loading" class="cam-loader" style="display:none"></div>
+          <img id="stream-img" alt="" style="display:none">
           <div class="cam-overlay">
             <div class="cam-pill">
               <div class="live-dot" id="ldot"></div>
@@ -2281,8 +2281,10 @@ function initCamera() {
   if (!camKey) return;
   document.getElementById('setup-view').style.display = 'none';
   document.getElementById('live-view').style.display = 'block';
-  const video = document.getElementById('stream-video');
-  video.poster = '/snapshot?key=' + encodeURIComponent(camKey);
+  const img = document.getElementById('stream-img');
+  img.src = '/stream?key=' + encodeURIComponent(camKey);
+  img.style.display = 'block';
+  document.getElementById('lstatus').textContent = 'Live · MJPEG';
   _startHLS();
 }
 
@@ -2302,7 +2304,9 @@ function _startHLS() {
     hlsPlayer.loadSource('/hls/stream.m3u8');
     hlsPlayer.attachMedia(video);
     hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-      document.getElementById('cam-loading').style.display = 'none';
+      const img = document.getElementById('stream-img');
+      img.style.display = 'none';
+      img.src = '';
       document.getElementById('dvr-bar').style.display = 'flex';
       _startDvrTimer();
     });
@@ -2330,7 +2334,12 @@ function _startHLS() {
 }
 
 function _fallbackMJPEG() {
-  _startHLS();
+  const img = document.getElementById('stream-img');
+  if (camKey && !img.src.includes('/stream')) {
+    img.src = '/stream?key=' + encodeURIComponent(camKey);
+  }
+  img.style.display = 'block';
+  document.getElementById('lstatus').textContent = 'Live · MJPEG';
 }
 
 // ── DVR ──────────────────────────────────────────────────────────────────────
