@@ -400,10 +400,6 @@ button { font-family: inherit; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 .live-dot.off { background: var(--red); box-shadow: 0 0 6px var(--red); animation: none; }
 #stream-video { display: block; width: 100%; min-height: 240px; background: #000; }
-#stream-img {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  object-fit: contain; background: #000; z-index: 1;
-}
 .live-dot.dvr { background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: none; }
 #dvr-bar {
   background: #111; border-radius: 0 0 12px 12px; max-width: 960px;
@@ -1140,7 +1136,6 @@ select.inp { cursor: pointer; }
       <div id="live-view" style="display:none">
         <div class="cam-wrap">
           <video id="stream-video" autoplay muted playsinline></video>
-          <img id="stream-img" alt="" style="display:none">
           <div class="cam-overlay">
             <div class="cam-pill">
               <div class="live-dot" id="ldot"></div>
@@ -2292,10 +2287,6 @@ function initCamera() {
   if (!camKey) return;
   document.getElementById('setup-view').style.display = 'none';
   document.getElementById('live-view').style.display = 'block';
-  const img = document.getElementById('stream-img');
-  img.src = '/stream?key=' + encodeURIComponent(camKey);
-  img.style.display = 'block';
-  document.getElementById('lstatus').textContent = 'Live · MJPEG';
   _startHLS();
 }
 
@@ -2315,22 +2306,20 @@ function _startHLS() {
     hlsPlayer.loadSource('/hls/stream.m3u8');
     hlsPlayer.attachMedia(video);
     hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-      const img = document.getElementById('stream-img');
-      img.style.display = 'none';
-      img.src = '';
       document.getElementById('dvr-bar').style.display = 'flex';
       _startDvrTimer();
     });
     hlsPlayer.on(Hls.Events.ERROR, (e, d) => {
       if (!d.fatal) return;
-      if (d.type === Hls.ErrorTypes.MEDIA_ERROR && !hlsPlayer._mediaRecovered) {
+      if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
+        hlsPlayer.startLoad();
+      } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR && !hlsPlayer._mediaRecovered) {
         hlsPlayer._mediaRecovered = true;
         hlsPlayer.recoverMediaError();
       } else {
         _stopDvrTimer();
         document.getElementById('dvr-bar').style.display = 'none';
-        _fallbackMJPEG();
-        setTimeout(_startHLS, 3000);
+        setTimeout(_startHLS, 2000);
       }
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -2343,14 +2332,7 @@ function _startHLS() {
   document.getElementById('lstatus').textContent = 'Live · HLS';
 }
 
-function _fallbackMJPEG() {
-  const img = document.getElementById('stream-img');
-  if (camKey && !img.src.includes('/stream')) {
-    img.src = '/stream?key=' + encodeURIComponent(camKey);
-  }
-  img.style.display = 'block';
-  document.getElementById('lstatus').textContent = 'Live · MJPEG';
-}
+function _fallbackMJPEG() { _startHLS(); }
 
 // ── DVR ──────────────────────────────────────────────────────────────────────
 let _dvrTimer = null;
@@ -2396,17 +2378,18 @@ function onDvrSeek(val) {
 }
 
 function seekToLive() {
-  _stopDvrTimer();
-  document.getElementById('dvr-bar').style.display = 'none';
-  const img = document.getElementById('stream-img');
-  if (camKey) {
-    img.src = '/stream?key=' + encodeURIComponent(camKey);
-    img.style.display = 'block';
+  const video = document.getElementById('stream-video');
+  if (!video) return;
+  let target = null;
+  if (hlsPlayer && isFinite(hlsPlayer.liveSyncPosition)) {
+    target = hlsPlayer.liveSyncPosition;
+  } else if (video.seekable.length) {
+    target = Math.max(video.seekable.end(0) - 6, video.seekable.start(0));
   }
-  document.getElementById('ldot').className = 'live-dot';
-  document.getElementById('lstatus').textContent = 'Live · MJPEG';
-  if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
-  setTimeout(_startHLS, 200);
+  if (target !== null) {
+    video.currentTime = target;
+    if (video.paused) video.play().catch(() => {});
+  }
 }
 
 // ── Session restore ───────────────────────────────────────────────────────────
