@@ -2308,9 +2308,15 @@ function _startHLS() {
     });
     hlsPlayer.on(Hls.Events.ERROR, (e, d) => {
       if (d.fatal) {
-        _stopDvrTimer();
-        document.getElementById('dvr-bar').style.display = 'none';
-        setTimeout(_startHLS, 1500);
+        if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          hlsPlayer.startLoad();
+        } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          hlsPlayer.recoverMediaError();
+        } else {
+          _stopDvrTimer();
+          document.getElementById('dvr-bar').style.display = 'none';
+          setTimeout(_startHLS, 1500);
+        }
       }
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -2362,11 +2368,12 @@ function _updateDvr() {
 }
 
 function onDvrSeek(val) {
+  if (!_dvrDragging) return;
   const video = document.getElementById('stream-video');
   if (!video || !video.seekable.length) return;
   document.getElementById('dvr-seek').style.setProperty('--p', parseFloat(val).toFixed(1) + '%');
   const start = video.seekable.start(0), end = video.seekable.end(0);
-  video.currentTime = start + (val / 100) * (end - start);
+  video.currentTime = Math.min(start + (val / 100) * (end - start), end - 4);
 }
 
 function seekToLive() {
