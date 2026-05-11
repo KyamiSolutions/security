@@ -6,6 +6,7 @@ from pathlib import Path
 
 HLS_DIR = Path("/tmp/nutikodu_hls")
 VAAPI_DEVICE = "/dev/dri/renderD128"
+DVR_WINDOW_SECONDS = 3600  # 1h DVR buffer
 
 log = logging.getLogger("nutikodu.hls")
 
@@ -36,6 +37,7 @@ class HLSStream:
         self._stop = False
         self._launch()
         threading.Thread(target=self._watch, daemon=True).start()
+        threading.Thread(target=self._cleanup_loop, daemon=True).start()
 
     def _cmd_vaapi(self) -> list[str]:
         return [
@@ -51,8 +53,8 @@ class HLSStream:
             "-an",
             "-f", "hls",
             "-hls_time", "2",
-            "-hls_list_size", "4",
-            "-hls_flags", "delete_segments+append_list",
+            "-hls_list_size", "1800",
+            "-hls_flags", "append_list",
             str(self.m3u8),
         ]
 
@@ -69,8 +71,8 @@ class HLSStream:
             "-an",
             "-f", "hls",
             "-hls_time", "2",
-            "-hls_list_size", "4",
-            "-hls_flags", "delete_segments+append_list",
+            "-hls_list_size", "1800",
+            "-hls_flags", "append_list",
             str(self.m3u8),
         ]
 
@@ -115,6 +117,21 @@ class HLSStream:
                     start_time = time.monotonic()
                     self._launch()
             time.sleep(2)
+
+    def _cleanup_loop(self):
+        """Kustutab .ts failid mis on vanemad kui DVR aken + 5 min margin."""
+        while not self._stop:
+            time.sleep(300)
+            cutoff = time.time() - DVR_WINDOW_SECONDS - 300
+            try:
+                for ts in HLS_DIR.glob("*.ts"):
+                    try:
+                        if ts.stat().st_mtime < cutoff:
+                            ts.unlink()
+                    except OSError:
+                        pass
+            except Exception:
+                pass
 
     def stop(self):
         self._stop = True
