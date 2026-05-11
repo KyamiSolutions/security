@@ -383,7 +383,7 @@ button { font-family: inherit; }
   background: #000; border-radius: 12px; overflow: hidden;
   border: 1px solid var(--border); position: relative; max-width: 960px;
 }
-.cam-wrap img, .cam-wrap video { display: block; width: 100%; min-height: 240px; background: #000; }
+.cam-wrap video { display: block; width: 100%; min-height: 240px; background: #000; }
 .cam-overlay { position: absolute; inset: 0; pointer-events: none; }
 .cam-pill {
   position: absolute; top: 1rem; left: 1rem;
@@ -399,6 +399,11 @@ button { font-family: inherit; }
 }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 .live-dot.off { background: var(--red); box-shadow: 0 0 6px var(--red); animation: none; }
+.cam-loader {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.5); font-size: 0.85rem; background: #000;
+}
+#stream-video { display: block; width: 100%; min-height: 240px; background: #000; }
 .live-dot.dvr { background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: none; }
 #dvr-bar {
   background: #111; border-radius: 0 0 12px 12px; max-width: 960px;
@@ -1134,8 +1139,8 @@ select.inp { cursor: pointer; }
 
       <div id="live-view" style="display:none">
         <div class="cam-wrap">
-          <video id="stream-video" autoplay muted playsinline style="display:none"></video>
-          <img id="stream-img" alt="" style="display:none">
+          <video id="stream-video" autoplay muted playsinline></video>
+          <div id="cam-loading" class="cam-loader">Ühendun kaameraga...</div>
           <div class="cam-overlay">
             <div class="cam-pill">
               <div class="live-dot" id="ldot"></div>
@@ -2277,8 +2282,6 @@ async function initCamera() {
   document.getElementById('setup-view').style.display = 'none';
   document.getElementById('live-view').style.display = 'block';
 
-  // Alusta kohe MJPEG-ga, uuenda HLS-ile kui valmis
-  _fallbackMJPEG();
   const status = await fetch('/hls-status').then(r => r.json()).catch(() => ({ready: false}));
   if (status.ready) _startHLS();
   else _waitForHLS();
@@ -2288,8 +2291,6 @@ function _startHLS() {
   _stopDvrTimer();
   document.getElementById('dvr-bar').style.display = 'none';
   const video = document.getElementById('stream-video');
-  document.getElementById('stream-img').style.display = 'none';
-  video.style.display = 'block';
   if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
   if (Hls.isSupported()) {
     hlsPlayer = new Hls({
@@ -2302,6 +2303,7 @@ function _startHLS() {
     hlsPlayer.loadSource('/hls/stream.m3u8');
     hlsPlayer.attachMedia(video);
     hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
+      document.getElementById('cam-loading').style.display = 'none';
       document.getElementById('dvr-bar').style.display = 'flex';
       _startDvrTimer();
     });
@@ -2309,20 +2311,30 @@ function _startHLS() {
       if (d.fatal) {
         _stopDvrTimer();
         document.getElementById('dvr-bar').style.display = 'none';
+        document.getElementById('cam-loading').style.display = 'flex';
+        document.getElementById('cam-loading').textContent = 'Ühendus katkes, ootan...';
         setTimeout(_waitForHLS, 3000);
       }
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
     video.src = '/hls/stream.m3u8';
+    document.getElementById('cam-loading').style.display = 'none';
   } else {
-    _fallbackMJPEG();
+    document.getElementById('cam-loading').textContent = 'HLS ei ole toetatud selles brauseris';
   }
   document.getElementById('ldot').className = 'live-dot';
   document.getElementById('lstatus').textContent = 'Live · HLS';
 }
 
 function _waitForHLS(attempts = 0) {
-  if (attempts > 15) { _fallbackMJPEG(); return; }
+  const loader = document.getElementById('cam-loading');
+  if (loader) { loader.style.display = 'flex'; loader.textContent = 'Ühendun kaameraga...'; }
+  if (attempts > 20) {
+    if (loader) loader.textContent = 'Kaamera pole kättesaadav';
+    document.getElementById('ldot').className = 'live-dot off';
+    document.getElementById('lstatus').textContent = 'Ühendus ebaõnnestus';
+    return;
+  }
   setTimeout(async () => {
     const s = await fetch('/hls-status').then(r => r.json()).catch(() => ({ready: false}));
     if (s.ready) _startHLS();
@@ -2331,17 +2343,7 @@ function _waitForHLS(attempts = 0) {
 }
 
 function _fallbackMJPEG() {
-  _stopDvrTimer();
-  document.getElementById('dvr-bar').style.display = 'none';
-  document.getElementById('stream-video').style.display = 'none';
-  const img = document.getElementById('stream-img');
-  img.style.display = 'block';
-  img.src = '/stream?key=' + encodeURIComponent(camKey);
-  img.onerror = () => {
-    document.getElementById('ldot').className = 'live-dot off';
-    document.getElementById('lstatus').textContent = 'Ühendus katkes';
-  };
-  document.getElementById('lstatus').textContent = 'Live · MJPEG';
+  _waitForHLS();
 }
 
 // ── DVR ──────────────────────────────────────────────────────────────────────
