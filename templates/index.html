@@ -1154,7 +1154,6 @@ select.inp { cursor: pointer; }
         </div>
         <div class="cam-bar">
           <button class="btn btn-outline" onclick="doSnapshot()">📷 Snapshot</button>
-          <button class="btn btn-outline" id="dvr-enter-btn" onclick="enterDvr()" style="display:none">◀ Ajalugu</button>
           <button class="btn btn-outline" onclick="showSetup()">⚙ Vaheta kaamera</button>
         </div>
       </div>
@@ -2286,7 +2285,6 @@ async function initCamera() {
 }
 
 function _startHLS() {
-  _dvrMode = false;
   _stopDvrTimer();
   document.getElementById('dvr-bar').style.display = 'none';
   const video = document.getElementById('stream-video');
@@ -2304,11 +2302,13 @@ function _startHLS() {
     hlsPlayer.loadSource('/hls/stream.m3u8');
     hlsPlayer.attachMedia(video);
     hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-      document.getElementById('dvr-enter-btn').style.display = '';
+      document.getElementById('dvr-bar').style.display = 'flex';
+      _startDvrTimer();
     });
     hlsPlayer.on(Hls.Events.ERROR, (e, d) => {
       if (d.fatal) {
-        document.getElementById('dvr-enter-btn').style.display = 'none';
+        _stopDvrTimer();
+        document.getElementById('dvr-bar').style.display = 'none';
         setTimeout(_waitForHLS, 3000);
       }
     });
@@ -2331,10 +2331,8 @@ function _waitForHLS(attempts = 0) {
 }
 
 function _fallbackMJPEG() {
-  _dvrMode = false;
   _stopDvrTimer();
   document.getElementById('dvr-bar').style.display = 'none';
-  document.getElementById('dvr-enter-btn').style.display = 'none';
   document.getElementById('stream-video').style.display = 'none';
   const img = document.getElementById('stream-img');
   img.style.display = 'block';
@@ -2349,7 +2347,6 @@ function _fallbackMJPEG() {
 // ── DVR ──────────────────────────────────────────────────────────────────────
 let _dvrTimer = null;
 let _dvrDragging = false;
-let _dvrMode = false;
 
 function _startDvrTimer() { _stopDvrTimer(); _dvrTimer = setInterval(_updateDvr, 500); }
 function _stopDvrTimer() { if (_dvrTimer) { clearInterval(_dvrTimer); _dvrTimer = null; } }
@@ -2362,53 +2359,38 @@ function _fmtDuration(sec) {
 }
 
 function _updateDvr() {
-  if (!_dvrMode) return;
   const video = document.getElementById('stream-video');
-  if (!video || !isFinite(video.duration) || video.duration < 1) return;
-  const cur = video.currentTime, total = video.duration;
-  const lag = Math.max(0, total - cur);
-  const pct = (cur / total) * 100;
+  if (!video || !video.seekable.length) return;
+  const start = video.seekable.start(0), end = video.seekable.end(0), cur = video.currentTime;
+  const range = end - start;
+  if (range < 5) return;
+  const lag = Math.max(0, end - cur);
+  const isLive = lag < 6;
+  const pct = ((cur - start) / range) * 100;
   if (!_dvrDragging) {
     const seekEl = document.getElementById('dvr-seek');
     seekEl.value = pct;
     seekEl.style.setProperty('--p', pct.toFixed(1) + '%');
   }
-  document.getElementById('dvr-offset').textContent = lag < 3 ? 'Algus' : _fmtDuration(lag) + ' tagasi';
-  document.getElementById('lstatus').textContent = lag < 3 ? 'Ajalugu · algus' : 'Ajalugu −' + _fmtDuration(lag);
+  document.getElementById('dvr-offset').textContent = isLive ? '' : '−' + _fmtDuration(lag) + ' tagasi';
+  document.getElementById('dvr-live-btn').classList.toggle('at-live', isLive);
+  document.getElementById('ldot').className = 'live-dot' + (isLive ? '' : ' dvr');
+  document.getElementById('lstatus').textContent = isLive ? 'Live · HLS' : 'DVR −' + _fmtDuration(lag);
 }
 
 function onDvrSeek(val) {
   const video = document.getElementById('stream-video');
-  if (!video) return;
+  if (!video || !video.seekable.length) return;
   document.getElementById('dvr-seek').style.setProperty('--p', parseFloat(val).toFixed(1) + '%');
-  if (_dvrMode && isFinite(video.duration)) {
-    video.currentTime = (val / 100) * video.duration;
-  }
-}
-
-function enterDvr() {
-  _dvrMode = true;
-  document.getElementById('dvr-enter-btn').style.display = 'none';
-  document.getElementById('dvr-bar').style.display = 'flex';
-  document.getElementById('ldot').className = 'live-dot dvr';
-  document.getElementById('lstatus').textContent = 'Ajalugu';
-  const video = document.getElementById('stream-video');
-  if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
-  if (Hls.isSupported()) {
-    hlsPlayer = new Hls({ maxBufferLength: 60 });
-    hlsPlayer.loadSource('/hls/dvr.m3u8');
-    hlsPlayer.attachMedia(video);
-    hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => _startDvrTimer());
-    video.addEventListener('loadedmetadata', function seekEnd() {
-      video.removeEventListener('loadedmetadata', seekEnd);
-      if (isFinite(video.duration)) video.currentTime = Math.max(0, video.duration - 5);
-    });
-    hlsPlayer.on(Hls.Events.ERROR, (e, d) => { if (d.fatal) _stopDvrTimer(); });
-  }
+  const start = video.seekable.start(0), end = video.seekable.end(0);
+  video.currentTime = start + (val / 100) * (end - start);
 }
 
 function seekToLive() {
-  _startHLS();
+  const video = document.getElementById('stream-video');
+  if (!video || !video.seekable.length) return;
+  video.currentTime = Math.max(video.seekable.end(0) - 3, video.seekable.start(0));
+  video.play().catch(() => {});
 }
 
 // ── Session restore ───────────────────────────────────────────────────────────

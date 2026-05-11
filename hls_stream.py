@@ -20,6 +20,12 @@ class HLSStream:
         self._fail_count = 0
         self._last_stderr = ""
         HLS_DIR.mkdir(exist_ok=True)
+        # Kustuta stale failid eelmisest käivitusest — muidu append_list rikub live edge'i
+        for f in list(HLS_DIR.glob("*.ts")) + list(HLS_DIR.glob("*.m3u8")):
+            try:
+                f.unlink()
+            except OSError:
+                pass
 
     @property
     def m3u8(self) -> Path:
@@ -53,8 +59,7 @@ class HLSStream:
             "-an",
             "-f", "hls",
             "-hls_time", "2",
-            "-hls_list_size", "6",
-            "-hls_flags", "append_list",
+            "-hls_list_size", "900",
             str(self.m3u8),
         ]
 
@@ -71,8 +76,7 @@ class HLSStream:
             "-an",
             "-f", "hls",
             "-hls_time", "2",
-            "-hls_list_size", "6",
-            "-hls_flags", "append_list",
+            "-hls_list_size", "900",
             str(self.m3u8),
         ]
 
