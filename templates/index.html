@@ -1695,8 +1695,7 @@ async function doProbe() {
   msg.className = 'pmsg ok'; msg.textContent = '✓ Leitud: ' + data.url;
   document.getElementById('setup-view').style.display = 'none';
   document.getElementById('live-view').style.display = 'block';
-  const img = document.getElementById('stream-img');
-  img.src = '/stream?key=' + encodeURIComponent(camKey);
+  _startHLS();
   document.getElementById('stat-cams').textContent = '1';
 }
 
@@ -2245,10 +2244,8 @@ let hlsPlayer = null;
 // Perioodiline kontroll — kui HLS on aktiivselt käivitatud aga video on seiskunud, taasta
 setInterval(() => {
   const video = document.getElementById('stream-video');
-  const img = document.getElementById('stream-img');
   if (!hlsPlayer || !video) return;
-  if (img && img.style.display !== 'none') return; // MJPEG on ees, HLS veel laadimas
-  if (video.paused && !video.ended) {
+  if (video.paused && !video.ended && video.readyState >= 3) {
     video.play().catch(() => {});
   }
 }, 8000);
@@ -2275,7 +2272,10 @@ function _startHLS() {
     hlsPlayer.attachMedia(video);
     hlsPlayer.on(Hls.Events.ERROR, (e, d) => {
       if (!d.fatal) return;
-      if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
+      const isManifest = d.details && d.details.startsWith('manifest');
+      if (isManifest) {
+        setTimeout(_startHLS, 1500);
+      } else if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
         hlsPlayer.startLoad();
       } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR && !hlsPlayer._mediaRecovered) {
         hlsPlayer._mediaRecovered = true;
