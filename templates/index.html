@@ -401,28 +401,6 @@ button { font-family: inherit; }
 .live-dot.off { background: var(--red); box-shadow: 0 0 6px var(--red); animation: none; }
 #stream-video { display: block; width: 100%; min-height: 240px; background: #000; }
 .live-dot.dvr { background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: none; }
-#dvr-bar {
-  background: #111; border-radius: 0 0 12px 12px; max-width: 960px;
-  padding: 8px 14px 10px; flex-direction: column; gap: 5px;
-}
-#dvr-seek {
-  -webkit-appearance: none; appearance: none;
-  width: 100%; height: 4px; border-radius: 2px; outline: none; cursor: pointer;
-  background: linear-gradient(to right, rgba(79,110,247,0.85) var(--p,100%), rgba(255,255,255,0.18) var(--p,100%));
-}
-#dvr-seek::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
-  background: #fff; border: 2px solid #4f6ef7; cursor: pointer; box-shadow: 0 0 4px rgba(0,0,0,0.5);
-}
-#dvr-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
-#dvr-offset { font-size: 0.72rem; color: rgba(255,255,255,0.45); font-variant-numeric: tabular-nums; min-width: 90px; }
-.btn-live {
-  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
-  padding: 2px 10px; border-radius: 10px; cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.35);
-  transition: all 0.2s;
-}
-.btn-live.at-live { background: #ef4444; color: #fff; border-color: transparent; box-shadow: 0 0 8px rgba(239,68,68,0.4); }
 .cam-bar { display: flex; gap: 0.6rem; margin-top: 1rem; flex-wrap: wrap; }
 
 /* ── Buttons ── */
@@ -1135,7 +1113,7 @@ select.inp { cursor: pointer; }
 
       <div id="live-view" style="display:none">
         <div class="cam-wrap">
-          <video id="stream-video" autoplay muted playsinline></video>
+          <video id="stream-video" autoplay muted playsinline controls></video>
           <div class="cam-overlay">
             <div class="cam-pill">
               <div class="live-dot" id="ldot"></div>
@@ -1143,17 +1121,9 @@ select.inp { cursor: pointer; }
             </div>
           </div>
         </div>
-        <div id="dvr-bar" style="display:none">
-          <input type="range" id="dvr-seek" min="0" max="100" value="100" step="0.1"
-            oninput="onDvrSeek(this.value)"
-            onpointerdown="_dvrDragging=true" onpointerup="_dvrDragging=false">
-          <div id="dvr-meta">
-            <span id="dvr-offset"></span>
-            <button class="btn-live" id="dvr-live-btn" onclick="seekToLive()">⏺ LIVE</button>
-          </div>
-        </div>
         <div class="cam-bar">
           <button class="btn btn-outline" onclick="doSnapshot()">📷 Snapshot</button>
+          <button class="btn btn-outline" onclick="seekToLive()">⏺ Live</button>
           <button class="btn btn-outline" onclick="showSetup()">⚙ Vaheta kaamera</button>
         </div>
       </div>
@@ -2291,8 +2261,6 @@ function initCamera() {
 }
 
 function _startHLS() {
-  _stopDvrTimer();
-  document.getElementById('dvr-bar').style.display = 'none';
   const video = document.getElementById('stream-video');
   if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
   if (Hls.isSupported()) {
@@ -2305,10 +2273,6 @@ function _startHLS() {
     });
     hlsPlayer.loadSource('/hls/stream.m3u8');
     hlsPlayer.attachMedia(video);
-    hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-      document.getElementById('dvr-bar').style.display = 'flex';
-      _startDvrTimer();
-    });
     hlsPlayer.on(Hls.Events.ERROR, (e, d) => {
       if (!d.fatal) return;
       if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
@@ -2317,16 +2281,11 @@ function _startHLS() {
         hlsPlayer._mediaRecovered = true;
         hlsPlayer.recoverMediaError();
       } else {
-        _stopDvrTimer();
-        document.getElementById('dvr-bar').style.display = 'none';
         setTimeout(_startHLS, 2000);
       }
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
     video.src = '/hls/stream.m3u8';
-    document.getElementById('cam-loading').style.display = 'none';
-  } else {
-    document.getElementById('cam-loading').textContent = 'HLS ei ole toetatud selles brauseris';
   }
   document.getElementById('ldot').className = 'live-dot';
   document.getElementById('lstatus').textContent = 'Live · HLS';
@@ -2334,13 +2293,7 @@ function _startHLS() {
 
 function _fallbackMJPEG() { _startHLS(); }
 
-// ── DVR ──────────────────────────────────────────────────────────────────────
-let _dvrTimer = null;
-let _dvrDragging = false;
-
-function _startDvrTimer() { _stopDvrTimer(); _dvrTimer = setInterval(_updateDvr, 500); }
-function _stopDvrTimer() { if (_dvrTimer) { clearInterval(_dvrTimer); _dvrTimer = null; } }
-
+// ── Live indicator ───────────────────────────────────────────────────────────
 function _fmtDuration(sec) {
   const s = Math.floor(sec), m = Math.floor(s / 60), h = Math.floor(m / 60);
   return h > 0
@@ -2348,34 +2301,15 @@ function _fmtDuration(sec) {
     : m + ':' + String(s % 60).padStart(2, '0');
 }
 
-function _updateDvr() {
+setInterval(() => {
   const video = document.getElementById('stream-video');
-  if (!video || !video.seekable.length) return;
-  const start = video.seekable.start(0), end = video.seekable.end(0), cur = video.currentTime;
-  const range = end - start;
-  if (range < 5) return;
+  if (!video || !video.seekable.length || !hlsPlayer) return;
+  const end = video.seekable.end(0), cur = video.currentTime;
   const lag = Math.max(0, end - cur);
-  const isLive = lag < 6;
-  const pct = ((cur - start) / range) * 100;
-  if (!_dvrDragging) {
-    const seekEl = document.getElementById('dvr-seek');
-    seekEl.value = pct;
-    seekEl.style.setProperty('--p', pct.toFixed(1) + '%');
-  }
-  document.getElementById('dvr-offset').textContent = isLive ? '' : '−' + _fmtDuration(lag) + ' tagasi';
-  document.getElementById('dvr-live-btn').classList.toggle('at-live', isLive);
+  const isLive = lag < 8;
   document.getElementById('ldot').className = 'live-dot' + (isLive ? '' : ' dvr');
   document.getElementById('lstatus').textContent = isLive ? 'Live · HLS' : 'DVR −' + _fmtDuration(lag);
-}
-
-function onDvrSeek(val) {
-  if (!_dvrDragging) return;
-  const video = document.getElementById('stream-video');
-  if (!video || !video.seekable.length) return;
-  document.getElementById('dvr-seek').style.setProperty('--p', parseFloat(val).toFixed(1) + '%');
-  const start = video.seekable.start(0), end = video.seekable.end(0);
-  video.currentTime = Math.min(start + (val / 100) * (end - start), end - 4);
-}
+}, 1000);
 
 function seekToLive() {
   const video = document.getElementById('stream-video');
