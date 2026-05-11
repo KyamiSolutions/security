@@ -2291,9 +2291,10 @@ function _startHLS() {
   if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
   if (Hls.isSupported()) {
     hlsPlayer = new Hls({
-      liveSyncDurationCount: 3,
-      liveMaxLatencyDurationCount: 6,
-      maxBufferLength: 30,
+      liveSyncDurationCount: 2,
+      liveMaxLatencyDurationCount: 4,
+      maxBufferLength: 8,
+      maxMaxBufferLength: 10,
       liveBackBufferLength: 3600,
       lowLatencyMode: false,
     });
@@ -2388,8 +2389,9 @@ function onDvrSeek(val) {
 
 function seekToLive() {
   const video = document.getElementById('stream-video');
-  if (!video) return;
-  video.currentTime = hlsPlayer ? (hlsPlayer.liveSyncPosition || video.seekable.end(0)) : video.seekable.end(0);
+  if (!video || !video.seekable.length) return;
+  video.currentTime = Math.max(video.seekable.end(0) - 3, video.seekable.start(0));
+  video.play().catch(() => {});
 }
 
 // ── Session restore ───────────────────────────────────────────────────────────
