@@ -1140,7 +1140,7 @@ select.inp { cursor: pointer; }
       <div id="live-view" style="display:none">
         <div class="cam-wrap">
           <video id="stream-video" autoplay muted playsinline></video>
-          <div id="cam-loading" class="cam-loader">Ühendun kaameraga...</div>
+          <div id="cam-loading" class="cam-loader" style="display:none"></div>
           <div class="cam-overlay">
             <div class="cam-pill">
               <div class="live-dot" id="ldot"></div>
@@ -2281,6 +2281,8 @@ function initCamera() {
   if (!camKey) return;
   document.getElementById('setup-view').style.display = 'none';
   document.getElementById('live-view').style.display = 'block';
+  const video = document.getElementById('stream-video');
+  video.poster = '/snapshot?key=' + encodeURIComponent(camKey);
   _startHLS();
 }
 
@@ -2308,9 +2310,6 @@ function _startHLS() {
       if (d.fatal) {
         _stopDvrTimer();
         document.getElementById('dvr-bar').style.display = 'none';
-        const loader = document.getElementById('cam-loading');
-        loader.style.display = 'flex';
-        loader.textContent = 'Ühendun kaameraga...';
         setTimeout(_startHLS, 1500);
       }
     });
