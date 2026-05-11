@@ -16,7 +16,7 @@ class HLSStream:
         self.rtsp_url = rtsp_url
         self._proc: subprocess.Popen | None = None
         self._stop = False
-        self._mode = "vaapi"  # "vaapi" või "sw"
+        self._mode = "sw"  # "vaapi" või "sw" — VAAPI kukub sellel serveril, alustan kohe softiga
         self._fail_count = 0
         self._last_stderr = ""
         HLS_DIR.mkdir(exist_ok=True)
@@ -48,6 +48,7 @@ class HLSStream:
     def _cmd_vaapi(self) -> list[str]:
         return [
             "ffmpeg", "-y",
+            "-fflags", "nobuffer+genpts",
             "-hwaccel", "vaapi",
             "-hwaccel_device", VAAPI_DEVICE,
             "-hwaccel_output_format", "vaapi",
@@ -56,16 +57,21 @@ class HLSStream:
             "-vf", "scale_vaapi=1280:-2",
             "-c:v", "h264_vaapi",
             "-qp", "26",
+            "-g", "30",
+            "-keyint_min", "30",
+            "-force_key_frames", "expr:gte(t,n_forced*2)",
             "-an",
             "-f", "hls",
             "-hls_time", "2",
             "-hls_list_size", "900",
+            "-hls_flags", "independent_segments",
             str(self.m3u8),
         ]
 
     def _cmd_sw(self) -> list[str]:
         return [
             "ffmpeg", "-y",
+            "-fflags", "nobuffer+genpts",
             "-rtsp_transport", "tcp",
             "-i", self.rtsp_url,
             "-vf", "scale=1280:-2",
@@ -73,10 +79,15 @@ class HLSStream:
             "-preset", "ultrafast",
             "-tune", "zerolatency",
             "-crf", "26",
+            "-g", "30",
+            "-keyint_min", "30",
+            "-sc_threshold", "0",
+            "-force_key_frames", "expr:gte(t,n_forced*2)",
             "-an",
             "-f", "hls",
             "-hls_time", "2",
             "-hls_list_size", "900",
+            "-hls_flags", "independent_segments",
             str(self.m3u8),
         ]
 
