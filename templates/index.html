@@ -2396,10 +2396,17 @@ function onDvrSeek(val) {
 }
 
 function seekToLive() {
-  const video = document.getElementById('stream-video');
-  if (!video || !video.seekable.length) return;
-  video.currentTime = Math.max(video.seekable.end(0) - 3, video.seekable.start(0));
-  if (video.paused) video.play().catch(() => {});
+  _stopDvrTimer();
+  document.getElementById('dvr-bar').style.display = 'none';
+  const img = document.getElementById('stream-img');
+  if (camKey) {
+    img.src = '/stream?key=' + encodeURIComponent(camKey);
+    img.style.display = 'block';
+  }
+  document.getElementById('ldot').className = 'live-dot';
+  document.getElementById('lstatus').textContent = 'Live · MJPEG';
+  if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
+  setTimeout(_startHLS, 200);
 }
 
 // ── Session restore ───────────────────────────────────────────────────────────
