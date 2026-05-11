@@ -53,7 +53,7 @@ class HLSStream:
             "-an",
             "-f", "hls",
             "-hls_time", "2",
-            "-hls_list_size", "1800",
+            "-hls_list_size", "6",
             "-hls_flags", "append_list",
             str(self.m3u8),
         ]
@@ -71,7 +71,7 @@ class HLSStream:
             "-an",
             "-f", "hls",
             "-hls_time", "2",
-            "-hls_list_size", "1800",
+            "-hls_list_size", "6",
             "-hls_flags", "append_list",
             str(self.m3u8),
         ]

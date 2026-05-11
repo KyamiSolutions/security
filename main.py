@@ -258,6 +258,41 @@ def hls_manifest(_: str = Depends(verify_session)):
                         headers={"Cache-Control": "no-cache"})
 
 
+@app.get("/hls/dvr.m3u8")
+def hls_dvr_manifest(_: str = Depends(verify_session)):
+    if not hls_stream:
+        raise HTTPException(503, "HLS pole aktiivne")
+    ts_files = sorted(
+        (f for f in HLS_DIR.iterdir() if f.suffix == ".ts"),
+        key=lambda p: p.stat().st_mtime,
+    )
+    if not ts_files:
+        raise HTTPException(503, "DVR segmendid puuduvad")
+    target_dur = 2
+    try:
+        for line in hls_stream.m3u8.read_text().splitlines():
+            if line.startswith("#EXT-X-TARGETDURATION:"):
+                target_dur = int(line.split(":")[1])
+                break
+    except Exception:
+        pass
+    lines = [
+        "#EXTM3U", "#EXT-X-VERSION:3",
+        f"#EXT-X-TARGETDURATION:{target_dur}",
+        "#EXT-X-PLAYLIST-TYPE:VOD",
+        "#EXT-X-MEDIA-SEQUENCE:0",
+    ]
+    for ts in ts_files:
+        lines.append(f"#EXTINF:{float(target_dur):.6f},")
+        lines.append(f"/hls/{ts.name}")
+    lines.append("#EXT-X-ENDLIST")
+    return Response(
+        "\n".join(lines) + "\n",
+        media_type="application/vnd.apple.mpegurl",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
 @app.get("/hls/{filename}")
 def hls_segment(filename: str, _: str = Depends(verify_session)):
     path = HLS_DIR / filename
