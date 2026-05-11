@@ -2277,6 +2277,17 @@ async function refreshStats() {
 
 let hlsPlayer = null;
 
+// Perioodiline kontroll — kui HLS on aktiivselt käivitatud aga video on seiskunud, taasta
+setInterval(() => {
+  const video = document.getElementById('stream-video');
+  const img = document.getElementById('stream-img');
+  if (!hlsPlayer || !video) return;
+  if (img && img.style.display !== 'none') return; // MJPEG on ees, HLS veel laadimas
+  if (video.paused && !video.ended) {
+    video.play().catch(() => {});
+  }
+}, 8000);
+
 function initCamera() {
   if (!camKey) return;
   document.getElementById('setup-view').style.display = 'none';
@@ -2311,16 +2322,15 @@ function _startHLS() {
       _startDvrTimer();
     });
     hlsPlayer.on(Hls.Events.ERROR, (e, d) => {
-      if (d.fatal) {
-        if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
-          hlsPlayer.startLoad();
-        } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) {
-          hlsPlayer.recoverMediaError();
-        } else {
-          _stopDvrTimer();
-          document.getElementById('dvr-bar').style.display = 'none';
-          setTimeout(_startHLS, 1500);
-        }
+      if (!d.fatal) return;
+      if (d.type === Hls.ErrorTypes.MEDIA_ERROR && !hlsPlayer._mediaRecovered) {
+        hlsPlayer._mediaRecovered = true;
+        hlsPlayer.recoverMediaError();
+      } else {
+        _stopDvrTimer();
+        document.getElementById('dvr-bar').style.display = 'none';
+        _fallbackMJPEG();
+        setTimeout(_startHLS, 3000);
       }
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -2388,7 +2398,6 @@ function onDvrSeek(val) {
 function seekToLive() {
   const video = document.getElementById('stream-video');
   if (!video || !video.seekable.length) return;
-  if (hlsPlayer) hlsPlayer.startLoad(-1);
   video.currentTime = Math.max(video.seekable.end(0) - 3, video.seekable.start(0));
   if (video.paused) video.play().catch(() => {});
 }
