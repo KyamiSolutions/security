@@ -2262,10 +2262,10 @@ function _startHLS() {
   if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
   if (Hls.isSupported()) {
     hlsPlayer = new Hls({
-      liveSyncDurationCount: 2,
-      liveMaxLatencyDurationCount: 4,
-      maxBufferLength: 8,
-      maxMaxBufferLength: 10,
+      liveSyncDurationCount: 3,
+      liveMaxLatencyDurationCount: 6,
+      maxBufferLength: 30,
+      maxMaxBufferLength: 60,
       lowLatencyMode: false,
     });
     hlsPlayer.loadSource('/hls/stream.m3u8');
