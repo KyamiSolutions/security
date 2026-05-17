@@ -53,6 +53,7 @@ class HLSStream:
             "-hwaccel_device", VAAPI_DEVICE,
             "-hwaccel_output_format", "vaapi",
             "-rtsp_transport", "tcp",
+            "-rw_timeout", "10000000",
             "-i", self.rtsp_url,
             "-c:v", "h264_vaapi",
             "-qp", "26",
@@ -72,6 +73,7 @@ class HLSStream:
             "ffmpeg", "-y",
             "-fflags", "nobuffer+genpts",
             "-rtsp_transport", "tcp",
+            "-rw_timeout", "10000000",
             "-i", self.rtsp_url,
             "-c:v", "libx264",
             "-preset", "ultrafast",
@@ -129,6 +131,18 @@ class HLSStream:
                     time.sleep(3)
                     start_time = time.monotonic()
                     self._launch()
+            elif self._proc and self.m3u8.exists():
+                # Watchdog: kui m3u8 pole 15s uuenenud, ffmpeg on zombie — tapa
+                try:
+                    age = time.time() - self.m3u8.stat().st_mtime
+                    if age > 15 and time.monotonic() - start_time > 20:
+                        log.warning("m3u8 pole %.0fs uuenenud — ffmpeg zombie, tapan", age)
+                        try:
+                            self._proc.kill()
+                        except OSError:
+                            pass
+                except OSError:
+                    pass
             time.sleep(2)
 
     def _cleanup_loop(self):
