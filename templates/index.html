@@ -4,426 +4,1116 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nutikodu</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
 <style>
 :root {
-  --bg: #0d0d1a;
-  --surface: #13131f;
-  --surface2: #1c1c2e;
-  --surface3: #242438;
-  --border: #2e2e4a;
-  --text: #eaeaf5;
-  --muted: #6a6a90;
-  --accent: #7c3aed;
-  --accent-h: #6d28d9;
-  --accent-glow: rgba(124,58,237,0.25);
+  --sb-bg: #1a1d2e;
+  --sb-text: #9097a8;
+  --sb-text-active: #fff;
+  --sb-section: #4a5068;
+  --sb-hover: rgba(255,255,255,0.06);
+  --sb-active-bg: rgba(79,110,247,0.18);
+  --sb-accent: #4f6ef7;
+  --sb-border: rgba(255,255,255,0.07);
+  --main-bg: #f4f5f7;
+  --topbar-bg: #fff;
+  --card-bg: #fff;
+  --text: #1a1d2e;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --blue: #4f6ef7;
   --green: #22c55e;
+  --purple: #a855f7;
+  --orange: #f97316;
   --red: #ef4444;
-  --sidebar: 230px;
+  --teal: #14b8a6;
+  --sidebar: 220px;
+  --topbar-h: 56px;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; cursor: default; }
+html, body { height: 100%; background: var(--main-bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; overflow-x: hidden; max-width: 100vw; }
 a { color: inherit; text-decoration: none; }
-img { cursor: default; }
+button { font-family: inherit; }
+
+
+/* ── NUTIKODU ── */
+.nk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 1rem; margin-top: 0.5rem; }
+.nk-card {
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 1.4rem 1.2rem 1.2rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.8rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  transition: box-shadow 0.2s;
+  border: 2px solid transparent;
+}
+.nk-card.on { border-color: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+.nk-icon { font-size: 2.4rem; line-height: 1; transition: filter 0.2s; }
+.nk-card:not(.on) .nk-icon { filter: grayscale(1) opacity(0.4); }
+.nk-name { font-size: 0.88rem; font-weight: 600; color: var(--text); text-align: center; }
+.nk-status { font-size: 0.75rem; color: var(--muted); }
+.nk-card.on .nk-status { color: var(--green); font-weight: 600; }
+.nk-toggle {
+  width: 60px; height: 32px; border-radius: 16px;
+  background: #d1d5db; border: none; cursor: pointer;
+  position: relative; transition: background 0.2s;
+}
+.nk-toggle::after {
+  content: ''; position: absolute; top: 4px; left: 4px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #fff; transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.nk-toggle.on { background: var(--green); }
+.nk-toggle.on::after { transform: translateX(28px); }
+@media (max-width: 700px) { .nk-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); } }
 
 /* ════════════════════ LOGIN ════════════════════ */
 #login-page {
   min-height: 100vh;
+  display: flex;
+}
+.l-left {
+  flex: 3;
+  background: linear-gradient(135deg, #1a1d2e 0%, #2d2060 60%, #1a1d2e 100%);
+  display: flex; flex-direction: column;
+  padding: 2.5rem 3rem;
+  position: relative; overflow: hidden;
+}
+.l-left::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(79,110,247,0.18) 0%, transparent 65%),
+              radial-gradient(ellipse at 80% 20%, rgba(168,85,247,0.12) 0%, transparent 50%);
+}
+.l-logo {
+  display: flex; align-items: center; gap: 0.75rem;
+  position: relative; z-index: 1;
+}
+.l-logo-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--sb-accent);
   display: flex; align-items: center; justify-content: center;
-  padding: 1rem;
-  background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.12) 0%, transparent 70%);
+  font-size: 1.1rem;
+}
+.l-logo-name { font-size: 1.05rem; font-weight: 800; color: #fff; }
+.l-hero {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  position: relative; z-index: 1;
+  padding: 2rem 0;
+}
+.l-headline {
+  font-size: 2.4rem; font-weight: 900; color: #fff;
+  line-height: 1.15; letter-spacing: -1px;
+  margin-bottom: 1.25rem;
+  max-width: 420px;
+}
+.l-features { display: flex; flex-direction: column; gap: 0.85rem; }
+.l-feature {
+  display: flex; align-items: center; gap: 0.85rem;
+  color: rgba(255,255,255,0.75); font-size: 0.9rem;
+}
+.l-feature-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; flex-shrink: 0;
+}
+.l-foot {
+  position: relative; z-index: 1;
+  font-size: 0.73rem; color: rgba(255,255,255,0.3);
+}
+.l-right {
+  flex: 2;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2.5rem 2rem;
+  min-width: 320px;
 }
 .lcard {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 2.5rem 2.25rem;
   width: 100%; max-width: 360px;
-  display: flex; flex-direction: column; gap: 1.5rem;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(124,58,237,0.08);
+  display: flex; flex-direction: column; gap: 1.4rem;
 }
-.lbrand {
-  display: flex; align-items: center; gap: 0.9rem;
-}
-.lbrand-icon {
-  width: 46px; height: 46px;
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.5rem;
-  box-shadow: 0 4px 16px rgba(124,58,237,0.4);
-}
-.lbrand-text { display: flex; flex-direction: column; gap: 2px; }
-.lbrand-name { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.5px; }
-.lbrand-sub { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.3px; }
-
-.lfields { display: flex; flex-direction: column; gap: 0.9rem; }
-.lfield { display: flex; flex-direction: column; gap: 0.35rem; }
-.lfield label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.lcard-title { font-size: 1.4rem; font-weight: 800; color: var(--text); letter-spacing: -0.4px; }
+.lcard-sub { font-size: 0.83rem; color: var(--muted); margin-top: 3px; }
+.lfields { display: flex; flex-direction: column; gap: 0.85rem; }
+.lfield { display: flex; flex-direction: column; gap: 0.3rem; }
+.lfield label { font-size: 0.73rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .lfield input {
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
+  padding: 0.7rem 0.95rem; border-radius: 9px;
   border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 0.95rem;
-  outline: none;
+  background: #f9fafb;
+  color: var(--text); font-size: 0.9rem; outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
 }
 .lfield input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+  background: #fff;
 }
 .lbtn {
-  padding: 0.8rem 1.5rem;
-  border-radius: 10px; border: none;
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  color: #fff; font-size: 1rem; font-weight: 700;
-  cursor: pointer; letter-spacing: 0.2px;
-  box-shadow: 0 4px 16px rgba(124,58,237,0.35);
-  transition: opacity 0.15s, transform 0.1s;
+  padding: 0.8rem; border-radius: 9px; border: none;
+  background: var(--blue); color: #fff;
+  font-size: 0.95rem; font-weight: 700; cursor: pointer;
+  transition: opacity 0.15s; font-family: inherit;
+  letter-spacing: 0.2px;
 }
-.lbtn:hover { opacity: 0.92; }
-.lbtn:active { transform: scale(0.98); }
+.lbtn:hover { opacity: 0.88; }
 .lerr {
-  font-size: 0.83rem; color: #fca5a5;
-  background: rgba(239,68,68,0.12);
-  border: 1px solid rgba(239,68,68,0.25);
-  border-radius: 8px; padding: 0.55rem 0.9rem;
+  font-size: 0.82rem; color: #b91c1c;
+  background: rgba(239,68,68,0.07);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 8px; padding: 0.5rem 0.85rem;
   display: none;
+}
+@media (max-width: 700px) {
+  #login-page { flex-direction: column; }
+  .l-left { display: none; }
+  .l-right { flex: 1; min-height: 100vh; justify-content: center; }
 }
 
 /* ════════════════════ APP SHELL ════════════════════ */
 #app { display: none; }
 
-/* Sidebar */
+/* ── Sidebar ── */
 .sb {
   position: fixed; inset: 0 auto 0 0;
   width: var(--sidebar);
-  background: var(--surface);
-  border-right: 1px solid var(--border);
+  background: var(--sb-bg);
   display: flex; flex-direction: column;
-  z-index: 100;
+  z-index: 200;
+  overflow-y: auto;
 }
 .sb-brand {
-  padding: 1.25rem 1rem 1.1rem;
-  display: flex; align-items: center; gap: 0.75rem;
-  border-bottom: 1px solid var(--border);
+  padding: 1.1rem 1rem;
+  display: flex; align-items: center; gap: 0.7rem;
+  border-bottom: 1px solid var(--sb-border);
+  flex-shrink: 0;
 }
 .sb-icon {
-  width: 36px; height: 36px;
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  border-radius: 10px;
+  width: 34px; height: 34px; border-radius: 9px;
+  background: var(--sb-accent);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem; flex-shrink: 0;
+  font-size: 1rem; flex-shrink: 0;
 }
-.sb-title { font-weight: 800; font-size: 0.95rem; letter-spacing: -0.3px; }
-
-.sb-nav { flex: 1; padding: 0.75rem 0.6rem; display: flex; flex-direction: column; gap: 3px; }
-.sb-section { font-size: 0.65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 0.5rem 0.7rem 0.25rem; margin-top: 0.25rem; }
+.sb-title { font-size: 0.95rem; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+.sb-nav { flex: 1; padding: 0.75rem 0.6rem; display: flex; flex-direction: column; gap: 1px; }
+.sb-section {
+  font-size: 0.62rem; font-weight: 700; color: var(--sb-section);
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 0.9rem 0.75rem 0.35rem;
+}
 .nav-btn {
-  display: flex; align-items: center; gap: 0.75rem;
-  padding: 0.65rem 0.85rem; border-radius: 10px;
-  cursor: pointer; font-size: 0.88rem; color: var(--muted);
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.55rem 0.75rem; border-radius: 8px;
+  cursor: pointer; font-size: 0.855rem; color: var(--sb-text);
   transition: background 0.12s, color 0.12s;
-  user-select: none;
+  user-select: none; position: relative;
 }
-.nav-btn:hover { background: var(--surface2); color: var(--text); }
+.nav-btn:hover { background: var(--sb-hover); color: #fff; }
 .nav-btn.on {
-  background: var(--surface2);
-  color: var(--text); font-weight: 600;
-  box-shadow: inset 3px 0 0 var(--accent);
+  background: var(--sb-active-bg);
+  color: var(--sb-text-active); font-weight: 600;
 }
-.nav-btn .ni { font-size: 1.05rem; width: 1.3rem; text-align: center; flex-shrink: 0; }
+.nav-btn.on::before {
+  content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+  width: 3px; border-radius: 0 2px 2px 0;
+  background: var(--sb-accent);
+}
+.nav-icon { font-size: 0.95rem; width: 1.2rem; text-align: center; flex-shrink: 0; }
 .nbadge {
   margin-left: auto;
-  background: var(--accent); color: #fff;
-  font-size: 0.65rem; font-weight: 800;
-  padding: 0.1rem 0.45rem; border-radius: 99px;
-  min-width: 18px; text-align: center;
-  display: none;
+  background: var(--sb-accent); color: #fff;
+  font-size: 0.62rem; font-weight: 800;
+  padding: 0.1rem 0.42rem; border-radius: 99px;
+  min-width: 18px; text-align: center; display: none;
 }
-
 .sb-foot {
-  padding: 0.9rem 0.8rem;
-  border-top: 1px solid var(--border);
+  padding: 0.75rem 0.6rem;
+  border-top: 1px solid var(--sb-border);
+  flex-shrink: 0;
 }
 .sb-user {
   display: flex; align-items: center; gap: 0.6rem;
-  padding: 0.5rem 0.6rem; border-radius: 9px;
-  cursor: pointer; transition: background 0.12s;
-  font-size: 0.83rem; color: var(--muted);
+  padding: 0.5rem 0.7rem; border-radius: 8px; cursor: pointer;
+  transition: background 0.12s; color: var(--sb-text); font-size: 0.82rem;
 }
-.sb-user:hover { background: var(--surface2); color: var(--text); }
+.sb-user:hover { background: var(--sb-hover); color: #fff; }
 .sb-avatar {
   width: 30px; height: 30px; border-radius: 50%;
-  background: var(--surface3); border: 1px solid var(--border);
+  background: var(--sb-active-bg); border: 1px solid rgba(79,110,247,0.3);
   display: flex; align-items: center; justify-content: center;
   font-size: 0.85rem; flex-shrink: 0;
 }
+.sb-logout { margin-left: auto; font-size: 0.75rem; opacity: 0.6; }
 
-/* Main */
+/* ── Topbar ── */
+.topbar {
+  position: fixed; top: 0; left: var(--sidebar); right: 0;
+  height: var(--topbar-h);
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 1.5rem; gap: 1rem;
+  z-index: 100;
+}
+.topbar-title { font-size: 1rem; font-weight: 700; color: var(--text); flex: 1; }
+.topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+.topbar-time { font-size: 0.8rem; color: var(--muted); }
+.topbar-user {
+  display: flex; align-items: center; gap: 0.55rem;
+  cursor: default;
+}
+.topbar-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--sb-accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; color: #fff; font-weight: 700;
+}
+.topbar-name { font-size: 0.83rem; font-weight: 600; }
+.topbar-badge {
+  font-size: 0.68rem; font-weight: 700;
+  background: rgba(79,110,247,0.12); color: var(--sb-accent);
+  border: 1px solid rgba(79,110,247,0.25);
+  padding: 0.1rem 0.45rem; border-radius: 99px;
+}
+.topbar-mob {
+  display: none; position: fixed; top: 0; left: 0; right: 0;
+  height: var(--topbar-h);
+  background: var(--sb-bg);
+  align-items: center; padding: 0 1rem; gap: 0.75rem;
+  z-index: 200;
+}
+.topbar-mob .sb-icon { width: 30px; height: 30px; border-radius: 8px; font-size: 0.9rem; }
+.topbar-mob-title { font-size: 0.9rem; font-weight: 800; color: #fff; flex: 1; }
+
+/* ── Main ── */
 .main {
   margin-left: var(--sidebar);
+  padding-top: var(--topbar-h);
   min-height: 100vh;
   display: flex; flex-direction: column;
 }
-.topbar {
-  display: none;
-  align-items: center; gap: 0.75rem;
-  padding: 0.8rem 1rem;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 50;
-}
-.topbar-brand { font-weight: 800; font-size: 0.95rem; flex: 1; }
 
-/* Pages */
-.page { display: none; flex: 1; padding: 1.75rem; }
+/* ── Pages ── */
+.page { display: none; flex: 1; padding: 1.5rem; }
 .page.on { display: block; }
-.page-header { margin-bottom: 1.5rem; }
-.page-title { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.3px; }
-.page-sub { font-size: 0.83rem; color: var(--muted); margin-top: 0.25rem; }
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;
+}
+.page-title { font-size: 1.3rem; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+.page-sub { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
+.page-date { font-size: 0.8rem; color: var(--muted); white-space: nowrap; align-self: flex-end; }
 
-/* ── Camera ── */
-.cam-wrap {
-  background: #000;
-  border-radius: 14px; overflow: hidden;
+/* ── Stats cards ── */
+.stats-row {
+  display: grid; gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  margin-bottom: 1.5rem;
+}
+.stat-card {
+  background: var(--card-bg);
   border: 1px solid var(--border);
-  position: relative; max-width: 960px;
+  border-radius: 12px; padding: 1.1rem 1.25rem;
+  border-left: 4px solid transparent;
+  display: flex; align-items: center; gap: 0.9rem;
 }
-.cam-wrap img { display: block; width: 100%; min-height: 240px; cursor: default; }
-.cam-overlay {
-  position: absolute; inset: 0;
-  pointer-events: none;
+.stat-card.blue  { border-left-color: var(--blue); }
+.stat-card.green { border-left-color: var(--green); }
+.stat-card.purple{ border-left-color: var(--purple); }
+.stat-card.orange{ border-left-color: var(--orange); }
+.stat-card.teal  { border-left-color: var(--teal); }
+.stat-card.red   { border-left-color: var(--red); }
+.stat-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
 }
+.stat-card.blue   .stat-icon { background: rgba(79,110,247,0.1); }
+.stat-card.green  .stat-icon { background: rgba(34,197,94,0.1); }
+.stat-card.purple .stat-icon { background: rgba(168,85,247,0.1); }
+.stat-card.orange .stat-icon { background: rgba(249,115,22,0.1); }
+.stat-card.teal   .stat-icon { background: rgba(20,184,166,0.1); }
+.stat-card.red    .stat-icon { background: rgba(239,68,68,0.1); }
+.stat-num { font-size: 1.6rem; font-weight: 800; line-height: 1; color: var(--text); }
+.stat-label { font-size: 0.76rem; color: var(--muted); margin-top: 3px; }
+
+/* ── Two column layout ── */
+.two-col {
+  display: grid; gap: 1rem;
+  grid-template-columns: 1fr 1fr;
+}
+.panel {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+}
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title { font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+.panel-link { font-size: 0.78rem; color: var(--blue); cursor: pointer; font-weight: 600; }
+.panel-link:hover { text-decoration: underline; }
+.panel-body { padding: 0.5rem 0; }
+.panel-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.65rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.panel-row:last-child { border-bottom: none; }
+.panel-row:hover { background: #fafafa; }
+.panel-row-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: rgba(79,110,247,0.08);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; flex-shrink: 0;
+}
+.panel-row-main { flex: 1; min-width: 0; }
+.panel-row-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panel-row-sub { font-size: 0.73rem; color: var(--muted); margin-top: 1px; }
+.panel-row-meta { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+.panel-empty { padding: 2.5rem 1rem; text-align: center; color: var(--muted); font-size: 0.85rem; }
+
+/* ── Camera page ── */
+.cam-wrap {
+  background: #000; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--border); position: relative; max-width: 960px;
+}
+.cam-wrap video { display: block; width: 100%; min-height: 240px; background: #000; }
+.cam-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
 .cam-pill {
   position: absolute; top: 1rem; left: 1rem;
-  display: flex; align-items: center; gap: 0.45rem;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(8px);
+  display: flex; align-items: center; gap: 0.4rem;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(8px);
   padding: 0.3rem 0.75rem; border-radius: 99px;
-  font-size: 0.75rem; font-weight: 600;
+  font-size: 0.73rem; font-weight: 600; color: #fff;
 }
 .live-dot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 6px var(--green);
+  background: var(--green); box-shadow: 0 0 6px var(--green);
   animation: pulse 2s infinite;
 }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 .live-dot.off { background: var(--red); box-shadow: 0 0 6px var(--red); animation: none; }
-.cam-bar {
-  display: flex; gap: 0.6rem; margin-top: 1rem; flex-wrap: wrap;
-}
+#stream-video { display: block; width: 100%; min-height: 240px; background: #000; }
+.live-dot.dvr { background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: none; }
+.cam-bar { display: flex; gap: 0.6rem; margin-top: 1rem; flex-wrap: wrap; }
 
-/* ── Cards (buttons) ── */
-.btn-outline {
+/* ── Buttons ── */
+.btn {
   display: inline-flex; align-items: center; gap: 0.4rem;
-  padding: 0.5rem 1rem; border-radius: 9px;
-  border: 1px solid var(--border);
-  background: var(--surface2); color: var(--text);
-  font-size: 0.85rem; font-weight: 500; cursor: pointer;
-  transition: background 0.12s, border-color 0.12s;
+  padding: 0.5rem 1rem; border-radius: 8px;
+  font-size: 0.83rem; font-weight: 600; cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  border: none;
 }
-.btn-outline:hover { background: var(--surface3); border-color: var(--muted); }
-.btn-red { border-color: rgba(239,68,68,0.4); color: #f87171; }
-.btn-red:hover { background: rgba(239,68,68,0.1); }
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { opacity: 0.88; }
+.btn-outline {
+  background: var(--card-bg); color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { background: #f0f1f3; }
+.btn-danger { background: rgba(239,68,68,0.08); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+.btn-danger:hover { background: rgba(239,68,68,0.15); }
 
 /* ── Setup card ── */
-.setup-box {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 14px; padding: 1.5rem; max-width: 500px;
+.setup-card {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.5rem; max-width: 520px;
   display: flex; flex-direction: column; gap: 1rem;
 }
-.setup-box h3 { font-size: 1rem; font-weight: 700; }
-.frow { display: flex; gap: 0.6rem; }
+.setup-card h3 { font-size: 0.95rem; font-weight: 700; }
+.frow { display: flex; gap: 0.75rem; }
 .frow .fgrp { flex: 1; }
-.fgrp { display: flex; flex-direction: column; gap: 0.35rem; }
-.fgrp label { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.fgrp { display: flex; flex-direction: column; gap: 0.3rem; }
+.fgrp label { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
 .inp {
-  padding: 0.6rem 0.85rem; border-radius: 9px;
-  border: 1px solid var(--border); background: var(--bg);
-  color: var(--text); font-size: 0.9rem; outline: none; width: 100%;
+  padding: 0.6rem 0.85rem; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--main-bg);
+  color: var(--text); font-size: 0.875rem; outline: none; width: 100%;
   transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
 }
-.inp:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.inp:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(79,110,247,0.12); }
 select.inp { cursor: pointer; }
-.pmsg { font-size: 0.82rem; padding: 0.5rem 0.8rem; border-radius: 8px; display: none; }
-.pmsg.ok { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); color: #86efac; }
-.pmsg.err { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
-.btn-primary {
-  padding: 0.65rem 1.25rem; border-radius: 9px; border: none;
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer;
-  box-shadow: 0 4px 12px rgba(124,58,237,0.3);
-  transition: opacity 0.15s;
-}
-.btn-primary:hover { opacity: 0.88; }
+.pmsg { font-size: 0.8rem; padding: 0.5rem 0.85rem; border-radius: 8px; display: none; }
+.pmsg.ok { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); color: #15803d; }
+.pmsg.err { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #b91c1c; }
 
 /* ── Recordings ── */
 .rec-grid {
-  display: grid; gap: 0.75rem;
+  display: grid; gap: 0.85rem;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 .rec-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 1.1rem 1.25rem;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.1rem 1.2rem;
   display: flex; flex-direction: column; gap: 0.65rem;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.rec-card:hover { border-color: var(--muted); }
-.rec-name { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+.rec-card:hover { border-color: #c7c9d1; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.rec-name { font-size: 0.875rem; font-weight: 700; }
 .rec-meta { font-size: 0.75rem; color: var(--muted); }
 .rec-actions { display: flex; gap: 0.5rem; }
 
 /* ── Devices ── */
 .dev-grid {
-  display: grid; gap: 0.75rem;
+  display: grid; gap: 0.85rem;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 .dev-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 1.1rem 1.25rem;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.1rem 1.2rem;
   display: flex; flex-direction: column; gap: 0.7rem;
   transition: border-color 0.15s;
 }
-.dev-card:hover { border-color: var(--muted); }
+.dev-card:hover { border-color: #c7c9d1; }
 .dev-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-.dev-info { min-width: 0; }
-.dev-name { font-size: 0.9rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dev-kind { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
-.dev-ip { font-size: 0.75rem; color: var(--muted); }
+.dev-name { font-size: 0.9rem; font-weight: 700; }
+.dev-kind { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.dev-ip { font-size: 0.73rem; color: var(--muted); }
 .toggle {
-  width: 46px; height: 26px; border-radius: 13px; border: none;
-  background: var(--surface3); cursor: pointer; position: relative;
-  flex-shrink: 0; transition: background 0.2s;
+  width: 44px; height: 24px; border-radius: 12px;
+  background: #d1d5db; border: none; cursor: pointer;
+  position: relative; flex-shrink: 0; transition: background 0.2s;
 }
 .toggle::after {
-  content: ''; position: absolute; top: 3px; left: 3px;
+  content: ''; position: absolute; top: 2px; left: 2px;
   width: 20px; height: 20px; border-radius: 50%; background: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   transition: transform 0.2s;
 }
-.toggle.on { background: var(--accent); }
+.toggle.on { background: var(--blue); }
 .toggle.on::after { transform: translateX(20px); }
 
-.empty { color: var(--muted); font-size: 0.9rem; padding: 0.5rem 0; }
+.empty { color: var(--muted); font-size: 0.875rem; padding: 0.5rem 0; }
+.divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
 
-/* ── Mobile ── */
+/* ── Mobile bottom nav ── */
 .mob-nav {
   display: none; position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--surface); border-top: 1px solid var(--border);
-  z-index: 100;
+  background: #fff; border-top: 1px solid var(--border);
+  z-index: 200;
+  padding-bottom: env(safe-area-inset-bottom);
 }
-.mob-nav-inner { display: flex; }
+.mob-nav-inner {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+.mob-nav-inner::-webkit-scrollbar { display: none; }
 .mob-btn {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  padding: 0.6rem 0; cursor: pointer; color: var(--muted);
-  font-size: 0.65rem; gap: 0.2rem; transition: color 0.12s;
+  flex: 0 0 20%; min-width: 64px;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0.5rem 0.25rem 0.4rem; cursor: pointer; color: var(--muted);
+  font-size: 0.6rem; gap: 0.18rem;
   position: relative; user-select: none;
+  scroll-snap-align: start;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.mob-btn .mi { font-size: 1.3rem; }
-.mob-btn.on { color: var(--accent); }
+.mob-btn .mi { font-size: 1.35rem; line-height: 1; }
+.mob-btn span:last-child { white-space: nowrap; font-weight: 500; }
+.mob-btn.on { color: var(--blue); }
+.mob-btn.on .mi { transform: scale(1.1); }
 .mob-badge {
-  position: absolute; top: 5px; right: calc(50% - 16px);
-  background: var(--accent); color: #fff;
-  font-size: 0.6rem; font-weight: 800;
-  min-width: 16px; padding: 0 3px; text-align: center;
+  position: absolute; top: 4px; right: calc(50% - 20px);
+  background: var(--red); color: #fff;
+  font-size: 0.55rem; font-weight: 800;
+  min-width: 14px; padding: 1px 3px; text-align: center;
   border-radius: 99px; display: none;
 }
 
-@media (max-width: 700px) {
-  .sb { display: none; }
-  .topbar { display: flex; }
-  .main { margin-left: 0; padding-bottom: 70px; }
-  .page { padding: 1rem; }
-  .mob-nav { display: block; }
+@media (max-width: 768px) {
+  .sb { display: none !important; }
+  .topbar { display: none !important; }
+  .topbar-mob { display: flex !important; }
+  .mob-nav { display: block !important; }
+
+  .main {
+    margin-left: 0 !important;
+    padding-top: var(--topbar-h);
+    padding-bottom: calc(62px + env(safe-area-inset-bottom));
+    min-height: 100svh;
+    overflow-x: hidden;
+  }
+
+  .page {
+    padding: 0.75rem;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .page-header { margin-bottom: 0.65rem; }
+  .page-title { font-size: 1rem; font-weight: 800; }
+  .page-sub { font-size: 0.72rem; }
+  .page-date { display: none; }
+
+  .stats-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+  }
+  .stat-card { padding: 0.6rem 0.7rem; gap: 0.5rem; border-radius: 10px; overflow: hidden; }
+  .stat-icon { width: 28px; height: 28px; font-size: 0.8rem; border-radius: 7px; flex-shrink: 0; }
+  .stat-num { font-size: 1.15rem; }
+  .stat-label { font-size: 0.62rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .two-col { grid-template-columns: 1fr; gap: 0.5rem; }
+  .panel { max-width: 100% !important; border-radius: 10px; overflow: hidden; }
+  .panel-head { padding: 0.65rem 0.85rem; }
+  .panel-title { font-size: 0.82rem; }
+  .panel-row { padding: 0.55rem 0.85rem; gap: 0.6rem; }
+  .panel-row-icon { width: 28px; height: 28px; font-size: 0.8rem; border-radius: 7px; flex-shrink: 0; }
+  .panel-row-name { font-size: 0.8rem; }
+  .panel-row-sub { font-size: 0.68rem; }
+  .panel-row-meta { font-size: 0.7rem; flex-shrink: 0; }
+
+  #page-camera { padding: 0.5rem; }
+  .cam-wrap { border-radius: 10px; }
+  .cam-wrap img, .cam-wrap video { width: 100%; min-height: 200px; }
+  .cam-bar { gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap; }
+  .cam-bar .btn { flex: 1; justify-content: center; min-height: 44px; font-size: 0.8rem; }
+
+  .btn { min-height: 44px; font-size: 0.85rem; }
+  .inp { font-size: 16px; min-height: 44px; }
+  .setup-card { max-width: 100% !important; padding: 0.85rem; border-radius: 10px; }
+  .frow { flex-wrap: wrap; gap: 0.5rem; }
+  .frow .fgrp { flex: 1 1 calc(50% - 0.25rem); min-width: 100px; }
+
+  .rec-grid { grid-template-columns: 1fr; gap: 0.45rem; }
+  .rec-card { padding: 0.7rem 0.85rem; border-radius: 10px; }
+  .rec-name { font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rec-meta { font-size: 0.7rem; }
+  .rec-actions { gap: 0.4rem; margin-top: 0.5rem; }
+  .rec-actions a, .rec-actions button { flex: 1; justify-content: center; min-height: 42px; font-size: 0.78rem; }
+
+  .dev-grid { grid-template-columns: 1fr; gap: 0.45rem; }
+  .dev-card { padding: 0.75rem 0.9rem; border-radius: 10px; }
+
+  .panel[style*="max-width"] { max-width: 100% !important; }
 }
-@media (max-width: 440px) {
-  .rec-grid, .dev-grid { grid-template-columns: 1fr; }
+
+/* ── Recordings extras ── */
+.rec-thumb {
+  width: 100%; aspect-ratio: 16/9; background: var(--main-bg);
+  border-radius: 8px; overflow: hidden; margin-bottom: 0.5rem;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 0.72rem; cursor: pointer;
+  position: relative;
 }
+.rec-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rec-thumb::after {
+  content: '▶'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.25); color: #fff; font-size: 1.5rem;
+  opacity: 0; transition: opacity 0.15s;
+}
+.rec-thumb:hover::after { opacity: 1; }
+
+.rec-filters { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.rec-filter-btn {
+  padding: 0.4rem 0.85rem; border-radius: 999px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  color: var(--muted); font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.rec-filter-btn:hover { background: var(--main-bg); }
+.rec-filter-btn.on { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+.cal-wrap { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+.cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.7rem; font-weight: 700; font-size: 0.9rem; }
+.cal-nav { background: none; border: none; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 6px; color: var(--muted); font-size: 1rem; }
+.cal-nav:hover { background: var(--main-bg); color: var(--text); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dow { font-size: 0.65rem; color: var(--muted); text-align: center; padding: 0.3rem 0; font-weight: 700; text-transform: uppercase; }
+.cal-day {
+  aspect-ratio: 1; border-radius: 7px; background: var(--main-bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 0.78rem; color: var(--muted); cursor: pointer;
+  position: relative; transition: background 0.15s;
+}
+.cal-day:hover:not(.empty) { background: rgba(79,110,247,0.12); color: var(--text); }
+.cal-day.empty { background: transparent; cursor: default; }
+.cal-day.today { color: var(--blue); font-weight: 800; box-shadow: inset 0 0 0 2px var(--blue); }
+.cal-day.has { background: rgba(79,110,247,0.1); color: var(--text); font-weight: 700; }
+.cal-day.has.heavy { background: var(--blue); color: #fff; }
+.cal-day.selected { background: var(--orange) !important; color: #fff !important; }
+.cal-dot { position: absolute; bottom: 4px; font-size: 0.55rem; }
+
+/* ── System / health widgets ── */
+.health-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.6rem;
+}
+.health-cell {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.7rem 0.85rem; background: var(--main-bg);
+  border-radius: 9px; border: 1px solid var(--border);
+}
+.health-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.5);
+  flex-shrink: 0;
+}
+.health-dot.off { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.5); animation: none; }
+.health-dot.warn { background: var(--orange); box-shadow: 0 0 6px rgba(249,115,22,0.5); }
+.health-name { font-size: 0.85rem; font-weight: 600; flex: 1; }
+.health-state { font-size: 0.72rem; color: var(--muted); }
+.health-state.up { color: var(--green); font-weight: 700; }
+.health-state.down { color: var(--red); font-weight: 700; }
+
+.sys-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.7rem;
+}
+.sys-cell { background: var(--main-bg); border-radius: 10px; padding: 0.85rem 1rem; border: 1px solid var(--border); }
+.sys-label { font-size: 0.7rem; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 0.3px; }
+.sys-value { font-size: 1.15rem; font-weight: 800; margin-top: 4px; }
+.sys-bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 0.5rem; overflow: hidden; }
+.sys-bar-fill { height: 100%; background: var(--blue); transition: width 0.3s, background 0.3s; }
+.sys-bar-fill.warn { background: var(--orange); }
+.sys-bar-fill.crit { background: var(--red); }
+
+/* ── Stats / charts ── */
+.chart-bars {
+  display: flex; align-items: flex-end; gap: 0.4rem;
+  height: 110px; padding: 0.4rem 0 0.2rem;
+}
+.chart-bar {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0.35rem;
+  position: relative;
+}
+.chart-bar-fill {
+  width: 100%; background: linear-gradient(180deg, var(--blue), rgba(79,110,247,0.5));
+  border-radius: 5px 5px 0 0;
+  min-height: 3px; transition: height 0.3s ease;
+  position: relative;
+}
+.chart-bar.peak .chart-bar-fill { background: linear-gradient(180deg, var(--orange), rgba(249,115,22,0.5)); }
+.chart-bar.zero .chart-bar-fill { background: var(--border); opacity: 0.5; }
+.chart-bar-count {
+  position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+  font-size: 0.68rem; font-weight: 700; color: var(--text);
+  white-space: nowrap;
+}
+.chart-bar-label { font-size: 0.66rem; color: var(--muted); font-weight: 600; }
+
+.hour-grid {
+  display: grid; grid-template-columns: repeat(24, 1fr);
+  gap: 2px; height: 60px; align-items: flex-end;
+  margin-top: 0.5rem;
+}
+.hour-cell {
+  background: var(--border);
+  border-radius: 2px;
+  transition: background 0.15s;
+  min-height: 4px;
+  position: relative;
+}
+.hour-cell[title]:hover { background: var(--blue); }
+.hour-axis {
+  display: grid; grid-template-columns: repeat(24, 1fr);
+  font-size: 0.6rem; color: var(--muted);
+  margin-top: 4px; text-align: center;
+}
+.hour-axis div { white-space: nowrap; }
+
+.disk-bar {
+  height: 10px; background: var(--main-bg); border-radius: 5px;
+  overflow: hidden; margin: 0.7rem 0 0.4rem;
+  border: 1px solid var(--border);
+}
+.disk-bar-fill {
+  height: 100%; background: var(--green);
+  transition: width 0.3s, background 0.3s;
+}
+.disk-bar-fill.warn { background: var(--orange); }
+.disk-bar-fill.crit { background: var(--red); }
+
+.insight {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(79,110,247,0.06);
+  border-radius: 9px; border-left: 3px solid var(--blue);
+  font-size: 0.83rem; color: var(--text);
+}
+.insight.warn { background: rgba(249,115,22,0.08); border-left-color: var(--orange); }
+.insight-emoji { font-size: 1.1rem; flex-shrink: 0; }
+.insight-text strong { font-weight: 700; }
+
+.stat-trend { font-size: 0.7rem; margin-top: 2px; }
+.stat-trend.up { color: var(--red); }
+.stat-trend.down { color: var(--green); }
+.stat-trend.flat { color: var(--muted); }
+
+/* ── Hosting page ── */
+.host-steps { display: grid; gap: 0.7rem; }
+.host-step {
+  display: flex; gap: 0.85rem; padding: 0.85rem 1rem;
+  background: var(--main-bg); border-radius: 10px;
+  border: 1px solid transparent;
+}
+.host-step-num {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--blue); color: #fff; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+}
+.host-step-body { flex: 1; min-width: 0; }
+.host-step-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 3px; }
+.host-step-desc { font-size: 0.83rem; color: var(--muted); line-height: 1.5; }
+.host-step-desc code, .host-hint code, .host-faq-a code, .host-msg code {
+  background: rgba(0,0,0,0.06); padding: 1px 6px; border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+}
+.host-hint { color: var(--muted); font-size: 0.8rem; margin-top: 0.7rem; line-height: 1.5; padding: 0.6rem 0.85rem; background: rgba(79,110,247,0.06); border-radius: 8px; border-left: 3px solid var(--blue); }
+.host-msg { font-size: 0.85rem; padding: 0.7rem 0.95rem; border-radius: 8px; display: none; margin-top: 0.85rem; line-height: 1.5; }
+.host-msg.ok { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); color: #15803d; display: block; }
+.host-msg.err { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #b91c1c; display: block; }
+.host-msg.info { background: rgba(79,110,247,0.07); border: 1px solid rgba(79,110,247,0.2); color: #1e40af; display: block; }
+.host-sites { display: grid; gap: 0.7rem; }
+.host-site {
+  display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem;
+  background: var(--main-bg); border-radius: 10px;
+  border: 1px solid transparent; transition: border-color 0.15s;
+}
+.host-site:hover { border-color: var(--border); }
+.host-site-icon {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 9px;
+  background: rgba(79,110,247,0.1); color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 700;
+}
+.host-site-body { flex: 1; min-width: 0; }
+.host-site-name { font-weight: 700; font-size: 0.92rem; word-break: break-all; }
+.host-site-link { font-size: 0.78rem; color: var(--muted); }
+.host-empty { color: var(--muted); text-align: center; padding: 1.5rem 1rem; font-size: 0.88rem; background: var(--main-bg); border-radius: 10px; }
+.host-faq-item { border-top: 1px solid var(--border); padding: 0.85rem 0; }
+.host-faq-item:first-child { border-top: none; padding-top: 0; }
+.host-faq-q { font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.host-faq-q::after { content: '+'; font-size: 1.2rem; color: var(--muted); transition: transform 0.15s; flex-shrink: 0; }
+.host-faq-item.open .host-faq-q::after { transform: rotate(45deg); }
+.host-faq-a { display: none; font-size: 0.85rem; color: var(--muted); line-height: 1.6; padding-top: 0.5rem; }
+.host-faq-item.open .host-faq-a { display: block; }
+.host-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; background: var(--main-bg); color: var(--muted); font-weight: 600; }
 </style>
 </head>
 <body>
 
 <!-- ═══ LOGIN ═══ -->
-<div id="login-page">
-  <div class="lcard">
-    <div class="lbrand">
-      <div class="lbrand-icon">🔒</div>
-      <div class="lbrand-text">
-        <div class="lbrand-name">Nutikodu</div>
-        <div class="lbrand-sub">Turvakaamera süsteem</div>
+<div id="login-page" style="display:none">
+  <!-- Left panel -->
+  <div class="l-left">
+    <div class="l-logo">
+      <div class="l-logo-icon">🔒</div>
+      <div class="l-logo-name">Nutikodu</div>
+    </div>
+    <div class="l-hero">
+      <div class="l-headline">Halda oma kodu turvaliselt.</div>
+      <div class="l-features">
+        <div class="l-feature">
+          <div class="l-feature-icon">📹</div>
+          IP-kaamera live vaade ja snapshot
+        </div>
+        <div class="l-feature">
+          <div class="l-feature-icon">🏃</div>
+          Liikumistuvastus ja automaatne salvestamine
+        </div>
+        <div class="l-feature">
+          <div class="l-feature-icon">💡</div>
+          Nutiseadmete juhtimine (Shelly, Tasmota)
+        </div>
+        <div class="l-feature">
+          <div class="l-feature-icon">🔐</div>
+          Turvaline kaugjuurdepääs Tailscale'iga
+        </div>
       </div>
     </div>
-    <div class="lfields">
-      <div class="lfield">
-        <label>Kasutajanimi</label>
-        <input type="text" id="lu" autocomplete="username" placeholder="admin">
+    <div class="l-foot">© 2026 Nutikodu · Turvakaamera süsteem</div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="l-right">
+    <div class="lcard">
+      <div>
+        <div class="lcard-title">Sisselogimine</div>
+        <div class="lcard-sub">Sisesta oma andmed jätkamiseks</div>
       </div>
-      <div class="lfield">
-        <label>Parool</label>
-        <input type="password" id="lp" autocomplete="current-password" placeholder="••••••••">
+      <div class="lfields">
+        <div class="lfield">
+          <label>Kasutajanimi</label>
+          <input type="text" id="lu" autocomplete="username" placeholder="admin">
+        </div>
+        <div class="lfield">
+          <label>Parool</label>
+          <input type="password" id="lp" autocomplete="current-password" placeholder="••••••••">
+        </div>
       </div>
+      <div class="lerr" id="lerr"></div>
+      <button class="lbtn" onclick="doLogin()">Sisene →</button>
     </div>
-    <div class="lerr" id="lerr"></div>
-    <button class="lbtn" onclick="doLogin()">Sisene →</button>
   </div>
 </div>
 
 <!-- ═══ APP ═══ -->
 <div id="app">
 
-  <!-- Sidebar -->
+  <!-- Sidebar (desktop) -->
   <aside class="sb">
     <div class="sb-brand">
       <div class="sb-icon">🔒</div>
       <div class="sb-title">Nutikodu</div>
     </div>
     <nav class="sb-nav">
-      <div class="sb-section">Vaated</div>
-      <div class="nav-btn on" id="snav-camera" onclick="go('camera')">
-        <span class="ni">📹</span> Kaamera
+      <div class="sb-section">Ülevaade</div>
+      <div class="nav-btn on" id="snav-dashboard" onclick="go('dashboard')">
+        <span class="nav-icon">📊</span> Töölaud
+      </div>
+
+      <div class="sb-section">Jälgimine</div>
+      <div class="nav-btn" id="snav-camera" onclick="go('camera')">
+        <span class="nav-icon">📹</span> Kaamera
       </div>
       <div class="nav-btn" id="snav-recordings" onclick="go('recordings')">
-        <span class="ni">🎬</span> Salvestused
+        <span class="nav-icon">🎬</span> Salvestused
         <span class="nbadge" id="sbadge"></span>
       </div>
+
+      <div class="sb-section">Nutikodu</div>
+      <div class="nav-btn" id="snav-nutikodu" onclick="go('nutikodu')">
+        <span class="nav-icon">🏠</span> Nutikodu
+      </div>
       <div class="nav-btn" id="snav-devices" onclick="go('devices')">
-        <span class="ni">💡</span> Seadmed
+        <span class="nav-icon">⚙️</span> Seadmed
+      </div>
+
+      <div class="sb-section">Haldus</div>
+      <div class="nav-btn" id="snav-hosting" onclick="go('hosting')">
+        <span class="nav-icon">🌐</span> Hosting
+      </div>
+      <div class="nav-btn" id="snav-users" onclick="go('users')">
+        <span class="nav-icon">👥</span> Kasutajad
+      </div>
+      <div class="nav-btn" id="snav-settings" onclick="go('settings')">
+        <span class="nav-icon">🛠️</span> Seaded
       </div>
     </nav>
     <div class="sb-foot">
-      <div class="sb-user" onclick="doLogout()">
+      <div class="sb-user" onclick="showPwModal()">
         <div class="sb-avatar">👤</div>
         <span id="sb-username">admin</span>
-        <span style="margin-left:auto;font-size:0.8rem">→ Välju</span>
+        <span class="sb-logout" title="Muuda parooli">🔑</span>
+      </div>
+      <div class="nav-btn" onclick="showTFAModal()" style="margin-top:2px;font-size:0.82rem;color:var(--sb-text)">
+        <span class="nav-icon">🔐</span> 2FA seadistus
+      </div>
+      <div class="nav-btn" onclick="doLogout()" style="margin-top:3px;justify-content:center;color:#f87171">
+        <span class="nav-icon">→</span> Logi välja
       </div>
     </div>
   </aside>
 
-  <!-- Mobile topbar -->
+  <!-- Topbar (desktop) -->
   <div class="topbar">
-    <div class="sb-icon" style="width:30px;height:30px;border-radius:8px;font-size:0.95rem;flex-shrink:0">🔒</div>
-    <div class="topbar-brand">Nutikodu</div>
-    <button class="btn-outline" style="padding:0.35rem 0.7rem;font-size:0.78rem" onclick="doLogout()">Välju</button>
+    <div class="topbar-title" id="topbar-title">Töölaud</div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbar-clock"></div>
+      <div class="topbar-user">
+        <div class="topbar-avatar" id="topbar-initial">A</div>
+        <div class="topbar-name" id="topbar-username">admin</div>
+        <div class="topbar-badge">admin</div>
+      </div>
+    </div>
   </div>
 
-  <!-- Content -->
+  <!-- Topbar (mobile) -->
+  <div class="topbar-mob">
+    <div class="sb-icon" style="width:30px;height:30px;border-radius:8px;font-size:0.9rem;flex-shrink:0">🔒</div>
+    <div class="topbar-mob-title">Nutikodu</div>
+    <button class="btn btn-outline" style="padding:0.35rem 0.7rem;font-size:0.78rem;color:#fff;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15)" onclick="doLogout()">Välju</button>
+  </div>
+
+  <!-- Content area -->
   <div class="main">
 
-    <!-- Camera -->
-    <div class="page on" id="page-camera">
+    <!-- ── DASHBOARD ── -->
+    <div class="page on" id="page-dashboard">
       <div class="page-header">
-        <div class="page-title">Kaamera</div>
-        <div class="page-sub">Live vaade ja salvestamine</div>
+        <div>
+          <div class="page-title">Töölaud</div>
+          <div class="page-sub">Nutikodu süsteemi ülevaade</div>
+        </div>
+        <div class="page-date" id="dash-date"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card blue">
+          <div class="stat-icon">📹</div>
+          <div>
+            <div class="stat-num" id="stat-cams">0</div>
+            <div class="stat-label">Kaameraid online</div>
+          </div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">🎬</div>
+          <div>
+            <div class="stat-num" id="stat-recs">0</div>
+            <div class="stat-label">Salvestusi kokku</div>
+          </div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon">💡</div>
+          <div>
+            <div class="stat-num" id="stat-devs">0</div>
+            <div class="stat-label">Seadmeid</div>
+          </div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">🏃</div>
+          <div style="min-width:0">
+            <div class="stat-num" id="stat-motion">0</div>
+            <div class="stat-label">Liikumist täna</div>
+            <div class="stat-trend flat" id="stat-trend">vs eile</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Insights -->
+      <div id="dash-insights" style="margin-bottom:1rem;display:flex;flex-direction:column;gap:0.6rem"></div>
+
+      <!-- Charts row -->
+      <div class="two-col" style="margin-bottom:1rem">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">📊 Liikumised — viimased 7 päeva</div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-bars" id="chart-week">
+              <div class="empty" style="margin:0 auto;color:var(--muted);font-size:0.85rem">Laen…</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">⏰ Tänane jaotus tundide kaupa</div>
+          </div>
+          <div class="panel-body">
+            <div class="hour-grid" id="chart-hours"></div>
+            <div class="hour-axis">
+              <div>0</div><div></div><div></div><div>3</div><div></div><div></div>
+              <div>6</div><div></div><div></div><div>9</div><div></div><div></div>
+              <div>12</div><div></div><div></div><div>15</div><div></div><div></div>
+              <div>18</div><div></div><div></div><div>21</div><div></div><div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Storage panel -->
+      <div class="panel" style="margin-bottom:1rem">
+        <div class="panel-head">
+          <div class="panel-title">💾 Salvestusruum</div>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:0.85rem">
+            <div>
+              <strong id="stat-rec-size">–</strong> salvestusi
+              <span style="color:var(--muted)"> · <span id="stat-rec-count">0</span> faili</span>
+            </div>
+            <div style="color:var(--muted);font-size:0.78rem">
+              Kettal vaba: <strong id="stat-disk-free" style="color:var(--text)">–</strong> / <span id="stat-disk-total">–</span>
+            </div>
+          </div>
+          <div class="disk-bar"><div class="disk-bar-fill" id="stat-disk-bar" style="width:0%"></div></div>
+          <div style="font-size:0.72rem;color:var(--muted);text-align:right" id="stat-disk-pct">0% kasutusel</div>
+        </div>
+      </div>
+
+      <!-- System + Health row -->
+      <div class="two-col" style="margin-bottom:1rem">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">🖥 Süsteem</div>
+          </div>
+          <div class="panel-body">
+            <div class="sys-grid">
+              <div class="sys-cell">
+                <div class="sys-label">Uptime</div>
+                <div class="sys-value" id="sys-uptime">–</div>
+              </div>
+              <div class="sys-cell">
+                <div class="sys-label">CPU</div>
+                <div class="sys-value" id="sys-cpu">–</div>
+                <div class="sys-bar"><div class="sys-bar-fill" id="sys-cpu-bar" style="width:0%"></div></div>
+              </div>
+              <div class="sys-cell">
+                <div class="sys-label">RAM</div>
+                <div class="sys-value" id="sys-ram">–</div>
+                <div class="sys-bar"><div class="sys-bar-fill" id="sys-ram-bar" style="width:0%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">📡 Teenuste tervis</div>
+          </div>
+          <div class="panel-body">
+            <div class="health-grid" id="dash-health">
+              <div class="health-cell"><div class="health-dot off"></div><div class="health-name">Laen…</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two panels -->
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">🎬 Viimased salvestused</div>
+            <div class="panel-link" onclick="go('recordings')">Vaata kõiki</div>
+          </div>
+          <div class="panel-body" id="dash-recs">
+            <div class="panel-empty">Laen...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">💡 Seadmete olek</div>
+            <div class="panel-link" onclick="go('devices')">Halda</div>
+          </div>
+          <div class="panel-body" id="dash-devs">
+            <div class="panel-empty">Laen...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CAMERA ── -->
+    <div class="page" id="page-camera">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Kaamera</div>
+          <div class="page-sub">Live vaade ja salvestamine</div>
+        </div>
       </div>
 
       <div id="live-view" style="display:none">
         <div class="cam-wrap">
-          <img id="stream-img" alt="">
+          <video id="stream-video" autoplay muted playsinline controls></video>
           <div class="cam-overlay">
             <div class="cam-pill">
               <div class="live-dot" id="ldot"></div>
@@ -432,11 +1122,13 @@ select.inp { cursor: pointer; }
           </div>
         </div>
         <div class="cam-bar">
-          <button class="btn-outline" onclick="doSnapshot()">📷 Snapshot</button>
+          <button class="btn btn-outline" onclick="doSnapshot()">📷 Snapshot</button>
+          <button class="btn btn-outline" onclick="seekToLive()">⏺ Live</button>
+          <button class="btn btn-outline" onclick="showSetup()">⚙ Vaheta kaamera</button>
         </div>
       </div>
 
-      <div id="setup-view" class="setup-box">
+      <div id="setup-view" class="setup-card">
         <h3>Ühenda IP-kaamera</h3>
         <div class="frow">
           <div class="fgrp" style="flex:2">
@@ -458,28 +1150,56 @@ select.inp { cursor: pointer; }
             <input class="inp" type="password" id="cw">
           </div>
         </div>
-        <button class="btn-primary" onclick="doProbe()">🔍 Otsi ja ühenda</button>
+        <button class="btn btn-primary" onclick="doProbe()">🔍 Otsi ja ühenda</button>
         <div class="pmsg" id="pmsg"></div>
       </div>
     </div>
 
-    <!-- Recordings -->
+    <!-- ── RECORDINGS ── -->
     <div class="page" id="page-recordings">
       <div class="page-header">
-        <div class="page-title">Salvestused</div>
-        <div class="page-sub" id="rec-count">Laen...</div>
+        <div>
+          <div class="page-title">Salvestused</div>
+          <div class="page-sub" id="rec-count">Laen...</div>
+        </div>
       </div>
+
+      <div class="cal-wrap">
+        <div class="cal-head">
+          <button class="cal-nav" onclick="calMove(-1)">‹</button>
+          <div id="cal-title">—</div>
+          <button class="cal-nav" onclick="calMove(1)">›</button>
+        </div>
+        <div class="cal-grid" id="cal-dow">
+          <div class="cal-dow">E</div><div class="cal-dow">T</div><div class="cal-dow">K</div>
+          <div class="cal-dow">N</div><div class="cal-dow">R</div><div class="cal-dow">L</div><div class="cal-dow">P</div>
+        </div>
+        <div class="cal-grid" id="cal-days"></div>
+      </div>
+
+      <div class="rec-filters" id="rec-filters">
+        <button class="rec-filter-btn on" data-filter="all" onclick="setRecFilter('all')">Kõik</button>
+        <button class="rec-filter-btn" data-filter="today" onclick="setRecFilter('today')">Täna</button>
+        <button class="rec-filter-btn" data-filter="yesterday" onclick="setRecFilter('yesterday')">Eile</button>
+        <button class="rec-filter-btn" data-filter="7days" onclick="setRecFilter('7days')">7 päeva</button>
+        <button class="rec-filter-btn" data-filter="30days" onclick="setRecFilter('30days')">30 päeva</button>
+        <button class="rec-filter-btn" id="rec-filter-day" data-filter="day" onclick="setRecFilter('all')" style="display:none"></button>
+      </div>
+
       <div class="rec-grid" id="rec-grid"></div>
     </div>
 
-    <!-- Devices -->
+    <!-- ── DEVICES ── -->
     <div class="page" id="page-devices">
       <div class="page-header">
-        <div class="page-title">Nutikodu seadmed</div>
-        <div class="page-sub">Shelly, Tasmota ja HTTP seadmed</div>
+        <div>
+          <div class="page-title">Seadmed</div>
+          <div class="page-sub">Shelly, Tasmota ja HTTP seadmed</div>
+        </div>
       </div>
       <div class="dev-grid" id="dev-grid"></div>
-      <div class="setup-box">
+
+      <div class="setup-card admin-only">
         <h3>Lisa uus seade</h3>
         <div class="fgrp">
           <label>Nimi</label>
@@ -487,9 +1207,10 @@ select.inp { cursor: pointer; }
         </div>
         <div class="fgrp">
           <label>Tüüp</label>
-          <select class="inp" id="dk">
+          <select class="inp" id="dk" onchange="if(this.value==='sonoff')document.getElementById('dport').value='8081';else if(document.getElementById('dport').value==='8081')document.getElementById('dport').value='80'">
             <option value="shelly">Shelly</option>
             <option value="tasmota">Tasmota</option>
+            <option value="sonoff">Sonoff DIY</option>
             <option value="http">HTTP</option>
           </select>
         </div>
@@ -503,24 +1224,271 @@ select.inp { cursor: pointer; }
             <input class="inp" id="dport" value="80">
           </div>
         </div>
-        <button class="btn-primary" onclick="addDevice()">+ Lisa seade</button>
+        <button class="btn btn-primary" onclick="addDevice()">+ Lisa seade</button>
+      </div>
+    </div>
+
+
+    <!-- ── NUTIKODU ── -->
+    <div class="page" id="page-nutikodu">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Nutikodu</div>
+          <div class="page-sub" id="nk-sub">Lülitid ja tuled</div>
+        </div>
+        <button class="btn btn-outline" onclick="loadNutikodu()" style="font-size:0.82rem">⟳ Uuenda</button>
+      </div>
+      <div id="nk-grid" class="nk-grid"></div>
+    </div>
+
+    <!-- ── USERS ── -->
+    <div class="page" id="page-users">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Kasutajad</div>
+          <div class="page-sub">Halda süsteemi kasutajaid</div>
+        </div>
+      </div>
+
+      <div class="panel" style="max-width:600px;margin-bottom:1.5rem">
+        <div class="panel-head">
+          <div class="panel-title">👥 Kasutajate nimekiri</div>
+        </div>
+        <div class="panel-body" id="users-list"></div>
+      </div>
+
+      <div class="setup-card" style="max-width:480px">
+        <h3>Lisa uus kasutaja</h3>
+        <div class="fgrp">
+          <label>Kasutajanimi</label>
+          <input class="inp" id="new-username" placeholder="kasutaja123">
+        </div>
+        <div class="fgrp">
+          <label>Parool</label>
+          <input class="inp" type="password" id="new-password" placeholder="••••••••">
+        </div>
+        <div class="fgrp">
+          <label>Roll</label>
+          <select class="inp" id="new-role">
+            <option value="user">Kasutaja</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="createUser()">+ Lisa kasutaja</button>
+        <div class="pmsg" id="user-msg"></div>
+      </div>
+    </div>
+
+    <!-- ── HOSTING ── -->
+    <div class="page" id="page-hosting">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🌐 Hosting</div>
+          <div class="page-sub">Loo automaatselt veebimajutus oma domeenile — Cloudflare DNS, tunnel ja Virtualmini virtuaalserver</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:1rem">
+        <div class="panel-head">
+          <div class="panel-title">📋 Kuidas see töötab</div>
+        </div>
+        <div class="panel-body">
+          <div class="host-steps">
+            <div class="host-step">
+              <div class="host-step-num">1</div>
+              <div class="host-step-body">
+                <div class="host-step-title">Lisa domeen Cloudflare'i (ühekordne)</div>
+                <div class="host-step-desc">
+                  Mine <a href="https://dash.cloudflare.com" target="_blank">Cloudflare</a> → <code>Add Site</code> → sisesta domeen (nt <code>kalle.ee</code>) → vali Free plaan.
+                  Cloudflare annab kaks nameserverit. Mine oma registrari (Elkdata, Namecheap jne) → asenda <em>Nameservers</em> nendega.
+                  Propageerub 5 min — 24 h.
+                </div>
+              </div>
+            </div>
+            <div class="host-step">
+              <div class="host-step-num">2</div>
+              <div class="host-step-body">
+                <div class="host-step-title">Sisesta domeen all olevasse vormi</div>
+                <div class="host-step-desc">
+                  Kirjuta täisdomeen — <code>blogi.mrnux.ee</code>, <code>kalle.ee</code> või <code>www.kalle.ee</code> — ja vajuta <strong>Loo</strong>.
+                  Süsteem teeb taustal: leiab Cloudflare tsooni, loob DNS CNAME, lisab tunneli routele, käivitab Virtualmini virtuaalserveri.
+                </div>
+              </div>
+            </div>
+            <div class="host-step">
+              <div class="host-step-num">3</div>
+              <div class="host-step-body">
+                <div class="host-step-title">Halda saiti Virtualminis</div>
+                <div class="host-step-desc">
+                  Kuvatakse loodud Virtualmini parool — kirjuta turvaliselt üles. Logi sisse aadressil
+                  <a href="https://panel.mrnux.ee" target="_blank">panel.mrnux.ee</a> ja halda faile, andmebaase, e-maile.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:1rem">
+        <div class="panel-head">
+          <div class="panel-title">➕ Lisa uus domeen</div>
+        </div>
+        <div class="panel-body">
+          <form id="host-form" onsubmit="return false">
+            <div class="frow" style="align-items:flex-end">
+              <div class="fgrp" style="flex:3">
+                <label>Domeen</label>
+                <input class="inp" type="text" id="host-domain" placeholder="näiteks blogi.mrnux.ee või kalle.ee" autocomplete="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <button type="button" class="btn btn-primary" id="host-add-btn" onclick="hostAddSite()">🚀 Loo virtuaalserver</button>
+            </div>
+            <div id="host-msg" class="host-msg"></div>
+            <div class="host-hint">
+              💡 <strong>Näide:</strong> kui registreerisid <code>kalle.ee</code> ja muutsid nameservers Cloudflare'is, saad siia kirjutada nii <code>kalle.ee</code> kui ka <code>www.kalle.ee</code> või suvalise alamdomeeni.
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:1rem">
+        <div class="panel-head">
+          <div class="panel-title">🗂 Olemasolevad domeenid <span class="host-badge" id="host-count">0</span></div>
+        </div>
+        <div class="panel-body">
+          <div class="host-sites" id="host-sites">
+            <div class="host-empty">Laen…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">❓ Korduvad küsimused</div>
+        </div>
+        <div class="panel-body" id="host-faq">
+          <div class="host-faq-item">
+            <div class="host-faq-q">Mis juhtub kui sisestan domeeni, mille tsoon pole minu Cloudflare kontol?</div>
+            <div class="host-faq-a">
+              Saad veateate <em>"Cloudflare tsooni ei leitud"</em>. Süsteem ei saa programmiselt teiste kontode tsoone hallata.
+              Lahendus: lisa domeen oma Cloudflare kontosse (Add Site) ja muuda registrari nameservers.
+            </div>
+          </div>
+          <div class="host-faq-item">
+            <div class="host-faq-q">Saan ma hostida kellegi teise domeeni?</div>
+            <div class="host-faq-a">
+              Jah — domeeni omanik ei pea Cloudflare kontot omama. Sina lisad domeeni <strong>oma</strong> Cloudflare'i, omanik vaid muudab oma registraris nameservers Cloudflare omadeks.
+            </div>
+          </div>
+          <div class="host-faq-item">
+            <div class="host-faq-q">Kuidas SSL töötab?</div>
+            <div class="host-faq-a">
+              SSL'i pakub Cloudflare automaatselt (Flexible SSL). Brauser → Cloudflare HTTPS, Cloudflare → tunnel HTTP. Otsast-otsa TLS-i jaoks: Virtualmini all Let's Encrypt sertifikaat.
+            </div>
+          </div>
+          <div class="host-faq-item">
+            <div class="host-faq-q">Mis juhtub kui kustutan domeeni siit?</div>
+            <div class="host-faq-a">
+              Kõik korraga: DNS kirje (Cloudflare), tunnel route, Virtualmini virtuaalserver + kõik failid ja andmebaasid. Tegevus on <strong>pöördumatu</strong>.
+            </div>
+          </div>
+          <div class="host-faq-item">
+            <div class="host-faq-q">Kuidas vaadata kas DNS on propageerunud?</div>
+            <div class="host-faq-a">
+              Käsk: <code>dig kalle.ee</code> peab tagastama Cloudflare IP'd (104.21.x.x või 172.67.x.x). Kui mitte — registraris pole nameservers veel Cloudflare omadeks vahetatud.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SEADED ── -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Seaded</div>
+          <div class="page-sub">Süsteemi konfiguratsioon</div>
+        </div>
+      </div>
+
+      <div class="setup-card" style="max-width:560px;margin-bottom:1.5rem">
+        <h3>📷 Kaamera</h3>
+        <div class="fgrp">
+          <label>RTSP URL</label>
+          <input class="inp" id="set-camera-url" type="password" placeholder="rtsp://admin:parool@192.168.1.x:554/..." autocomplete="off">
+        </div>
+        <div id="set-camera-msg" class="pmsg" style="display:none"></div>
+      </div>
+
+      <div class="setup-card" style="max-width:560px;margin-bottom:1.5rem">
+        <h3>🚨 Liikumistuvastus</h3>
+        <div class="fgrp">
+          <label>Tundlikkus (threshold) — väiksem = tundlikum</label>
+          <input class="inp" id="set-threshold" type="number" min="500" max="50000" step="500">
+        </div>
+        <div class="fgrp">
+          <label>Salvestuse pikkus (sekundit)</label>
+          <input class="inp" id="set-record-sec" type="number" min="5" max="300">
+        </div>
+        <div class="fgrp">
+          <label>Ooteaeg häirete vahel (sekundit)</label>
+          <input class="inp" id="set-cooldown" type="number" min="0" max="300">
+        </div>
+        <div class="fgrp">
+          <label>Salvestuste säilitamise aeg (päeva, 0 = igavesti)</label>
+          <input class="inp" id="set-retention" type="number" min="0" max="365">
+        </div>
+      </div>
+
+      <div class="setup-card" style="max-width:560px;margin-bottom:1.5rem">
+        <h3>🔔 Teavitused</h3>
+        <div class="fgrp" style="display:flex;align-items:center;gap:0.7rem">
+          <input type="checkbox" id="set-notif-enabled" style="width:18px;height:18px;accent-color:var(--primary)">
+          <label for="set-notif-enabled" style="margin:0">Teavitused sisse lülitatud</label>
+        </div>
+        <div class="fgrp">
+          <label>Discord Webhook URL</label>
+          <div style="display:flex;gap:.5rem">
+            <input class="inp" id="set-discord" placeholder="https://discord.com/api/webhooks/..." style="flex:1">
+            <button class="btn" type="button" onclick="testDiscord()" style="white-space:nowrap">Test</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="max-width:560px;display:flex;gap:0.7rem;align-items:center">
+        <button class="btn" onclick="saveSettings()">💾 Salvesta seaded</button>
+        <div id="set-msg" class="pmsg" style="display:none;flex:1"></div>
       </div>
     </div>
 
   </div><!-- /main -->
 
-  <!-- Mobile nav -->
+  <!-- Mobile bottom nav -->
   <div class="mob-nav">
     <div class="mob-nav-inner">
-      <div class="mob-btn on" id="mnav-camera" onclick="go('camera')">
-        <span class="mi">📹</span><span>Kaamera</span>
+      <div class="mob-btn on" id="mnav-dashboard" onclick="go('dashboard')">
+        <span class="mi">🏠</span><span>Avaleht</span>
+      </div>
+      <div class="mob-btn" id="mnav-camera" onclick="go('camera')">
+        <span class="mi">📷</span><span>Kaamera</span>
       </div>
       <div class="mob-btn" id="mnav-recordings" onclick="go('recordings')">
-        <span class="mi">🎬</span><span>Salvestused</span>
+        <span class="mi">🎬</span><span>Klipid</span>
         <span class="mob-badge" id="mbadge"></span>
       </div>
+      <div class="mob-btn" id="mnav-nutikodu" onclick="go('nutikodu')">
+        <span class="mi">🏠</span><span>Nutikodu</span>
+      </div>
       <div class="mob-btn" id="mnav-devices" onclick="go('devices')">
-        <span class="mi">💡</span><span>Seadmed</span>
+        <span class="mi">⚙️</span><span>Seadmed</span>
+      </div>
+      <div class="mob-btn" id="mnav-hosting" onclick="go('hosting')">
+        <span class="mi">🌐</span><span>Hosting</span>
+      </div>
+      <div class="mob-btn" id="mnav-users" onclick="go('users')">
+        <span class="mi">👤</span><span>Kasutajad</span>
+      </div>
+      <div class="mob-btn" id="mnav-settings" onclick="go('settings')">
+        <span class="mi">🛠️</span><span>Seaded</span>
       </div>
     </div>
   </div>
@@ -530,9 +1498,47 @@ select.inp { cursor: pointer; }
 <script>
 'use strict';
 let camKey = '';
-let currentPage = 'camera';
+let userRole = 'user';
 
-// ── Login / Logout ──────────────────────────────────────────────────────────
+function applyRole() {
+  const isAdmin = userRole === 'admin';
+  ['snav-users', 'snav-devices'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isAdmin ? '' : 'none';
+  });
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = isAdmin ? '' : 'none';
+  });
+}
+let currentPage = 'dashboard';
+let recData = [];
+let devData = [];
+
+const PAGE_TITLES = {
+  dashboard: 'Töölaud',
+  camera: 'Kaamera',
+  recordings: 'Salvestused',
+  nutikodu: 'Nutikodu',
+  settings: 'Seaded',
+  devices: 'Seadmed',
+  users: 'Kasutajad',
+  hosting: 'Hosting',
+};
+
+// ── Clock ────────────────────────────────────────────────────────────────────
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('topbar-clock').textContent =
+    now.toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Login / Logout ───────────────────────────────────────────────────────────
+
+let _2faUser = '';
+let _2faTempToken = '';
 
 async function doLogin() {
   const u = document.getElementById('lu').value.trim();
@@ -549,56 +1555,127 @@ async function doLogin() {
     err.style.display = 'block';
     return;
   }
-  camKey = data.cam_key || '';
-  sessionStorage.setItem('camKey', camKey);
-  document.getElementById('sb-username').textContent = u || 'admin';
+  if (data.requires_2fa) {
+    _2faUser = u;
+    _2faTempToken = data.temp_token;
+    show2FAStep();
+    return;
+  }
+  _finishLogin(u, data.cam_key || '');
+}
+
+function show2FAStep() {
+  document.querySelector('.lcard').innerHTML = `
+    <div>
+      <div class="lcard-title">Kaheastmeline autentimine</div>
+      <div class="lcard-sub">Sisesta autentimisrakenduse kood</div>
+    </div>
+    <div class="lfields">
+      <div class="lfield">
+        <label>6-kohaline kood</label>
+        <input type="text" id="totp-code" class="lfield input" maxlength="6" placeholder="000000"
+          style="padding:0.7rem 0.95rem;border-radius:9px;border:1px solid var(--border);background:#f9fafb;color:var(--text);font-size:1.2rem;letter-spacing:0.3em;text-align:center;outline:none;font-family:inherit;width:100%"
+          autocomplete="one-time-code">
+      </div>
+    </div>
+    <div class="lerr" id="lerr" style="display:none"></div>
+    <button class="lbtn" onclick="doVerify2FA()">Kinnita →</button>
+    <div style="text-align:center;font-size:0.8rem;color:var(--muted);cursor:pointer" onclick="location.reload()">← Tagasi</div>
+  `;
+  setTimeout(() => document.getElementById('totp-code')?.focus(), 100);
+  document.getElementById('totp-code')?.addEventListener('keydown', e => { if (e.key === 'Enter') doVerify2FA(); });
+}
+
+async function doVerify2FA() {
+  const code = document.getElementById('totp-code').value.trim();
+  const err = document.getElementById('lerr');
+  err.style.display = 'none';
+  const fd = new FormData();
+  fd.append('temp_token', _2faTempToken);
+  fd.append('code', code);
+  const res = await fetch('/login/2fa', { method: 'POST', body: fd });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    err.textContent = data.detail || 'Vale kood';
+    err.style.display = 'block';
+    return;
+  }
+  _finishLogin(_2faUser, data.cam_key || '');
+}
+
+function _finishLogin(username, ck) {
+  camKey = ck;
+  localStorage.setItem('camKey', camKey);
+  const name = username || 'admin';
+  document.getElementById('sb-username').textContent = name;
+  document.getElementById('topbar-username').textContent = name;
+  document.getElementById('topbar-initial').textContent = name[0].toUpperCase();
   showApp();
 }
 
 async function doLogout() {
   await fetch('/logout', { method: 'POST' });
-  sessionStorage.clear();
+  localStorage.removeItem('camKey');
+  localStorage.removeItem('username');
   location.reload();
 }
 
 document.getElementById('lp').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('lu').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('lp').focus(); });
 
-// ── App show ────────────────────────────────────────────────────────────────
+// ── App ──────────────────────────────────────────────────────────────────────
 
-function showApp() {
+function showApp(page) {
   document.getElementById('login-page').style.display = 'none';
-  const app = document.getElementById('app');
-  app.style.display = 'block';
+  document.getElementById('app').style.display = 'block';
+
+  const d = new Date();
+  document.getElementById('dash-date').textContent =
+    d.toLocaleDateString('et-EE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
   if (camKey) {
-    document.getElementById('setup-view').style.display = 'none';
-    document.getElementById('live-view').style.display = 'block';
-    const img = document.getElementById('stream-img');
-    img.src = '/stream?key=' + encodeURIComponent(camKey);
-    img.onerror = () => {
-      document.getElementById('ldot').className = 'live-dot off';
-      document.getElementById('lstatus').textContent = 'Ühendus katkes';
-    };
+    document.getElementById('stat-cams').textContent = '1';
+    initCamera();
   }
+
+  fetch('/users/me').then(r => r.json()).then(d => {
+    userRole = d.role || 'user';
+    applyRole();
+  });
   loadRecordings();
   loadDevices();
+  go(page || 'dashboard');
 }
 
 // ── Navigation ───────────────────────────────────────────────────────────────
 
 function go(name) {
   currentPage = name;
+  localStorage.setItem('lastPage', name);
   document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
   document.querySelectorAll('.nav-btn').forEach(n => n.classList.remove('on'));
   document.querySelectorAll('.mob-btn').forEach(n => n.classList.remove('on'));
   document.getElementById('page-' + name).classList.add('on');
-  document.getElementById('snav-' + name).classList.add('on');
-  document.getElementById('mnav-' + name).classList.add('on');
+  const sn = document.getElementById('snav-' + name);
+  if (sn) sn.classList.add('on');
+  const mn = document.getElementById('mnav-' + name);
+  if (mn) mn.classList.add('on');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[name] || name;
   if (name === 'recordings') loadRecordings();
   if (name === 'devices') loadDevices();
+  if (name === 'nutikodu') loadNutikodu();
+  if (name === 'settings') loadSettings();
+  if (name === 'users') loadUsers();
+  if (name === 'dashboard') refreshDashboard();
+  if (name === 'hosting') loadHostingSites();
 }
 
 // ── Camera ───────────────────────────────────────────────────────────────────
+
+function showSetup() {
+  document.getElementById('setup-view').style.display = 'flex';
+  document.getElementById('live-view').style.display = 'none';
+}
 
 async function doProbe() {
   const ip = document.getElementById('ci').value.trim();
@@ -614,11 +1691,12 @@ async function doProbe() {
     return;
   }
   camKey = data.internal_key;
-  sessionStorage.setItem('camKey', camKey);
+  localStorage.setItem('camKey', camKey);
   msg.className = 'pmsg ok'; msg.textContent = '✓ Leitud: ' + data.url;
   document.getElementById('setup-view').style.display = 'none';
   document.getElementById('live-view').style.display = 'block';
-  document.getElementById('stream-img').src = '/stream?key=' + encodeURIComponent(camKey);
+  _startHLS();
+  document.getElementById('stat-cams').textContent = '1';
 }
 
 async function doSnapshot() {
@@ -634,31 +1712,159 @@ async function doSnapshot() {
 
 // ── Recordings ───────────────────────────────────────────────────────────────
 
+let recFilter = 'all';
+let recSelectedDay = null; // ISO 'YYYY-MM-DD' or null
+let calMonthOffset = 0;
+
 async function loadRecordings() {
   const res = await fetch('/recordings');
   if (!res.ok) return;
-  const list = await res.json();
-  const count = list.length;
-  const subEl = document.getElementById('rec-count');
-  subEl.textContent = count ? count + ' salvestust' : 'Ühtegi salvestust pole veel';
+  recData = await res.json();
+  const count = recData.length;
   ['sbadge', 'mbadge'].forEach(id => {
     const el = document.getElementById(id);
     el.textContent = count; el.style.display = count ? 'inline' : 'none';
   });
+  document.getElementById('stat-recs').textContent = count;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayTs = today.getTime() / 1000;
+  const todayCount = recData.filter(r => r.mtime >= todayTs).length;
+  document.getElementById('stat-motion').textContent = todayCount;
+
+  renderRecCalendar();
+  renderRecGrid();
+  refreshDashboardRecs();
+}
+
+function _filterRecs() {
+  if (recSelectedDay) {
+    const start = new Date(recSelectedDay + 'T00:00:00').getTime() / 1000;
+    const end = start + 86400;
+    return recData.filter(r => r.mtime >= start && r.mtime < end);
+  }
+  if (recFilter === 'all') return recData;
+  const now = new Date();
+  let from;
+  if (recFilter === 'today') {
+    from = new Date(now); from.setHours(0,0,0,0);
+    return recData.filter(r => r.mtime * 1000 >= from.getTime());
+  }
+  if (recFilter === 'yesterday') {
+    const start = new Date(now); start.setHours(0,0,0,0); start.setDate(start.getDate() - 1);
+    const end = new Date(start); end.setDate(end.getDate() + 1);
+    return recData.filter(r => r.mtime * 1000 >= start.getTime() && r.mtime * 1000 < end.getTime());
+  }
+  if (recFilter === '7days') {
+    from = Date.now() - 7 * 86400000;
+    return recData.filter(r => r.mtime * 1000 >= from);
+  }
+  if (recFilter === '30days') {
+    from = Date.now() - 30 * 86400000;
+    return recData.filter(r => r.mtime * 1000 >= from);
+  }
+  return recData;
+}
+
+function setRecFilter(f) {
+  recFilter = f;
+  recSelectedDay = null;
+  document.querySelectorAll('.rec-filter-btn').forEach(b => {
+    b.classList.toggle('on', b.dataset.filter === f);
+  });
+  document.getElementById('rec-filter-day').style.display = 'none';
+  document.querySelectorAll('.cal-day.selected').forEach(d => d.classList.remove('selected'));
+  renderRecGrid();
+}
+
+function selectCalDay(iso) {
+  recSelectedDay = recSelectedDay === iso ? null : iso;
+  document.querySelectorAll('.cal-day').forEach(d => {
+    d.classList.toggle('selected', recSelectedDay && d.dataset.iso === recSelectedDay);
+  });
+  document.querySelectorAll('.rec-filter-btn').forEach(b => b.classList.remove('on'));
+  const dayBtn = document.getElementById('rec-filter-day');
+  if (recSelectedDay) {
+    dayBtn.textContent = '📅 ' + recSelectedDay;
+    dayBtn.style.display = '';
+    dayBtn.classList.add('on');
+  } else {
+    dayBtn.style.display = 'none';
+    document.querySelector('.rec-filter-btn[data-filter="all"]').classList.add('on');
+    recFilter = 'all';
+  }
+  renderRecGrid();
+}
+
+function renderRecGrid() {
   const grid = document.getElementById('rec-grid');
-  if (!count) { grid.innerHTML = '<div class="empty">Liikumisest salvestusi pole veel tekkinud.</div>'; return; }
-  grid.innerHTML = list.map(r => {
+  const filtered = _filterRecs();
+  document.getElementById('rec-count').textContent =
+    filtered.length ? filtered.length + ' salvestust' :
+    (recData.length ? 'Sellele filtrile vastavaid pole' : 'Ühtegi salvestust pole veel');
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty">' +
+      (recData.length ? 'Sellele filtrile vastavaid salvestusi pole.' : 'Liikumisest salvestusi pole veel tekkinud.') + '</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(r => {
     const d = new Date(r.mtime * 1000).toLocaleString('et-EE');
     const mb = (r.size / 1048576).toFixed(1);
+    const safe = encodeURIComponent(r.filename);
     return `<div class="rec-card">
-      <div class="rec-name">🎬 ${r.filename}</div>
+      <div class="rec-thumb" onclick="playRec('${r.filename}')">
+        <img loading="lazy" src="/recordings/${safe}/thumb" onerror="this.style.display='none';this.parentElement.textContent='🎬'">
+      </div>
+      <div class="rec-name">${r.filename}</div>
       <div class="rec-meta">${d} &middot; ${mb} MB</div>
       <div class="rec-actions">
-        <a class="btn-outline" style="font-size:0.8rem" href="/recordings/${encodeURIComponent(r.filename)}" download>⬇ Lae alla</a>
-        <button class="btn-outline btn-red" style="font-size:0.8rem" onclick="delRec('${r.filename}')">🗑 Kustuta</button>
+        <button class="btn btn-primary" style="font-size:0.78rem" onclick="playRec('${r.filename}')">▶ Vaata</button>
+        <a class="btn btn-outline" style="font-size:0.78rem" href="/recordings/${safe}" download>⬇ Lae alla</a>
+        <button class="btn btn-danger" style="font-size:0.78rem" onclick="delRec('${r.filename}')">🗑 Kustuta</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function calMove(delta) {
+  calMonthOffset += delta;
+  renderRecCalendar();
+}
+
+function renderRecCalendar() {
+  const now = new Date();
+  const view = new Date(now.getFullYear(), now.getMonth() + calMonthOffset, 1);
+  const monthNames = ['Jaanuar','Veebruar','Märts','Aprill','Mai','Juuni','Juuli','August','September','Oktoober','November','Detsember'];
+  document.getElementById('cal-title').textContent = monthNames[view.getMonth()] + ' ' + view.getFullYear();
+
+  // Counts per day in this month
+  const counts = {};
+  recData.forEach(r => {
+    const d = new Date(r.mtime * 1000);
+    if (d.getFullYear() === view.getFullYear() && d.getMonth() === view.getMonth()) {
+      const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      counts[iso] = (counts[iso] || 0) + 1;
+    }
+  });
+  const maxCount = Math.max(1, ...Object.values(counts));
+
+  const firstWeekday = (view.getDay() + 6) % 7; // Mon=0
+  const daysInMonth = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+  const todayIso = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+  let html = '';
+  for (let i = 0; i < firstWeekday; i++) html += '<div class="cal-day empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = view.getFullYear() + '-' + String(view.getMonth()+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const c = counts[iso] || 0;
+    const cls = ['cal-day'];
+    if (iso === todayIso) cls.push('today');
+    if (c > 0) cls.push('has');
+    if (c >= maxCount * 0.6) cls.push('heavy');
+    if (recSelectedDay === iso) cls.push('selected');
+    html += `<div class="${cls.join(' ')}" data-iso="${iso}" ${c ? `onclick="selectCalDay('${iso}')"` : ''}>${d}${c ? `<div class="cal-dot">${c}</div>` : ''}</div>`;
+  }
+  document.getElementById('cal-days').innerHTML = html;
 }
 
 async function delRec(fn) {
@@ -667,25 +1873,51 @@ async function delRec(fn) {
   loadRecordings();
 }
 
+function playRec(fn) {
+  const modal = document.getElementById('rec-modal');
+  const video = document.getElementById('rec-video');
+  const title = document.getElementById('rec-title');
+  title.textContent = fn;
+  video.src = '/recordings/' + encodeURIComponent(fn);
+  modal.style.display = 'flex';
+  video.play().catch(() => {});
+}
+
+function closeRecModal() {
+  const modal = document.getElementById('rec-modal');
+  const video = document.getElementById('rec-video');
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+  modal.style.display = 'none';
+}
+
 // ── Devices ──────────────────────────────────────────────────────────────────
 
 async function loadDevices() {
   const res = await fetch('/devices');
   if (!res.ok) return;
-  const devs = await res.json();
+  devData = await res.json();
+  document.getElementById('stat-devs').textContent = devData.length;
+
   const grid = document.getElementById('dev-grid');
-  if (!devs.length) { grid.innerHTML = '<div class="empty">Seadmeid pole lisatud.</div>'; return; }
-  grid.innerHTML = devs.map(d => `<div class="dev-card">
-    <div class="dev-top">
-      <div class="dev-info">
-        <div class="dev-name">${d.name}</div>
-        <div class="dev-kind">${d.kind}</div>
+  if (!devData.length) {
+    grid.innerHTML = '<div class="empty">Seadmeid pole lisatud.</div>';
+  } else {
+    grid.innerHTML = devData.map(d => `<div class="dev-card">
+      <div class="dev-top">
+        <div>
+          <div class="dev-name">${d.name}</div>
+          <div class="dev-kind">${d.kind}</div>
+        </div>
+        <button class="toggle ${d.state ? 'on' : ''}" onclick="toggleDev('${d.id}', this)" title="Lülita"></button>
       </div>
-      <button class="toggle ${d.state ? 'on' : ''}" onclick="toggleDev('${d.id}', this)" title="Lülita"></button>
-    </div>
-    <div class="dev-ip">${d.ip}:${d.port}</div>
-    <button class="btn-outline btn-red" style="font-size:0.78rem;align-self:flex-start" onclick="delDev('${d.id}')">Eemalda</button>
-  </div>`).join('');
+      <div class="dev-ip">${d.ip}:${d.port}</div>
+      <button class="btn btn-danger" style="font-size:0.78rem;align-self:flex-start" onclick="delDev('${d.id}')">Eemalda</button>
+    </div>`).join('');
+  }
+
+  refreshDashboardDevs();
 }
 
 async function toggleDev(id, btn) {
@@ -715,14 +1947,745 @@ async function delDev(id) {
   loadDevices();
 }
 
+
+// ── Nutikodu ──────────────────────────────────────────────────────────────────
+
+const NK_ICONS = { shelly: '💡', tasmota: '💡', sonoff: '💡', http: '🔌' };
+
+async function loadNutikodu() {
+  const res = await fetch('/devices');
+  if (!res.ok) return;
+  const devices = await res.json();
+  const grid = document.getElementById('nk-grid');
+  const sub = document.getElementById('nk-sub');
+  const onCount = devices.filter(d => d.state).length;
+  sub.textContent = `${devices.length} seadet · ${onCount} sees`;
+  if (!devices.length) {
+    grid.innerHTML = '<div class="empty">Nutikodu seadmeid pole lisatud.<br><small>Lisa seadmed "Seadmed" lehel.</small></div>';
+    return;
+  }
+  grid.innerHTML = devices.map(d => {
+    const icon = NK_ICONS[d.kind] || '🔌';
+    const on = d.state;
+    return `<div class="nk-card${on ? ' on' : ''}" id="nkcard-${d.id}">
+      <div class="nk-icon">${icon}</div>
+      <div class="nk-name">${d.name}</div>
+      <div class="nk-status">${on ? 'Sees' : 'Väljas'}</div>
+      <button class="nk-toggle${on ? ' on' : ''}" onclick="nkToggle('${d.id}', this)" title="Lülita"></button>
+    </div>`;
+  }).join('');
+}
+
+async function nkToggle(id, btn) {
+  btn.disabled = true;
+  try {
+    const res = await fetch('/devices/' + id + '/toggle', { method: 'POST' });
+    const d = await res.json();
+    if (d.error) {
+      showNkError(d.error);
+      return;
+    }
+    const card = document.getElementById('nkcard-' + id);
+    if (!card) return;
+    btn.classList.toggle('on', !!d.state);
+    card.classList.toggle('on', !!d.state);
+    card.querySelector('.nk-status').textContent = d.state ? 'Sees' : 'Väljas';
+    loadNutikodu();
+  } catch (e) {
+    showNkError(e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function showNkError(msg) {
+  let el = document.getElementById('nk-error');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'nk-error';
+    el.style.cssText = 'background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:0.6rem 1rem;margin:0.5rem 0;font-size:0.9rem;';
+    document.getElementById('nk-grid').before(el);
+  }
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 8000);
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+
+async function loadUsers() {
+  const res = await fetch('/users');
+  if (!res.ok) return;
+  const users = await res.json();
+  const el = document.getElementById('users-list');
+  if (!users.length) { el.innerHTML = '<div class="panel-empty">Kasutajaid pole</div>'; return; }
+  el.innerHTML = users.map(u => `<div class="panel-row">
+    <div class="panel-row-icon">👤</div>
+    <div class="panel-row-main">
+      <div class="panel-row-name">${u.username}</div>
+      <div class="panel-row-sub">${u.role === 'admin' ? '⭐ Admin' : 'Kasutaja'}</div>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center">
+      <button class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="promptPassword('${u.username}')">🔑 Parool</button>
+      <button class="btn btn-danger" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="removeUser('${u.username}')">🗑</button>
+    </div>
+  </div>`).join('');
+}
+
+async function createUser() {
+  const username = document.getElementById('new-username').value.trim();
+  const password = document.getElementById('new-password').value;
+  const role = document.getElementById('new-role').value;
+  const msg = document.getElementById('user-msg');
+  if (!username || !password) { msg.className='pmsg err'; msg.textContent='Täida kõik väljad'; msg.style.display='block'; return; }
+  const fd = new FormData();
+  fd.append('username', username); fd.append('password', password); fd.append('role', role);
+  const res = await fetch('/users', { method: 'POST', body: fd });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { msg.className='pmsg err'; msg.textContent=data.detail||'Viga'; msg.style.display='block'; return; }
+  msg.className='pmsg ok'; msg.textContent='✓ Kasutaja lisatud'; msg.style.display='block';
+  document.getElementById('new-username').value='';
+  document.getElementById('new-password').value='';
+  loadUsers();
+}
+
+async function removeUser(username) {
+  if (!confirm('Kustutan kasutaja ' + username + '?')) return;
+  await fetch('/users/' + encodeURIComponent(username), { method: 'DELETE' });
+  loadUsers();
+}
+
+async function promptPassword(username) {
+  const pw = prompt('Uus parool kasutajale ' + username + ':');
+  if (!pw) return;
+  const fd = new FormData(); fd.append('password', pw);
+  const res = await fetch('/users/' + encodeURIComponent(username) + '/password', { method: 'POST', body: fd });
+  if (res.ok) alert('Parool muudetud');
+}
+
+// ── Dashboard panels ─────────────────────────────────────────────────────────
+
+function refreshDashboardRecs() {
+  const el = document.getElementById('dash-recs');
+  const list = recData.slice(0, 5);
+  if (!list.length) {
+    el.innerHTML = '<div class="panel-empty">Salvestusi pole veel</div>';
+    return;
+  }
+  el.innerHTML = list.map(r => {
+    const d = new Date(r.mtime * 1000).toLocaleString('et-EE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const mb = (r.size / 1048576).toFixed(1);
+    return `<div class="panel-row">
+      <div class="panel-row-icon">🎬</div>
+      <div class="panel-row-main">
+        <div class="panel-row-name">${r.filename}</div>
+        <div class="panel-row-sub">${mb} MB</div>
+      </div>
+      <div class="panel-row-meta">${d}</div>
+    </div>`;
+  }).join('');
+}
+
+function refreshDashboardDevs() {
+  const el = document.getElementById('dash-devs');
+  if (!devData.length) {
+    el.innerHTML = '<div class="panel-empty">Seadmeid pole lisatud</div>';
+    return;
+  }
+  el.innerHTML = devData.map(d => `<div class="panel-row">
+    <div class="panel-row-icon">💡</div>
+    <div class="panel-row-main">
+      <div class="panel-row-name">${d.name}</div>
+      <div class="panel-row-sub">${d.kind} &middot; ${d.ip}</div>
+    </div>
+    <div class="panel-row-meta" style="color:${d.state ? 'var(--green)' : 'var(--muted)'}">
+      ${d.state ? '● Sees' : '○ Väljas'}
+    </div>
+  </div>`).join('');
+}
+
+function refreshDashboard() {
+  refreshDashboardRecs();
+  refreshDashboardDevs();
+  refreshStats();
+}
+
+function _fmtBytes(n) {
+  if (!n) return '0 B';
+  const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return n.toFixed(n < 10 && i > 0 ? 1 : 0) + ' ' + u[i];
+}
+
+async function refreshStats() {
+  try {
+    const r = await fetch('/stats');
+    if (!r.ok) return;
+    const s = await r.json();
+
+    // Trend (today vs yesterday)
+    const trend = document.getElementById('stat-trend');
+    const diff = s.today_count - s.yesterday_count;
+    if (diff > 0) {
+      trend.className = 'stat-trend up';
+      trend.textContent = `↑ +${diff} vs eile`;
+    } else if (diff < 0) {
+      trend.className = 'stat-trend down';
+      trend.textContent = `↓ ${diff} vs eile`;
+    } else {
+      trend.className = 'stat-trend flat';
+      trend.textContent = `= ${s.yesterday_count} eile`;
+    }
+
+    // 7-day bar chart
+    const week = document.getElementById('chart-week');
+    const maxDay = Math.max(1, ...s.by_day.map(d => d.count));
+    const peakDay = s.by_day.reduce((p, d) => d.count > p.count ? d : p, s.by_day[0]);
+    week.innerHTML = s.by_day.map(d => {
+      const pct = (d.count / maxDay) * 100;
+      const isPeak = d.count > 0 && d.count === peakDay.count;
+      const cls = d.count === 0 ? 'zero' : (isPeak ? 'peak' : '');
+      return `<div class="chart-bar ${cls}" title="${d.date}: ${d.count} liikumist">
+        <div class="chart-bar-fill" style="height:${pct}%">
+          ${d.count > 0 ? `<div class="chart-bar-count">${d.count}</div>` : ''}
+        </div>
+        <div class="chart-bar-label">${d.label}</div>
+      </div>`;
+    }).join('');
+
+    // Hour grid
+    const hours = document.getElementById('chart-hours');
+    const maxHour = Math.max(1, ...s.by_hour.map(h => h.count));
+    hours.innerHTML = s.by_hour.map(h => {
+      const pct = h.count > 0 ? Math.max(15, (h.count / maxHour) * 100) : 0;
+      const c = h.count > 0 ? '#4f6ef7' : '#e5e7eb';
+      const op = h.count > 0 ? 0.4 + 0.6 * (h.count / maxHour) : 1;
+      return `<div class="hour-cell" style="height:${pct || 8}%;background:${c};opacity:${op}" title="${String(h.hour).padStart(2,'0')}:00 — ${h.count} liikumist"></div>`;
+    }).join('');
+
+    // Storage
+    document.getElementById('stat-rec-size').textContent = _fmtBytes(s.recordings_size_bytes);
+    document.getElementById('stat-rec-count').textContent = s.total_recordings;
+    document.getElementById('stat-disk-free').textContent = _fmtBytes(s.disk_free_bytes);
+    document.getElementById('stat-disk-total').textContent = _fmtBytes(s.disk_total_bytes);
+    const used = s.disk_total_bytes - s.disk_free_bytes;
+    const usedPct = s.disk_total_bytes > 0 ? (used / s.disk_total_bytes) * 100 : 0;
+    const bar = document.getElementById('stat-disk-bar');
+    bar.style.width = usedPct.toFixed(1) + '%';
+    bar.className = 'disk-bar-fill' + (usedPct > 90 ? ' crit' : usedPct > 75 ? ' warn' : '');
+    document.getElementById('stat-disk-pct').textContent = usedPct.toFixed(1) + '% kasutusel';
+
+    // System
+    if (s.system) {
+      const sec = s.system.uptime_seconds;
+      const days = Math.floor(sec / 86400);
+      const hours = Math.floor((sec % 86400) / 3600);
+      const mins = Math.floor((sec % 3600) / 60);
+      let up = '';
+      if (days > 0) up = `${days}p ${hours}h`;
+      else if (hours > 0) up = `${hours}h ${mins}min`;
+      else up = `${mins} min`;
+      document.getElementById('sys-uptime').textContent = up;
+
+      const cpu = s.system.cpu_percent;
+      document.getElementById('sys-cpu').textContent = cpu.toFixed(0) + '%';
+      const cpuBar = document.getElementById('sys-cpu-bar');
+      cpuBar.style.width = cpu + '%';
+      cpuBar.className = 'sys-bar-fill' + (cpu > 90 ? ' crit' : cpu > 70 ? ' warn' : '');
+
+      const ramTotal = s.system.ram_total_bytes;
+      const ramUsed = s.system.ram_used_bytes;
+      const ramPct = ramTotal > 0 ? (ramUsed / ramTotal) * 100 : 0;
+      document.getElementById('sys-ram').textContent = _fmtBytes(ramUsed) + ' / ' + _fmtBytes(ramTotal);
+      const ramBar = document.getElementById('sys-ram-bar');
+      ramBar.style.width = ramPct + '%';
+      ramBar.className = 'sys-bar-fill' + (ramPct > 90 ? ' crit' : ramPct > 75 ? ' warn' : '');
+    }
+
+    // Health
+    if (s.health) {
+      const hlsLabel = s.health.hls_mode === 'sw' ? 'HLS (sw)' : 'HLS stream';
+      const items = [
+        ['📹', 'Kaamera', s.health.camera],
+        ['🏃', 'Motion', s.health.motion],
+        ['📺', hlsLabel, s.health.hls],
+        ['🔌', 'Cloudflare tunnel', s.health.tunnel],
+      ];
+      document.getElementById('dash-health').innerHTML = items.map(([emoji, name, ok]) =>
+        `<div class="health-cell">
+          <div class="health-dot ${ok ? '' : 'off'}"></div>
+          <div class="health-name">${emoji} ${name}</div>
+          <div class="health-state ${ok ? 'up' : 'down'}">${ok ? 'OK' : 'OFF'}</div>
+        </div>`
+      ).join('');
+    }
+
+    // Insights
+    const ins = document.getElementById('dash-insights');
+    const items = [];
+    if (s.peak_hour && s.peak_hour.count > 0) {
+      const h = String(s.peak_hour.hour).padStart(2, '0');
+      items.push(`<div class="insight"><div class="insight-emoji">🔥</div><div class="insight-text">Tänane aktiivseim tund: <strong>${h}:00</strong> (${s.peak_hour.count} liikumist)</div></div>`);
+    }
+    if (usedPct > 90) {
+      items.push(`<div class="insight warn"><div class="insight-emoji">⚠️</div><div class="insight-text">Ketas <strong>${usedPct.toFixed(0)}%</strong> täis. Vähenda <em>retention</em> päevi Seadetes või kustuta vanu salvestusi.</div></div>`);
+    } else if (s.today_count === 0 && s.yesterday_count > 0) {
+      items.push(`<div class="insight"><div class="insight-emoji">🌙</div><div class="insight-text">Täna pole veel liikumist. (Eile: ${s.yesterday_count})</div></div>`);
+    }
+    ins.innerHTML = items.join('');
+  } catch {}
+}
+
+// ── Camera live setup ────────────────────────────────────────────────────────
+
+let hlsPlayer = null;
+
+// Perioodiline kontroll — kui HLS on aktiivselt käivitatud aga video on seiskunud, taasta
+setInterval(() => {
+  const video = document.getElementById('stream-video');
+  if (!hlsPlayer || !video) return;
+  if (video.paused && !video.ended && video.readyState >= 3) {
+    video.play().catch(() => {});
+  }
+}, 8000);
+
+function initCamera() {
+  if (!camKey) return;
+  document.getElementById('setup-view').style.display = 'none';
+  document.getElementById('live-view').style.display = 'block';
+  _startHLS();
+}
+
+function _startHLS() {
+  const video = document.getElementById('stream-video');
+  if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
+  if (Hls.isSupported()) {
+    hlsPlayer = new Hls({
+      liveSyncDurationCount: 3,
+      liveMaxLatencyDurationCount: 6,
+      maxBufferLength: 30,
+      maxMaxBufferLength: 60,
+      lowLatencyMode: false,
+    });
+    hlsPlayer.loadSource('/hls/stream.m3u8');
+    hlsPlayer.attachMedia(video);
+    hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play().catch(err => console.warn('Autoplay blokeeritud:', err));
+    });
+    hlsPlayer._stale404s = 0;
+    hlsPlayer.on(Hls.Events.FRAG_LOADED, () => { hlsPlayer._stale404s = 0; });
+    hlsPlayer.on(Hls.Events.ERROR, (e, d) => {
+      console.warn('HLS error:', d.type, d.details, d.fatal);
+      // 404 segmendile = server restartis, playlist sequence läks segamini → täielik reset
+      if (d.details === 'fragLoadError' && d.response && d.response.code === 404) {
+        hlsPlayer._stale404s++;
+        if (hlsPlayer._stale404s >= 3) {
+          console.warn('Mitu 404 segmenti — server restart? Täielik HLS reset.');
+          setTimeout(_startHLS, 500);
+          return;
+        }
+      }
+      if (!d.fatal) return;
+      const isManifest = d.details && d.details.startsWith('manifest');
+      if (isManifest) {
+        setTimeout(_startHLS, 1500);
+      } else if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
+        if (d.details === 'fragLoadError') {
+          setTimeout(_startHLS, 500);
+        } else {
+          hlsPlayer.startLoad();
+        }
+      } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR && !hlsPlayer._mediaRecovered) {
+        hlsPlayer._mediaRecovered = true;
+        hlsPlayer.recoverMediaError();
+      } else {
+        setTimeout(_startHLS, 2000);
+      }
+    });
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = '/hls/stream.m3u8';
+  }
+  document.getElementById('ldot').className = 'live-dot';
+  document.getElementById('lstatus').textContent = 'Live · HLS';
+}
+
+function _fallbackMJPEG() { _startHLS(); }
+
+// ── Live indicator ───────────────────────────────────────────────────────────
+function _fmtDuration(sec) {
+  const s = Math.floor(sec), m = Math.floor(s / 60), h = Math.floor(m / 60);
+  return h > 0
+    ? h + ':' + String(m % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0')
+    : m + ':' + String(s % 60).padStart(2, '0');
+}
+
+setInterval(() => {
+  const video = document.getElementById('stream-video');
+  if (!video || !video.seekable.length || !hlsPlayer) return;
+  const end = video.seekable.end(0), cur = video.currentTime;
+  const lag = Math.max(0, end - cur);
+  const isLive = lag < 8;
+  document.getElementById('ldot').className = 'live-dot' + (isLive ? '' : ' dvr');
+  document.getElementById('lstatus').textContent = isLive ? 'Live · HLS' : 'DVR −' + _fmtDuration(lag);
+}, 1000);
+
+function seekToLive() {
+  const video = document.getElementById('stream-video');
+  if (!video) return;
+  let target = null;
+  if (hlsPlayer && isFinite(hlsPlayer.liveSyncPosition)) {
+    target = hlsPlayer.liveSyncPosition;
+  } else if (video.seekable.length) {
+    target = Math.max(video.seekable.end(0) - 6, video.seekable.start(0));
+  }
+  if (target !== null) {
+    video.currentTime = target;
+    if (video.paused) video.play().catch(() => {});
+  }
+}
+
 // ── Session restore ───────────────────────────────────────────────────────────
 (async () => {
-  const res = await fetch('/recordings');
+  const res = await fetch('/users/me');
   if (res.ok) {
-    camKey = sessionStorage.getItem('camKey') || '';
-    showApp();
+    const me = await res.json();
+    camKey = localStorage.getItem('camKey') || '';
+    document.getElementById('sb-username').textContent = me.username;
+    document.getElementById('topbar-username').textContent = me.username;
+    document.getElementById('topbar-initial').textContent = me.username[0].toUpperCase();
+    const hashPage = location.hash.replace('#', '');
+    const startPage = (hashPage && PAGE_TITLES[hashPage]) ? hashPage : (localStorage.getItem('lastPage') || 'dashboard');
+    showApp(startPage);
+    initCamera();
+  } else {
+    document.getElementById('login-page').style.display = 'flex';
   }
 })();
+
+async function loadSettings() {
+  const res = await fetch('/settings');
+  if (!res.ok) return;
+  const s = await res.json();
+  document.getElementById('set-camera-url').value = s.camera_url || '';
+  document.getElementById('set-threshold').value = s.motion_threshold ?? 8000;
+  document.getElementById('set-record-sec').value = s.motion_record_seconds ?? 30;
+  document.getElementById('set-cooldown').value = s.motion_cooldown_seconds ?? 10;
+  document.getElementById('set-retention').value = s.recordings_retention_days ?? 30;
+  document.getElementById('set-discord').value = s.discord_webhook_url || '';
+  document.getElementById('set-notif-enabled').checked = s.notifications_enabled !== false;
+}
+
+async function saveSettings() {
+  const msg = document.getElementById('set-msg');
+  msg.style.display = 'none';
+  const data = {
+    camera_url: document.getElementById('set-camera-url').value.trim(),
+    motion_threshold: parseInt(document.getElementById('set-threshold').value) || 8000,
+    motion_record_seconds: parseInt(document.getElementById('set-record-sec').value) || 30,
+    motion_cooldown_seconds: parseInt(document.getElementById('set-cooldown').value) || 10,
+    recordings_retention_days: parseInt(document.getElementById('set-retention').value) || 0,
+    discord_webhook_url: document.getElementById('set-discord').value.trim(),
+    notifications_enabled: document.getElementById('set-notif-enabled').checked,
+  };
+  const res = await fetch('/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data),
+  });
+  const d = await res.json();
+  msg.style.display = 'block';
+  if (d.ok) {
+    msg.className = 'pmsg ok';
+    msg.textContent = '✓ Seaded salvestatud';
+  } else {
+    msg.className = 'pmsg err';
+    msg.textContent = d.detail || 'Viga';
+  }
+}
+
+async function testDiscord() {
+  const msg = document.getElementById('set-msg');
+  msg.style.display = 'block';
+  msg.className = 'pmsg';
+  msg.textContent = 'Saadan testteadet…';
+  await saveSettings();
+  try {
+    const r = await fetch('/settings/test-discord', { method: 'POST' });
+    const j = await r.json();
+    msg.style.display = 'block';
+    if (j.ok) {
+      msg.className = 'pmsg ok';
+      msg.textContent = '✓ Discord test õnnestus — ' + j.message;
+    } else {
+      msg.className = 'pmsg err';
+      msg.textContent = '✗ Discord test ebaõnnestus: ' + j.message;
+    }
+  } catch (e) {
+    msg.className = 'pmsg err';
+    msg.textContent = '✗ Päring ebaõnnestus: ' + e;
+  }
+}
+
+// ── Hosting ─────────────────────────────────────────────────────────────────
+
+function hostShowMsg(text, type) {
+  const m = document.getElementById('host-msg');
+  m.className = 'host-msg ' + type;
+  m.innerHTML = text;
+}
+
+async function loadHostingSites() {
+  const list = document.getElementById('host-sites');
+  const count = document.getElementById('host-count');
+  try {
+    const r = await fetch('/hosting/sites', { credentials: 'same-origin' });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(d.detail || 'Laadimine ebaõnnestus');
+    }
+    const data = await r.json();
+    count.textContent = data.length;
+    if (!data.length) {
+      list.innerHTML = '<div class="host-empty">Veel ühtegi domeeni pole loodud. Sisesta esimene ülevalpool.</div>';
+      return;
+    }
+    list.innerHTML = data.map(s => {
+      const initial = s.hostname[0].toUpperCase();
+      return `<div class="host-site">
+          <div class="host-site-icon">${initial}</div>
+          <div class="host-site-body">
+            <div class="host-site-name">${s.hostname}</div>
+            <div class="host-site-link"><a href="https://${s.hostname}" target="_blank">https://${s.hostname}</a></div>
+          </div>
+          <button class="btn btn-danger" data-host="${s.hostname}" onclick="hostDeleteSite('${s.hostname}', this)" style="padding:0.4rem 0.85rem;font-size:0.78rem">Kustuta</button>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="host-empty" style="color:var(--red)">Viga: ${e.message}</div>`;
+    count.textContent = '–';
+  }
+}
+
+async function hostAddSite() {
+  const btn = document.getElementById('host-add-btn');
+  const inp = document.getElementById('host-domain');
+  const dom = inp.value.trim().toLowerCase();
+  if (!dom) return;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Loon…';
+  hostShowMsg('🛠 Seadistan Cloudflare DNS-i, tunneli ja Virtualmini virtuaalserverit. Võib kesta kuni minuti.', 'info');
+  try {
+    const fd = new FormData();
+    fd.append('domain', dom);
+    const r = await fetch('/hosting/sites', { method: 'POST', body: fd, credentials: 'same-origin' });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Tundmatu viga');
+    hostShowMsg(
+      `✅ <strong>Loodud: ${data.hostname}</strong><br>`
+      + `Virtualmini parool: <code>${data.password}</code> &nbsp; <em>(kirjuta üles, ei saa hiljem näha)</em><br>`
+      + `Halduspaneel: <a href="${data.panel}" target="_blank">${data.panel}</a><br>`
+      + `Sait: <a href="https://${data.hostname}" target="_blank">https://${data.hostname}</a>`,
+      'ok'
+    );
+    inp.value = '';
+    loadHostingSites();
+  } catch (err) {
+    hostShowMsg('❌ Viga: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🚀 Loo virtuaalserver';
+  }
+}
+
+async function hostDeleteSite(dom, btn) {
+  if (!confirm(`Kustutada ${dom}?\n\nSee eemaldab DNS kirje, tunneli route ja Virtualmini virtuaalserveri koos KÕIKIDE failide ja andmebaasidega. Tegevus on pöördumatu.`)) return;
+  btn.disabled = true;
+  btn.textContent = 'Kustutan…';
+  try {
+    const r = await fetch('/hosting/sites/' + encodeURIComponent(dom), { method: 'DELETE', credentials: 'same-origin' });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Tundmatu viga');
+    loadHostingSites();
+  } catch (err) {
+    alert('Viga: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Kustuta';
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const q = e.target.closest('.host-faq-q');
+  if (q) q.parentElement.classList.toggle('open');
+});
+</script>
+<!-- Paroolimuutmise modaal -->
+<!-- Salvestuse vaatamise modaal -->
+<div id="rec-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:600;align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeRecModal()">
+  <div style="background:#000;border-radius:14px;padding:0.85rem;width:100%;max-width:900px;display:flex;flex-direction:column;gap:0.7rem;position:relative">
+    <div style="display:flex;align-items:center;justify-content:space-between;color:#fff;padding:0 0.3rem">
+      <div id="rec-title" style="font-size:0.85rem;font-weight:700;font-family:ui-monospace,monospace;word-break:break-all;flex:1"></div>
+      <button onclick="closeRecModal()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0 0.5rem">✕</button>
+    </div>
+    <video id="rec-video" controls autoplay playsinline style="width:100%;max-height:75vh;border-radius:8px;background:#000"></video>
+  </div>
+</div>
+
+<div id="pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:2rem;width:100%;max-width:380px;margin:1rem;display:flex;flex-direction:column;gap:1rem">
+    <div style="font-size:1.1rem;font-weight:800;color:var(--text)">🔑 Muuda parooli</div>
+    <div class="fgrp">
+      <label>Praegune parool</label>
+      <input class="inp" type="password" id="pw-old" placeholder="••••••••">
+    </div>
+    <div class="fgrp">
+      <label>Uus parool</label>
+      <input class="inp" type="password" id="pw-new" placeholder="••••••••">
+    </div>
+    <div class="fgrp">
+      <label>Korda uut parooli</label>
+      <input class="inp" type="password" id="pw-new2" placeholder="••••••••">
+    </div>
+    <div class="pmsg" id="pw-msg"></div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-outline" style="flex:1" onclick="hidePwModal()">Tühista</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitPwChange()">Salvesta</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPwModal() {
+  const m = document.getElementById('pw-modal');
+  m.style.display = 'flex';
+  document.getElementById('pw-old').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-new2').value = '';
+  document.getElementById('pw-msg').style.display = 'none';
+}
+function hidePwModal() {
+  document.getElementById('pw-modal').style.display = 'none';
+}
+document.getElementById('pw-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('pw-modal')) hidePwModal();
+});
+async function submitPwChange() {
+  const oldPw = document.getElementById('pw-old').value;
+  const newPw = document.getElementById('pw-new').value;
+  const newPw2 = document.getElementById('pw-new2').value;
+  const msg = document.getElementById('pw-msg');
+  msg.style.display = 'none';
+  if (!oldPw || !newPw) { msg.className='pmsg err'; msg.textContent='Täida kõik väljad'; msg.style.display='block'; return; }
+  if (newPw !== newPw2) { msg.className='pmsg err'; msg.textContent='Uued paroolid ei kattu'; msg.style.display='block'; return; }
+  if (newPw.length < 8) { msg.className='pmsg err'; msg.textContent='Parool peab olema vähemalt 8 tähemärki'; msg.style.display='block'; return; }
+  // Kontrolli vana parooli sisselogimisega
+  const username = document.getElementById('sb-username').textContent;
+  const fd = new FormData();
+  fd.append('password', newPw);
+  const res = await fetch('/users/' + encodeURIComponent(username) + '/password', { method: 'POST', body: fd });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    msg.className='pmsg err'; msg.textContent=d.detail||'Viga'; msg.style.display='block'; return;
+  }
+  msg.className='pmsg ok'; msg.textContent='✓ Parool muudetud!'; msg.style.display='block';
+  setTimeout(hidePwModal, 1500);
+}
+</script>
+
+<!-- 2FA modaal -->
+<div id="tfa-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:2rem;width:100%;max-width:420px;margin:1rem;display:flex;flex-direction:column;gap:1rem">
+    <div style="font-size:1.1rem;font-weight:800;color:var(--text)">🔐 Kaheastmeline autentimine</div>
+    <div id="tfa-status" style="font-size:0.85rem;color:var(--muted)">Laen...</div>
+    <div id="tfa-qr" style="display:none;text-align:center;min-height:180px"></div>
+    <div id="tfa-secret" style="display:none;font-size:0.78rem;color:var(--muted);word-break:break-all;background:#f9fafb;padding:0.5rem;border-radius:8px;border:1px solid var(--border)"></div>
+    <div id="tfa-confirm-wrap" style="display:none" class="fgrp">
+      <label>Kinnita kood autentimisrakendusest</label>
+      <input class="inp" type="text" id="tfa-confirm-code" placeholder="000000" maxlength="6" autocomplete="one-time-code">
+    </div>
+    <div class="pmsg" id="tfa-msg"></div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-outline" style="flex:1" onclick="hideTFAModal()">Sulge</button>
+      <button class="btn btn-primary" style="flex:1" id="tfa-action-btn" onclick="tfa2Action()">Laen...</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _tfaEnabled = false;
+
+async function showTFAModal() {
+  document.getElementById('tfa-modal').style.display = 'flex';
+  document.getElementById('tfa-qr').style.display = 'none';
+  document.getElementById('tfa-qr').innerHTML = '';
+  document.getElementById('tfa-secret').style.display = 'none';
+  document.getElementById('tfa-confirm-wrap').style.display = 'none';
+  document.getElementById('tfa-msg').style.display = 'none';
+  document.getElementById('tfa-action-btn').onclick = tfa2Action;
+  const res = await fetch('/users/me/2fa');
+  const data = await res.json();
+  _tfaEnabled = data.enabled;
+  const btn = document.getElementById('tfa-action-btn');
+  const status = document.getElementById('tfa-status');
+  if (_tfaEnabled) {
+    status.textContent = '✅ 2FA on praegu LUBATUD';
+    status.style.color = 'var(--green)';
+    btn.textContent = 'Lülita välja';
+    btn.className = 'btn btn-danger';
+  } else {
+    status.textContent = '2FA on praegu KEELATUD';
+    status.style.color = 'var(--muted)';
+    btn.textContent = 'Lülita sisse';
+    btn.className = 'btn btn-primary';
+  }
+}
+
+function hideTFAModal() {
+  document.getElementById('tfa-modal').style.display = 'none';
+}
+
+async function tfa2Action() {
+  const msg = document.getElementById('tfa-msg');
+  msg.style.display = 'none';
+  if (_tfaEnabled) {
+    const r = await fetch('/users/me/2fa/disable', { method: 'POST' });
+    if (r.ok) {
+      msg.className = 'pmsg ok'; msg.textContent = '✓ 2FA keelatud'; msg.style.display = 'block';
+      setTimeout(showTFAModal, 1000);
+    } else {
+      msg.className = 'pmsg err'; msg.textContent = 'Viga: ' + r.status; msg.style.display = 'block';
+    }
+    return;
+  }
+  // Luba 2FA — näita QR koodi
+  const res = await fetch('/users/me/2fa/enable', { method: 'POST' });
+  const data = await res.json();
+  document.getElementById('tfa-qr').innerHTML = `<img src="data:image/png;base64,${data.qr_png}" style="width:180px;height:180px">`;
+  document.getElementById('tfa-qr').style.display = 'block';
+  document.getElementById('tfa-secret').textContent = 'Võti: ' + data.secret;
+  document.getElementById('tfa-secret').style.display = 'block';
+  document.getElementById('tfa-confirm-wrap').style.display = 'block';
+  document.getElementById('tfa-status').textContent = 'Skaneeri QR kood Google Authenticator / Authy rakendusega:';
+  document.getElementById('tfa-action-btn').textContent = 'Kinnita';
+  document.getElementById('tfa-action-btn').onclick = confirmTFA;
+}
+
+async function confirmTFA() {
+  const code = document.getElementById('tfa-confirm-code').value.trim();
+  const msg = document.getElementById('tfa-msg');
+  if (!code) { msg.className='pmsg err'; msg.textContent='Sisesta kood'; msg.style.display='block'; return; }
+  const fd = new FormData(); fd.append('code', code);
+  const res = await fetch('/users/me/2fa/verify', { method: 'POST', body: fd });
+  if (res.ok) {
+    msg.className='pmsg ok'; msg.textContent='✅ 2FA edukalt seadistatud!'; msg.style.display='block';
+    setTimeout(() => { hideTFAModal(); showTFAModal(); }, 1500);
+  } else {
+    msg.className='pmsg err'; msg.textContent='Vale kood, proovi uuesti'; msg.style.display='block';
+  }
+}
+document.getElementById('tfa-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('tfa-modal')) hideTFAModal();
+});
 </script>
 </body>
 </html>

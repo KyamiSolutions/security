@@ -1,10 +1,13 @@
 import cv2
+import logging
 import threading
 import time
 import subprocess
 import os
 import socket
 from urllib.parse import quote
+
+log = logging.getLogger("nutikodu.camera")
 
 # RTSP rajad — Reolink esimesena, seejärel teised tuntud kaamerad
 RTSP_PATHS = [
@@ -23,12 +26,18 @@ RTSP_PATHS = [
 
 
 class Camera:
+    RECONNECT_MIN = 1.0
+    RECONNECT_MAX = 30.0
+
     def __init__(self, source: str | int):
         # source on kas RTSP URL (str) või USB indeks (int)
         self.source = source
         self.is_rtsp = isinstance(source, str) and source.startswith("rtsp://")
         self.cap = None
         self.lock = threading.Lock()
+        self._reconnect_lock = threading.Lock()
+        self._next_reconnect = 0.0
+        self._backoff = self.RECONNECT_MIN
         self._open()
 
     def _open(self):
@@ -45,18 +54,51 @@ class Camera:
             label = self.source if self.is_rtsp else f"/dev/video{self.source}"
             raise RuntimeError(f"Kaamerat ei leitud: {label}")
 
+    def _try_reconnect(self) -> bool:
+        """Üritab voogu uuesti avada exponential backoff'iga. Tagastab True kui õnnestus."""
+        if not self.is_rtsp:
+            return False
+        now = time.monotonic()
+        if now < self._next_reconnect:
+            return False
+        if not self._reconnect_lock.acquire(blocking=False):
+            return False
+        try:
+            if time.monotonic() < self._next_reconnect:
+                return False
+            try:
+                if self.cap:
+                    self.cap.release()
+            except Exception:
+                pass
+            try:
+                self._open()
+                self._backoff = self.RECONNECT_MIN
+                self._next_reconnect = 0.0
+                log.info("Kaamera ühendus taastatud: %s", self.source)
+                return True
+            except RuntimeError as e:
+                self._backoff = min(self._backoff * 2, self.RECONNECT_MAX)
+                self._next_reconnect = time.monotonic() + self._backoff
+                log.warning(
+                    "Kaamera ühendus katkenud (%s) — uus katse %.1fs pärast",
+                    e, self._backoff,
+                )
+                return False
+        finally:
+            self._reconnect_lock.release()
+
     def read_frame(self) -> bytes | None:
         with self.lock:
-            ok, frame = self.cap.read()
+            ok, frame = self.cap.read() if self.cap else (False, None)
         if not ok:
             if self.is_rtsp:
-                try:
-                    self.cap.release()
-                    self._open()
-                except RuntimeError:
-                    pass
+                self._try_reconnect()
             return None
-        _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        h, w = frame.shape[:2]
+        if w > 1280:
+            frame = cv2.resize(frame, (1280, int(h * 1280 / w)), interpolation=cv2.INTER_LINEAR)
+        _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 65])
         return buf.tobytes()
 
     def snapshot(self) -> bytes | None:

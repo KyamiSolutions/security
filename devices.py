@@ -28,7 +28,7 @@ def add_device(name: str, kind: str, ip: str, port: int = 80) -> dict:
     device = {
         "id": str(uuid.uuid4()),
         "name": name,
-        "kind": kind,  # shelly | tasmota | http
+        "kind": kind,  # shelly | tasmota | sonoff | http
         "ip": ip,
         "port": port,
         "state": False,
@@ -60,6 +60,13 @@ async def toggle_device(device_id: str) -> dict:
             elif device["kind"] == "tasmota":
                 cmd = "Power%20on" if new_state else "Power%20off"
                 await client.get(f"{base}/cm?cmnd={cmd}")
+            elif device["kind"] == "sonoff":
+                cmd = "on" if new_state else "off"
+                await client.post(
+                    f"{base}/zeroconf/switch",
+                    json={"deviceid": "", "data": {"switch": cmd}},
+                    headers={"Content-Type": "application/json"},
+                )
             elif device["kind"] == "http":
                 await client.post(f"{base}/switch", json={"state": new_state})
     except Exception as e:
