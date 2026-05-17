@@ -2273,14 +2273,29 @@ function _startHLS() {
     hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
       video.play().catch(err => console.warn('Autoplay blokeeritud:', err));
     });
+    hlsPlayer._stale404s = 0;
+    hlsPlayer.on(Hls.Events.FRAG_LOADED, () => { hlsPlayer._stale404s = 0; });
     hlsPlayer.on(Hls.Events.ERROR, (e, d) => {
       console.warn('HLS error:', d.type, d.details, d.fatal);
+      // 404 segmendile = server restartis, playlist sequence läks segamini → täielik reset
+      if (d.details === 'fragLoadError' && d.response && d.response.code === 404) {
+        hlsPlayer._stale404s++;
+        if (hlsPlayer._stale404s >= 3) {
+          console.warn('Mitu 404 segmenti — server restart? Täielik HLS reset.');
+          setTimeout(_startHLS, 500);
+          return;
+        }
+      }
       if (!d.fatal) return;
       const isManifest = d.details && d.details.startsWith('manifest');
       if (isManifest) {
         setTimeout(_startHLS, 1500);
       } else if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
-        hlsPlayer.startLoad();
+        if (d.details === 'fragLoadError') {
+          setTimeout(_startHLS, 500);
+        } else {
+          hlsPlayer.startLoad();
+        }
       } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR && !hlsPlayer._mediaRecovered) {
         hlsPlayer._mediaRecovered = true;
         hlsPlayer.recoverMediaError();
