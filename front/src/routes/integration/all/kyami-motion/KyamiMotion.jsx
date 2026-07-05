@@ -171,8 +171,37 @@ const KyamiMotionPage = props => (
               <div class="card">
                 <div class="card-header">
                   <h1 class="card-title">
+                    <Text id="integration.kyamiMotion.notificationsTitle">Discord notifications</Text>
+                  </h1>
+                </div>
+                <div class="card-body d-flex">
+                  <input
+                    class="form-control mr-2"
+                    placeholder="https://discord.com/api/webhooks/..."
+                    value={props.kyamiDiscordWebhookUrl}
+                    onInput={e => props.updateDiscordWebhookUrl(e.target.value)}
+                  />
+                  <button class="btn btn-outline-primary" onClick={props.saveConfig}>
+                    <Text id="integration.kyamiMotion.saveButton">Save</Text>
+                  </button>
+                  {props.kyamiConfigSaveStatus === RequestStatus.Success && (
+                    <span class="ml-2 text-success align-self-center">
+                      <Text id="integration.kyamiMotion.saved">Saved!</Text>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <h1 class="card-title">
                     <Text id="integration.kyamiMotion.recordingsTitle">Motion recordings</Text>
                   </h1>
+                  <div class="page-options d-flex">
+                    <button class="btn btn-outline-secondary btn-sm" onClick={props.getRecordings}>
+                      <i class="fe fe-refresh-cw" />
+                    </button>
+                  </div>
                 </div>
                 <div class="card-body">
                   <table class="table">

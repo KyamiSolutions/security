@@ -7,6 +7,7 @@ class KyamiMotionIntegration extends Component {
   componentWillMount() {
     this.props.getSources();
     this.props.getRecordings();
+    this.props.getConfig();
   }
 
   render(props) {
@@ -15,6 +16,6 @@ class KyamiMotionIntegration extends Component {
 }
 
 export default connect(
-  'session,kyamiSources,kyamiManualSource,kyamiProbeForm,kyamiProbeStatus,kyamiProbeError,kyamiRecordings,kyamiGetRecordingsStatus',
+  'session,kyamiSources,kyamiManualSource,kyamiProbeForm,kyamiProbeStatus,kyamiProbeError,kyamiRecordings,kyamiGetRecordingsStatus,kyamiDiscordWebhookUrl,kyamiConfigSaveStatus',
   actions
 )(KyamiMotionIntegration);

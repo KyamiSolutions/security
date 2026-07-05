@@ -108,6 +108,24 @@ function createActions(store) {
     async deleteRecording(state, filename) {
       await state.httpClient.delete(`/api/v1/service/kyami-motion/recordings/${encodeURIComponent(filename)}`);
       await actions.getRecordings(store.getState());
+    },
+    async getConfig(state) {
+      const config = await state.httpClient.get('/api/v1/service/kyami-motion/config');
+      store.setState({ kyamiDiscordWebhookUrl: config.discordWebhookUrl || '' });
+    },
+    updateDiscordWebhookUrl(state, value) {
+      store.setState({ kyamiDiscordWebhookUrl: value });
+    },
+    async saveConfig(state) {
+      store.setState({ kyamiConfigSaveStatus: RequestStatus.Getting });
+      try {
+        await state.httpClient.post('/api/v1/service/kyami-motion/config', {
+          discordWebhookUrl: state.kyamiDiscordWebhookUrl
+        });
+        store.setState({ kyamiConfigSaveStatus: RequestStatus.Success });
+      } catch (e) {
+        store.setState({ kyamiConfigSaveStatus: RequestStatus.Error });
+      }
     }
   };
   return actions;

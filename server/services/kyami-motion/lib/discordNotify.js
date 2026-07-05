@@ -2,7 +2,8 @@ const logger = require('../../../utils/logger');
 
 /**
  * @description Send a motion-detection snapshot to a Discord webhook, if one is configured
- * via the DISCORD_WEBHOOK_URL environment variable.
+ * (either saved through the kyami-motion settings page, or via the DISCORD_WEBHOOK_URL
+ * environment variable as a fallback).
  * @param {string|number} source - The camera source the snapshot came from (for the message text).
  * @param {Buffer} jpegBuffer - The JPEG snapshot to attach.
  * @returns {Promise<void>} Resolves once the webhook call finishes (errors are only logged).
@@ -10,7 +11,8 @@ const logger = require('../../../utils/logger');
  * await notifyDiscord.call(this, 'rtsp://...', jpegBuffer);
  */
 async function notifyDiscord(source, jpegBuffer) {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  const config = await this.getConfig();
+  const webhookUrl = config.discordWebhookUrl;
   if (!webhookUrl) {
     return;
   }

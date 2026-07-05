@@ -21,6 +21,27 @@ function parseSource(rawSource) {
 
 module.exports = function KyamiMotionController(gladys, kyamiMotionHandler) {
   /**
+   * @api {get} /api/v1/service/kyami-motion/config Get kyami-motion settings
+   * @apiName GetConfig
+   * @apiGroup KyamiMotion
+   */
+  async function getConfig(req, res) {
+    const config = await kyamiMotionHandler.getConfig();
+    res.json(config);
+  }
+
+  /**
+   * @api {post} /api/v1/service/kyami-motion/config Save kyami-motion settings
+   * @apiName SaveConfig
+   * @apiGroup KyamiMotion
+   */
+  async function saveConfig(req, res) {
+    const { discordWebhookUrl } = req.body;
+    const config = await kyamiMotionHandler.saveConfig({ discordWebhookUrl });
+    res.json(config);
+  }
+
+  /**
    * @api {get} /api/v1/service/kyami-motion/probe Probe a camera IP for a working RTSP path
    * @apiName Probe
    * @apiGroup KyamiMotion
@@ -151,6 +172,16 @@ module.exports = function KyamiMotionController(gladys, kyamiMotionHandler) {
   }
 
   return {
+    'get /api/v1/service/kyami-motion/config': {
+      authenticated: true,
+      admin: true,
+      controller: asyncMiddleware(getConfig),
+    },
+    'post /api/v1/service/kyami-motion/config': {
+      authenticated: true,
+      admin: true,
+      controller: asyncMiddleware(saveConfig),
+    },
     'get /api/v1/service/kyami-motion/probe': {
       authenticated: true,
       admin: true,
