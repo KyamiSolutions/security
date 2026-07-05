@@ -163,8 +163,44 @@ function sanitizeForGemini(schema) {
 }
 
 /**
+ * @description Fix `required` arrays Gemini rejects: it only allows `required` on a schema
+ * node whose `type` is `object`, and every listed name must exist in that same node's
+ * `properties` (a valid JSON Schema pattern when `properties` lives in a sibling `anyOf`
+ * branch, but not accepted by Gemini).
+ * @param {*} schema - Schema node, already ref-resolved and sanitized.
+ * @returns {*} Schema node with invalid `required` entries fixed or removed.
+ * @example
+ * fixRequiredForGemini({ type: 'object', required: ['missing'], properties: {} });
+ */
+function fixRequiredForGemini(schema) {
+  if (Array.isArray(schema)) {
+    return schema.map(fixRequiredForGemini);
+  }
+  if (!schema || typeof schema !== 'object') {
+    return schema;
+  }
+  const result = {};
+  Object.keys(schema).forEach((key) => {
+    result[key] = fixRequiredForGemini(schema[key]);
+  });
+  if (Array.isArray(result.required)) {
+    const propertyNames = result.properties ? Object.keys(result.properties) : [];
+    const filtered = result.required.filter((name) => propertyNames.includes(name));
+    if (filtered.length > 0) {
+      result.required = filtered;
+      if (!result.type && result.properties) {
+        result.type = 'object';
+      }
+    } else {
+      delete result.required;
+    }
+  }
+  return result;
+}
+
+/**
  * @description Make an MCP/OpenAI JSON schema safe for Gemini's function-calling API: inline
- * `$ref`/`$defs` and drop/convert unsupported keywords.
+ * `$ref`/`$defs`, drop/convert unsupported keywords, and fix invalid `required` arrays.
  * @param {object} parameters - Original JSON schema for a tool's parameters.
  * @returns {object} Gemini-compatible schema.
  * @example
@@ -175,7 +211,7 @@ function cleanParametersForGemini(parameters) {
     return parameters;
   }
   const defs = parameters.$defs || parameters.definitions || {};
-  return sanitizeForGemini(resolveRefs(parameters, defs));
+  return fixRequiredForGemini(sanitizeForGemini(resolveRefs(parameters, defs)));
 }
 
 /**
