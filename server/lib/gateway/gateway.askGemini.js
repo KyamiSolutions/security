@@ -92,36 +92,43 @@ function messagesToGeminiPayload(messages) {
   };
 }
 
-const MAX_REF_DEPTH = 20;
-
 /**
  * @description Recursively inline `$ref` pointers (to `$defs`/`definitions`) in a JSON schema,
- * since Gemini's function schema doesn't support `$ref`.
+ * since Gemini's function schema doesn't support `$ref`. Some MCP tool schemas (e.g. nested
+ * scene conditions) are genuinely self-referential, so a ref that's already being expanded in
+ * the current path is replaced with a generic permissive schema instead of recursing forever.
  * @param {*} schema - JSON schema node (object, array, or scalar).
  * @param {object} defs - Map of definition name to schema, gathered from `$defs`/`definitions`.
- * @param {number} [depth] - Recursion guard against malformed/circular refs.
+ * @param {Set<string>} [refPath] - Ref names currently being expanded, to detect cycles.
  * @returns {*} Schema node with `$ref` pointers resolved inline.
  * @example
  * resolveRefs({ $ref: '#/$defs/Foo' }, { Foo: { type: 'string' } });
  */
-function resolveRefs(schema, defs, depth = 0) {
-  if (depth > MAX_REF_DEPTH || !schema || typeof schema !== 'object') {
+function resolveRefs(schema, defs, refPath = new Set()) {
+  if (!schema || typeof schema !== 'object') {
     return schema;
   }
   if (Array.isArray(schema)) {
-    return schema.map((item) => resolveRefs(item, defs, depth + 1));
+    return schema.map((item) => resolveRefs(item, defs, refPath));
   }
   if (typeof schema.$ref === 'string') {
     const refName = schema.$ref.replace(/^#\/(\$defs|definitions)\//, '');
+    if (refPath.has(refName)) {
+      // Cycle detected: stop expanding and fall back to a permissive "any object" schema.
+      return { type: 'object' };
+    }
     const resolved = defs[refName];
-    return resolved ? resolveRefs(resolved, defs, depth + 1) : {};
+    if (!resolved) {
+      return {};
+    }
+    return resolveRefs(resolved, defs, new Set(refPath).add(refName));
   }
   const result = {};
   Object.keys(schema).forEach((key) => {
     if (key === '$defs' || key === 'definitions') {
       return;
     }
-    result[key] = resolveRefs(schema[key], defs, depth + 1);
+    result[key] = resolveRefs(schema[key], defs, refPath);
   });
   return result;
 }
