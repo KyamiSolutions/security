@@ -3,8 +3,9 @@ const { EVENTS } = require('../../utils/constants');
 const { getPreviousQuestionsForUser } = require('./message.getPreviousQuestionsForUser');
 
 /**
- * @description Check if Gladys Plus gateway is configured on this instance.
- * @returns {Promise<boolean>} True when gateway credentials are present.
+ * @description Check if an AI chat backend is available on this instance: either the paid
+ * Gladys Plus gateway, or a free Groq/Gemini API key.
+ * @returns {Promise<boolean>} True when an AI chat backend is available.
  * @example
  * const configured = await isGladysPlusConfigured.call(messageHandler);
  */
@@ -13,9 +14,13 @@ async function isGladysPlusConfigured() {
   const gladysGatewayRsaPrivateKey = await this.variable.getValue('GLADYS_GATEWAY_RSA_PRIVATE_KEY');
   const gladysGatewayEcdsaPrivateKey = await this.variable.getValue('GLADYS_GATEWAY_ECDSA_PRIVATE_KEY');
 
-  return (
-    gladysGatewayRefreshToken !== null && gladysGatewayRsaPrivateKey !== null && gladysGatewayEcdsaPrivateKey !== null
-  );
+  const gatewayConfigured =
+    gladysGatewayRefreshToken !== null && gladysGatewayRsaPrivateKey !== null && gladysGatewayEcdsaPrivateKey !== null;
+
+  const groqApiKey = (await this.variable.getValue('GROQ_API_KEY')) || process.env.GROQ_API_KEY;
+  const geminiApiKey = (await this.variable.getValue('GEMINI_API_KEY')) || process.env.GEMINI_API_KEY;
+
+  return gatewayConfigured || Boolean(groqApiKey) || Boolean(geminiApiKey);
 }
 
 /**
