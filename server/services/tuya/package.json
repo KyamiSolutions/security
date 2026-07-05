@@ -1,0 +1,20 @@
+{
+  "name": "gladys-tuya",
+  "version": "1.0.0",
+  "main": "index.js",
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm",
+    "arm64"
+  ],
+  "dependencies": {
+    "@demirdeniz/tuyapi-newgen": "8.1.5",
+    "@tuya/tuya-connector-nodejs": "^2.1.2",
+    "tuyapi": "^7.7.1"
+  }
+}

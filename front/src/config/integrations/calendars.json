@@ -1,0 +1,9 @@
+[
+  {
+    "key": "caldav",
+    "img": "/assets/integrations/cover/caldav.jpg",
+    "whiteBackground": true,
+    "local": true,
+    "cloud": true
+  }
+]

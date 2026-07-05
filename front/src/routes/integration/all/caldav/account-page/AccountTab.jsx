@@ -1,0 +1,213 @@
+import { Text, MarkupText, Localizer } from 'preact-i18n';
+import cx from 'classnames';
+import { CalDAVStatus } from '../../../../../utils/consts';
+
+import style from './AccountTab.css';
+
+const AccountTab = ({ children, ...props }) => (
+  <div class="card">
+    <div class="card-header">
+      <h1 class="card-title">
+        <Text id="integration.caldav.accountTab" />
+      </h1>
+    </div>
+    <div class="card-body">
+      <div
+        class={cx('dimmer', {
+          active: props.loading
+        })}
+      >
+        <div class="loader" />
+        <div class="dimmer-content">
+          <p>
+            <Text id="integration.caldav.accountIntroduction" />
+          </p>
+          <div class="form-group">
+            <div class="form-label">
+              <Text id="integration.caldav.hostLabel" />
+            </div>
+            <Text id="integration.caldav.hostInfo" />
+            <select class="form-control" onChange={props.updateCaldavHost} value={props.caldavHost}>
+              {Object.keys(props.dictionary.services).map(host => (
+                <option value={host}>
+                  <Text id={`integration.caldav.services.${host}.name`} />
+                </option>
+              ))}
+            </select>
+            {props.caldavHost && props.dictionary.services[props.caldavHost].verifySSL && (
+              <div className={`form-group ${style.sslSwitch}`}>
+                <label class="custom-switch">
+                  <input
+                    type="checkbox"
+                    class="custom-switch-input"
+                    checked={props.caldavCheckSSL}
+                    onClick={props.updateCaldavCheckSSL}
+                  />
+                  <span class="custom-switch-indicator" />
+                  <span class="custom-switch-description">
+                    <Text id={`integration.caldav.services.${props.caldavHost}.verifySSL`} />
+                  </span>
+                </label>
+              </div>
+            )}
+          </div>
+          <div class="form-group">
+            <div class="form-label">
+              <Text id={`integration.caldav.services.${props.caldavHost}.url`} />
+            </div>
+            <Text id={`integration.caldav.services.${props.caldavHost}.urlInfo`} />
+            <Localizer>
+              <input
+                type="text"
+                class="form-control"
+                placeholder={<Text id={`integration.caldav.services.${props.caldavHost}.url`} />}
+                onInput={props.updateCaldavUrl}
+                value={props.caldavUrl}
+              />
+            </Localizer>
+          </div>
+          <div class="form-group">
+            <div class="form-label">
+              <Text id={`integration.caldav.services.${props.caldavHost}.username`} />
+            </div>
+            <Text id={`integration.caldav.services.${props.caldavHost}.usernameInfo`} />
+            <Localizer>
+              <input
+                type="text"
+                class="form-control"
+                placeholder={<Text id={`integration.caldav.services.${props.caldavHost}.username`} />}
+                onInput={props.updateCaldavUsername}
+                value={props.caldavUsername}
+              />
+            </Localizer>
+          </div>
+          <div class="form-group">
+            <div class="form-label">
+              <Text id={`integration.caldav.services.${props.caldavHost}.password`} />
+            </div>
+            <MarkupText id={`integration.caldav.services.${props.caldavHost}.passwordInfo`} />
+            <Localizer>
+              <input
+                type="password"
+                class="form-control"
+                placeholder={<Text id={`integration.caldav.services.${props.caldavHost}.password`} />}
+                onInput={props.updateCaldavPassword}
+                value={props.caldavPassword}
+              />
+            </Localizer>
+          </div>
+          {(props.caldavSaveSettingsStatus === CalDAVStatus.BadCredentialsError ||
+            props.caldavSaveSettingsStatus === CalDAVStatus.BadUrlError ||
+            props.caldavSaveSettingsStatus === CalDAVStatus.RetrievePrincipalUrlError ||
+            props.caldavSaveSettingsStatus === CalDAVStatus.RetrieveHomeUrlError ||
+            props.caldavSaveSettingsStatus === CalDAVStatus.Error) && (
+            <div class="alert alert-danger">
+              <Text id="integration.caldav.configurationDefaultError" />
+              <p className={style.errorMessage}>
+                <Text id={`integration.caldav.configuration${props.caldavSaveSettingsStatus}`} />
+              </p>
+            </div>
+          )}
+          {props.caldavSaveSettingsStatus === CalDAVStatus.Success && (
+            <p class="alert alert-info">
+              <Text id="integration.caldav.configurationSuccess" />
+            </p>
+          )}
+          {props.caldavCleanUpStatus === CalDAVStatus.Error && (
+            <div class="alert alert-danger">
+              <Text id="integration.caldav.cleanUpError" />
+            </div>
+          )}
+          {props.caldavCleanUpStatus === CalDAVStatus.Success && (
+            <p class="alert alert-info">
+              <Text id="integration.caldav.cleanUpSuccess" />
+            </p>
+          )}
+          {(props.caldavSyncStatus === CalDAVStatus.BadCredentialsError ||
+            props.caldavSyncStatus === CalDAVStatus.RequestCalendarsError ||
+            props.caldavSyncStatus === CalDAVStatus.RequestChangesError ||
+            props.caldavSyncStatus === CalDAVStatus.RequestEventsError ||
+            props.caldavSyncStatus === CalDAVStatus.Error) && (
+            <div class="alert alert-danger">
+              <Text id="integration.caldav.synchronizationDefaultError" />
+              <p className={style.errorMessage}>
+                <Text id={`integration.caldav.synchronization${props.caldavSyncStatus}`} />
+              </p>
+            </div>
+          )}
+          {props.caldavSyncStatus === CalDAVStatus.Success && (
+            <p class="alert alert-info">
+              <Text id="integration.caldav.synchronizationSuccess" />
+            </p>
+          )}
+          {props.caldavLog && (
+            <div class="alert alert-secondary">
+              <div class="d-flex justify-content-between align-items-center">
+                <button
+                  type="button"
+                  class="btn btn-link p-0 text-start"
+                  onClick={props.toggleCaldavLog}
+                  aria-expanded={!props.caldavLogVisibility}
+                  aria-controls="caldav-log-content"
+                >
+                  <i
+                    class={cx('fe me-2', {
+                      'fe-chevron-right': props.caldavLogVisibility,
+                      'fe-chevron-down': !props.caldavLogVisibility
+                    })}
+                  />
+                  <Text id="integration.caldav.logTitle" />
+                </button>
+                {window.isSecureContext && (
+                  <button type="button" class="btn p-0" onClick={() => navigator.clipboard.writeText(props.caldavLog)}>
+                    <i class="fe fe-copy me-1" />
+                  </button>
+                )}
+              </div>
+              {!props.caldavLogVisibility && (
+                <pre id="caldav-log-content" class="mb-0 mt-2" style="white-space: pre-wrap; word-break: break-all;">
+                  {props.caldavLog}
+                </pre>
+              )}
+            </div>
+          )}
+          <div class="form-group">
+            <div className={style.successMessage}>
+              <Text id={`integration.caldav.synchronizationInfo`} />
+            </div>
+            <div class="d-sm-none">
+              <div class="row mb-2">
+                <div class="col-6 pr-1">
+                  <button className={cx('btn btn-primary btn-block', style.button)} onClick={props.saveCaldavSettings}>
+                    <Text id={`integration.caldav.buttonSave`} />
+                  </button>
+                </div>
+                <div class="col-6 pl-1">
+                  <button className={cx('btn btn-danger btn-block', style.button)} onClick={props.cleanUp}>
+                    <Text id={`integration.caldav.buttonCleanUp`} />
+                  </button>
+                </div>
+              </div>
+              <button class="btn btn-success btn-block" onClick={props.startSync}>
+                <Text id={`integration.caldav.buttonSync`} />
+              </button>
+            </div>
+            <span class="input-group-append d-none d-sm-flex">
+              <button className={cx('btn btn-primary', style.button)} onClick={props.saveCaldavSettings}>
+                <Text id={`integration.caldav.buttonSave`} />
+              </button>
+              <button className={cx('btn btn-danger', style.button)} onClick={props.cleanUp}>
+                <Text id={`integration.caldav.buttonCleanUp`} />
+              </button>
+              <button class="btn btn-success" onClick={props.startSync}>
+                <Text id={`integration.caldav.buttonSync`} />
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+export default AccountTab;

@@ -1,0 +1,19 @@
+{
+  "name": "gladys-usb",
+  "main": "index.js",
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm",
+    "arm64",
+    "arm64e"
+  ],
+  "scripts": {},
+  "dependencies": {
+    "serialport": "^13.0.0"
+  }
+}
