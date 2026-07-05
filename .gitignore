@@ -26,3 +26,5 @@ size-plugin.json
 .tmp
 .DS_Store
 matter-controller-data
+.tailscale-choice
+docker/docker-compose.local.yml

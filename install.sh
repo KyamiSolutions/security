@@ -76,25 +76,34 @@ docker compose -f "$COMPOSE_FILE" up -d
 ok "Teenus käivitatud"
 
 # ── Tailscale (kaugpääs) ─────────────────────────────────────────────────────
-echo ""
-echo -e "  ${Y}Kas soovid kaugpääsu (vaata süsteemi ka kodust väljaspool)?${N}"
-read -r -p "  Paigalda Tailscale? [j/e]: " TAIL
-if [[ "$TAIL" =~ ^[jJ]$ ]]; then
-  if command -v tailscale &>/dev/null; then
-    ok "Tailscale on juba paigaldatud"
-  else
-    info "Paigaldan Tailscale'i..."
-    curl -fsSL https://tailscale.com/install.sh | sh
-    ok "Tailscale paigaldatud"
-  fi
-  info "Käivitan Tailscale'i (brauser avaneb autentimiseks)..."
-  sudo tailscale up
+TAILSCALE_CHOICE_FILE="$CURRENT_DIR/.tailscale-choice"
+TAIL_IP=""
+if command -v tailscale &>/dev/null && tailscale ip -4 &>/dev/null; then
   TAIL_IP=$(tailscale ip -4 2>/dev/null || echo "")
-  if [ -n "$TAIL_IP" ]; then
-    ok "Tailscale IP: $TAIL_IP"
-  fi
+  ok "Tailscale on juba seadistatud (IP: $TAIL_IP), ei küsi uuesti"
+elif [ -f "$TAILSCALE_CHOICE_FILE" ]; then
+  ok "Tailscale valik on juba varasemalt tehtud (ei soovinud), ei küsi uuesti"
 else
-  TAIL_IP=""
+  echo ""
+  echo -e "  ${Y}Kas soovid kaugpääsu (vaata süsteemi ka kodust väljaspool)?${N}"
+  read -r -p "  Paigalda Tailscale? [j/e]: " TAIL
+  if [[ "$TAIL" =~ ^[jJ]$ ]]; then
+    if command -v tailscale &>/dev/null; then
+      ok "Tailscale on juba paigaldatud"
+    else
+      info "Paigaldan Tailscale'i..."
+      curl -fsSL https://tailscale.com/install.sh | sh
+      ok "Tailscale paigaldatud"
+    fi
+    info "Käivitan Tailscale'i (brauser avaneb autentimiseks)..."
+    sudo tailscale up
+    TAIL_IP=$(tailscale ip -4 2>/dev/null || echo "")
+    if [ -n "$TAIL_IP" ]; then
+      ok "Tailscale IP: $TAIL_IP"
+    fi
+  else
+    echo "no" > "$TAILSCALE_CHOICE_FILE"
+  fi
 fi
 
 # ── Kokkuvõte ──────────────────────────────────────────────────────────────────
