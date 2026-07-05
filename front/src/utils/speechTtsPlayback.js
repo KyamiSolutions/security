@@ -32,3 +32,28 @@ export async function playSpeechTtsUrl(audio, ttsUrl, onEnded) {
   audio.src = ttsUrl;
   await audio.play();
 }
+
+/**
+ * @description Speak text using the browser's own (free, offline) speech synthesis, used as a
+ * fallback when no paid Gladys Plus TTS is configured (ttsUrl is null).
+ * @param {string} text - Text to speak.
+ * @param {string} [lang] - BCP 47 language tag (e.g. 'et', 'en-US'); browser default if omitted.
+ * @param {() => void} onEnded - Called when speech finishes (or immediately if unsupported).
+ * @returns {void}
+ * @example
+ * speakWithBrowserTts('Tuli on sisse lülitatud', 'et', () => {});
+ */
+export function speakWithBrowserTts(text, lang, onEnded) {
+  if (!window.speechSynthesis || !text) {
+    onEnded();
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  if (lang) {
+    utterance.lang = lang;
+  }
+  utterance.onend = onEnded;
+  utterance.onerror = onEnded;
+  window.speechSynthesis.speak(utterance);
+}

@@ -44,7 +44,9 @@ async function askGroq(body, apiKey) {
  * @public
  * @description Ask an AI chat backend: the Gladys Gateway AI endpoint when a Gladys Plus
  * subscription is configured, otherwise Groq's free API when GROQ_API_KEY is set, falling
- * back to Google Gemini's free API when only GEMINI_API_KEY is set.
+ * back to Google Gemini's free API when only GEMINI_API_KEY is set. When both free keys are
+ * set, the AI_CHAT_PROVIDER preference ('groq' | 'gemini') decides which one is used, so e.g.
+ * a Groq key added only for voice transcription doesn't silently take over text chat too.
  * @param {object} body - OpenAI-compatible chat request body.
  * @returns {Promise<object>} Chat completion-like response.
  * @example
@@ -52,10 +54,18 @@ async function askGroq(body, apiKey) {
  */
 async function aiChat(body) {
   const groqApiKey = (await this.variable.getValue('GROQ_API_KEY')) || process.env.GROQ_API_KEY;
+  const geminiApiKey = (await this.variable.getValue('GEMINI_API_KEY')) || process.env.GEMINI_API_KEY;
+  const preferredProvider = await this.variable.getValue('AI_CHAT_PROVIDER');
+
+  if (groqApiKey && geminiApiKey) {
+    if (preferredProvider === 'gemini') {
+      return askGemini(body, geminiApiKey);
+    }
+    return askGroq(body, groqApiKey);
+  }
   if (groqApiKey) {
     return askGroq(body, groqApiKey);
   }
-  const geminiApiKey = (await this.variable.getValue('GEMINI_API_KEY')) || process.env.GEMINI_API_KEY;
   if (geminiApiKey) {
     return askGemini(body, geminiApiKey);
   }

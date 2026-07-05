@@ -7,6 +7,7 @@ class ChatSidebar extends Component {
     gladysPlusConfigured: null,
     groqApiKey: '',
     geminiApiKey: '',
+    chatProvider: 'auto',
     saving: false,
     saved: false
   };
@@ -38,6 +39,12 @@ class ChatSidebar extends Component {
     } catch (e) {
       // not configured yet
     }
+    try {
+      const provider = await this.props.httpClient.get('/api/v1/variable/AI_CHAT_PROVIDER');
+      this.setState({ chatProvider: provider.value || 'auto' });
+    } catch (e) {
+      // not configured yet, keep default 'auto'
+    }
   };
 
   updateGroqApiKey = e => {
@@ -48,11 +55,16 @@ class ChatSidebar extends Component {
     this.setState({ geminiApiKey: e.target.value, saved: false });
   };
 
+  updateChatProvider = e => {
+    this.setState({ chatProvider: e.target.value, saved: false });
+  };
+
   saveKeys = async () => {
     this.setState({ saving: true, saved: false });
     try {
       await this.props.httpClient.post('/api/v1/variable/GROQ_API_KEY', { value: this.state.groqApiKey });
       await this.props.httpClient.post('/api/v1/variable/GEMINI_API_KEY', { value: this.state.geminiApiKey });
+      await this.props.httpClient.post('/api/v1/variable/AI_CHAT_PROVIDER', { value: this.state.chatProvider });
       await this.fetchStatus();
       this.setState({ saving: false, saved: true });
     } catch (e) {
@@ -66,7 +78,7 @@ class ChatSidebar extends Component {
     this.fetchKeys();
   }
 
-  render({}, { gladysPlusConfigured, groqApiKey, geminiApiKey, saving, saved }) {
+  render({}, { gladysPlusConfigured, groqApiKey, geminiApiKey, chatProvider, saving, saved }) {
     return (
       <div>
         <div class="card mb-3">
@@ -112,6 +124,19 @@ class ChatSidebar extends Component {
               value={geminiApiKey}
               onInput={this.updateGeminiApiKey}
             />
+
+            <label class="form-label small mb-1">
+              <Text id="chat.sidebar.chatProviderLabel">
+                Text chat provider (used for text chat only; voice transcription always uses Groq)
+              </Text>
+            </label>
+            <select class="form-control form-control-sm mb-2" value={chatProvider} onChange={this.updateChatProvider}>
+              <option value="auto">
+                <Text id="chat.sidebar.chatProviderAuto">Automatic (Groq, then Gemini)</Text>
+              </option>
+              <option value="groq">Groq</option>
+              <option value="gemini">Gemini</option>
+            </select>
 
             <button class="btn btn-primary btn-sm" onClick={this.saveKeys} disabled={saving}>
               <Text id="chat.sidebar.saveKeys">Save</Text>

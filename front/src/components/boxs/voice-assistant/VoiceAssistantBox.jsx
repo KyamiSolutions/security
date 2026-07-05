@@ -14,7 +14,7 @@ import {
 } from '../../../utils/speechMicrophoneAccess';
 import { prepareSpeechCommandRecording, preloadSpeechCommandRecorder } from '../../../utils/speechCommandRecorder';
 import { isRecordUntilSilenceAbortError, recordUntilSilence } from '../../../utils/recordUntilSilence';
-import { playSpeechTtsUrl, unlockSpeechTtsPlayback } from '../../../utils/speechTtsPlayback';
+import { playSpeechTtsUrl, speakWithBrowserTts, unlockSpeechTtsPlayback } from '../../../utils/speechTtsPlayback';
 import style from './style.css';
 
 const STATE = {
@@ -283,7 +283,7 @@ class VoiceAssistantBox extends Component {
     try {
       const status = await this.props.httpClient.get('/api/v1/gateway/status');
       if (this._isMounted) {
-        this.setState({ gatewayConnected: status.configured === true });
+        this.setState({ gatewayConnected: status.configured === true || status.aiChatAvailable === true });
       }
     } catch (e) {
       if (this._isMounted) {
@@ -341,11 +341,22 @@ class VoiceAssistantBox extends Component {
     });
   };
 
-  playTts = async (ttsUrl, voiceSessionGeneration) => {
+  playTts = async (ttsUrl, voiceSessionGeneration, answerText) => {
     if (!this.isVoiceSessionActive(voiceSessionGeneration)) {
       return;
     }
     if (!ttsUrl) {
+      if (answerText) {
+        this.safeSetState({ uiState: STATE.SPEAKING }, voiceSessionGeneration);
+        speakWithBrowserTts(answerText, this.props.user && this.props.user.language, () => {
+          if (!this.isVoiceSessionActive(voiceSessionGeneration)) {
+            return;
+          }
+          this.safeSetState({ uiState: STATE.IDLE }, voiceSessionGeneration);
+          this.scheduleMessagesClear();
+        });
+        return;
+      }
       this.safeSetState({ uiState: STATE.IDLE }, voiceSessionGeneration);
       this.scheduleMessagesClear();
       return;
@@ -472,7 +483,7 @@ class VoiceAssistantBox extends Component {
         this.safeSetState({ response: result.answer }, voiceSessionGeneration);
       }
 
-      await this.playTts(result.ttsUrl, voiceSessionGeneration);
+      await this.playTts(result.ttsUrl, voiceSessionGeneration, result.answer);
     } catch (e) {
       if (isAbortError(e)) {
         if (this.isVoiceSessionActive(voiceSessionGeneration)) {
