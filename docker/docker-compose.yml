@@ -17,6 +17,9 @@ services:
       SQLITE_FILE_PATH: /var/lib/gladysassistant/gladys-production.db
       SERVER_PORT: 80
       TZ: Europe/Paris
+      # Optional: paste a Discord webhook URL here to get a photo notification
+      # whenever kyami-motion detects motion (Server Settings > Integrations > Webhooks).
+      DISCORD_WEBHOOK_URL: ''
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/gladysassistant:/var/lib/gladysassistant

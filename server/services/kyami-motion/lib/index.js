@@ -5,6 +5,7 @@ const { listUsbCameras } = require('./listUsbCameras');
 const { getV4l2Controls, setV4l2Control } = require('./v4l2Controls');
 const { startRecording, stopRecording, listRecordings, deleteRecording } = require('./recordings');
 const { motionTick, startMotionDetector, stopMotionDetector } = require('./motionDetector');
+const { notifyDiscord } = require('./discordNotify');
 
 /**
  * @description Handler exposing all kyami-motion functions, bound so `this` inside each
@@ -34,5 +35,6 @@ KyamiMotionHandler.prototype.deleteRecording = deleteRecording;
 KyamiMotionHandler.prototype.motionTick = motionTick;
 KyamiMotionHandler.prototype.startMotionDetector = startMotionDetector;
 KyamiMotionHandler.prototype.stopMotionDetector = stopMotionDetector;
+KyamiMotionHandler.prototype.notifyDiscord = notifyDiscord;
 
 module.exports = KyamiMotionHandler;

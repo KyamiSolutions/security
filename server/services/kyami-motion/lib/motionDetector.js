@@ -35,6 +35,7 @@ async function motionTick(source) {
           // eslint-disable-next-line no-await-in-loop
           state.recording = await this.startRecording(source, MOTION_DETECTION.RECORD_SECONDS);
           state.recordingUntil = now + MOTION_DETECTION.RECORD_SECONDS * 1000;
+          this.notifyDiscord(source, jpegBuffer).catch(() => {});
         }
       }
     }
