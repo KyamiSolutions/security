@@ -12,7 +12,7 @@ class EmptyChat extends Component {
     try {
       const gatewayStatus = await this.props.httpClient.get('/api/v1/gateway/status');
       this.setState({
-        gladysPlusConfigured: gatewayStatus.configured === true
+        gladysPlusConfigured: gatewayStatus.configured === true || gatewayStatus.aiChatAvailable === true
       });
     } catch (e) {
       console.error(e);

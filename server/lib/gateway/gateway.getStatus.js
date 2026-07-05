@@ -15,6 +15,8 @@ async function getStatus() {
   return {
     configured,
     connected: this.connected,
+    // AI chat also works without a Gladys Plus subscription when a free Groq or Gemini API key is set.
+    aiChatAvailable: configured || Boolean(process.env.GROQ_API_KEY) || Boolean(process.env.GEMINI_API_KEY),
   };
 }
 

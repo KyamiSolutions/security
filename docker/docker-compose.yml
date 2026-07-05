@@ -20,6 +20,11 @@ services:
       # Optional: paste a Discord webhook URL here to get a photo notification
       # whenever kyami-motion detects motion (Server Settings > Integrations > Webhooks).
       DISCORD_WEBHOOK_URL: ''
+      # Optional: free AI chat without a Gladys Plus subscription. Get a free key at
+      # https://console.groq.com/keys and paste it here to enable the AI chat feature.
+      GROQ_API_KEY: ''
+      # Optional fallback if GROQ_API_KEY is empty: free key at https://aistudio.google.com/apikey
+      GEMINI_API_KEY: ''
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/gladysassistant:/var/lib/gladysassistant
