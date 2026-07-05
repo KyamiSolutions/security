@@ -8,18 +8,19 @@ const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 /**
  * @description Ask Groq's free OpenAI-compatible chat completion API, used as a free
- * alternative to the paid Gladys Gateway AI chat when GROQ_API_KEY is configured.
+ * alternative to the paid Gladys Gateway AI chat when a Groq API key is configured.
  * @param {object} body - OpenAI-compatible chat request body (messages, tools, tool_choice).
+ * @param {string} apiKey - Groq API key.
  * @returns {Promise<object>} Chat completion response, OpenAI-shaped.
  * @example
- * askGroq({ messages: [{ role: 'user', content: 'Hello' }] });
+ * askGroq({ messages: [{ role: 'user', content: 'Hello' }] }, 'gsk_...');
  */
-async function askGroq(body) {
+async function askGroq(body, apiKey) {
   const response = await fetch(GROQ_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(Object.assign({ model: GROQ_MODEL }, body)),
   });
@@ -50,11 +51,13 @@ async function askGroq(body) {
  * aiChat({ messages: [{ role: 'user', content: 'Hello' }] });
  */
 async function aiChat(body) {
-  if (process.env.GROQ_API_KEY) {
-    return askGroq(body);
+  const groqApiKey = (await this.variable.getValue('GROQ_API_KEY')) || process.env.GROQ_API_KEY;
+  if (groqApiKey) {
+    return askGroq(body, groqApiKey);
   }
-  if (process.env.GEMINI_API_KEY) {
-    return askGemini(body);
+  const geminiApiKey = (await this.variable.getValue('GEMINI_API_KEY')) || process.env.GEMINI_API_KEY;
+  if (geminiApiKey) {
+    return askGemini(body, geminiApiKey);
   }
   try {
     const response = await this.gladysGatewayClient.openAIAsk(body);

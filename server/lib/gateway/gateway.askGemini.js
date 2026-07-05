@@ -149,14 +149,15 @@ function geminiResponseToOpenAiShape(geminiResponse) {
 
 /**
  * @description Ask Google Gemini's free API, translating from/to the OpenAI-compatible shape
- * used by the rest of the AI chat code. Used as a free fallback when GROQ_API_KEY isn't set
- * but GEMINI_API_KEY is.
+ * used by the rest of the AI chat code. Used as a free fallback when no Groq key is set
+ * but a Gemini key is.
  * @param {object} body - OpenAI-compatible chat request body (messages, tools, tool_choice).
+ * @param {string} apiKey - Gemini API key.
  * @returns {Promise<object>} OpenAI-shaped chat completion response.
  * @example
- * askGemini({ messages: [{ role: 'user', content: 'Hello' }] });
+ * askGemini({ messages: [{ role: 'user', content: 'Hello' }] }, 'AIza...');
  */
-async function askGemini(body) {
+async function askGemini(body, apiKey) {
   const { systemInstruction, contents } = messagesToGeminiPayload(body.messages || []);
   const payload = {
     contents,
@@ -164,7 +165,7 @@ async function askGemini(body) {
     tools: toolsToGeminiTools(body.tools),
   };
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`, {
+  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
