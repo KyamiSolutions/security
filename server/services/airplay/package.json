@@ -1,0 +1,19 @@
+{
+  "name": "gladys-airplay",
+  "version": "1.0.0",
+  "main": "index.js",
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm",
+    "arm64"
+  ],
+  "dependencies": {
+    "@lox-audioserver/node-airplay-sender": "^0.4.7",
+    "bonjour": "^3.5.1"
+  }
+}

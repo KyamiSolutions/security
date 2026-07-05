@@ -1,0 +1,500 @@
+html,
+body {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+#app {
+  height: 100%;
+}
+.direct-chat .box-body {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  position: relative;
+  overflow-x: hidden;
+  padding: 0;
+}
+.direct-chat.chat-pane-open .direct-chat-contacts {
+  -webkit-transform: translate(0, 0);
+  -ms-transform: translate(0, 0);
+  -o-transform: translate(0, 0);
+  transform: translate(0, 0);
+}
+.direct-chat-messages {
+  -webkit-transform: translate(0, 0);
+  -ms-transform: translate(0, 0);
+  -o-transform: translate(0, 0);
+  transform: translate(0, 0);
+  padding: 10px;
+  height: 250px;
+  overflow: auto;
+}
+.direct-chat-msg,
+.direct-chat-text {
+  display: block;
+}
+.direct-chat-msg {
+  margin-bottom: 10px;
+}
+.direct-chat-msg:before,
+.direct-chat-msg:after {
+  content: ' ';
+  display: table;
+}
+.direct-chat-msg:after {
+  clear: both;
+}
+.direct-chat-messages,
+.direct-chat-contacts {
+  -webkit-transition: -webkit-transform 0.5s ease-in-out;
+  -moz-transition: -moz-transform 0.5s ease-in-out;
+  -o-transition: -o-transform 0.5s ease-in-out;
+  transition: transform 0.5s ease-in-out;
+}
+.direct-chat-text {
+  border-radius: 5px;
+  position: relative;
+  padding: 5px 10px;
+  background: #d2d6de;
+  border: 1px solid #d2d6de;
+  margin: 5px 0 0 50px;
+  color: #444444;
+}
+.direct-chat-text:after,
+.direct-chat-text:before {
+  position: absolute;
+  right: 100%;
+  top: 15px;
+  border: solid transparent;
+  border-right-color: #d2d6de;
+  content: ' ';
+  height: 0;
+  width: 0;
+  pointer-events: none;
+}
+.direct-chat-text:after {
+  border-width: 5px;
+  margin-top: -5px;
+}
+.direct-chat-text:before {
+  border-width: 6px;
+  margin-top: -6px;
+}
+.right .direct-chat-text {
+  margin-right: 50px;
+  margin-left: 0;
+}
+.right .direct-chat-text:after,
+.right .direct-chat-text:before {
+  right: auto;
+  left: 100%;
+  border-right-color: transparent;
+  border-left-color: #d2d6de;
+}
+.direct-chat-img {
+  border-radius: 50%;
+  float: left;
+  width: 40px;
+  height: 40px;
+}
+.right .direct-chat-img {
+  float: right;
+}
+.direct-chat-info {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+.direct-chat-name {
+  font-weight: 600;
+}
+.direct-chat-timestamp {
+  color: #999;
+}
+.direct-chat-contacts-open .direct-chat-contacts {
+  -webkit-transform: translate(0, 0);
+  -ms-transform: translate(0, 0);
+  -o-transform: translate(0, 0);
+  transform: translate(0, 0);
+}
+.direct-chat-contacts {
+  -webkit-transform: translate(101%, 0);
+  -ms-transform: translate(101%, 0);
+  -o-transform: translate(101%, 0);
+  transform: translate(101%, 0);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: 250px;
+  width: 100%;
+  background: #222d32;
+  color: #fff;
+  overflow: auto;
+}
+.contacts-list > li {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  margin: 0;
+}
+.contacts-list > li:before,
+.contacts-list > li:after {
+  content: ' ';
+  display: table;
+}
+.contacts-list > li:after {
+  clear: both;
+}
+.contacts-list > li:last-of-type {
+  border-bottom: none;
+}
+.contacts-list-img {
+  border-radius: 50%;
+  width: 40px;
+  float: left;
+}
+.contacts-list-info {
+  margin-left: 45px;
+  color: #fff;
+}
+.contacts-list-name,
+.contacts-list-status {
+  display: block;
+}
+.contacts-list-name {
+  font-weight: 600;
+}
+.contacts-list-status {
+  font-size: 12px;
+}
+.contacts-list-date {
+  color: #aaa;
+  font-weight: normal;
+}
+.contacts-list-msg {
+  color: #999;
+}
+.direct-chat-danger .right > .direct-chat-text {
+  background: #dd4b39;
+  border-color: #dd4b39;
+  color: #ffffff;
+}
+.direct-chat-danger .right > .direct-chat-text:after,
+.direct-chat-danger .right > .direct-chat-text:before {
+  border-left-color: #dd4b39;
+}
+.direct-chat-primary .right > .direct-chat-text {
+  background: #3c8dbc;
+  border-color: #3c8dbc;
+  color: #ffffff;
+}
+.direct-chat-primary .right > .direct-chat-text:after,
+.direct-chat-primary .right > .direct-chat-text:before {
+  border-left-color: #3c8dbc;
+}
+.direct-chat-warning .right > .direct-chat-text {
+  background: #f39c12;
+  border-color: #f39c12;
+  color: #ffffff;
+}
+.direct-chat-warning .right > .direct-chat-text:after,
+.direct-chat-warning .right > .direct-chat-text:before {
+  border-left-color: #f39c12;
+}
+.direct-chat-info .right > .direct-chat-text {
+  background: #00c0ef;
+  border-color: #00c0ef;
+  color: #ffffff;
+}
+.direct-chat-info .right > .direct-chat-text:after,
+.direct-chat-info .right > .direct-chat-text:before {
+  border-left-color: #00c0ef;
+}
+.direct-chat-success .right > .direct-chat-text {
+  background: #00a65a;
+  border-color: #00a65a;
+  color: #ffffff;
+}
+.direct-chat-success .right > .direct-chat-text:after,
+.direct-chat-success .right > .direct-chat-text:before {
+  border-left-color: #00a65a;
+}
+.custom-file-input:lang(en) ~ .custom-file-label::after {
+  content: 'Browse';
+}
+.custom-file-input:lang(fr) ~ .custom-file-label::after {
+  content: 'Parcourir';
+}
+.cursor-pointer {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.loading-border {
+  animation: borderBlink 2s infinite;
+}
+@keyframes borderBlink {
+  50% {
+    border-color: #45aaf2;
+  }
+}
+
+.react-clock {
+  display: block;
+  position: relative;
+}
+.react-clock,
+.react-clock *,
+.react-clock *:before,
+.react-clock *:after {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.react-clock__face {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border: 1px solid rgb(73, 80, 87);
+  border-radius: 50%;
+}
+.react-clock__hand {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  right: 50%;
+}
+.react-clock__hand__body {
+  position: absolute;
+  background-color: rgb(73, 80, 87);
+  transform: translateX(-50%);
+}
+.react-clock__mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  right: 50%;
+}
+.react-clock__mark__body {
+  position: absolute;
+  background-color: rgb(73, 80, 87);
+  transform: translateX(-50%);
+}
+.react-clock__mark__number {
+  position: absolute;
+  left: -40px;
+  width: 80px;
+  text-align: center;
+}
+.react-clock__second-hand__body {
+  background-color: rgb(205, 32, 31);
+}
+
+.react-clock {
+  background-color: white;
+  border-radius: 50%;
+}
+.react-clock__face {
+  border: 1px solid white;
+}
+.react-clock__second-hand {
+  transition: transform cubic-bezier(0.68, 0, 0.27, 1.55) 0.2s;
+}
+
+.opacity-60 {
+  opacity: 60%;
+}
+
+.humidity-slider {
+  width: 100%;
+  max-width: 500px;
+  height: 30px;
+}
+
+.humidity-slider-thumb {
+  font-size: 0.9em;
+  text-align: center;
+  background-color: #fafafa;
+  cursor: pointer;
+  border: 1px solid gray;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.humidity-slider-thumb.active {
+  border: 1px solid #467fcf;
+}
+
+.humidity-slider-track {
+  position: relative;
+  background: #f1c40f;
+}
+
+.humidity-slider-track-1 {
+  background: #5eba00;
+}
+
+.humidity-slider-track-2 {
+  background: #467fcf;
+}
+
+.humidity-slider .humidity-slider-track {
+  top: 10px;
+  height: 10px;
+}
+
+.humidity-slider .humidity-slider-thumb {
+  top: 3px;
+  width: 41px;
+  height: 24px;
+  line-height: 22px;
+}
+
+.temperature-slider {
+  width: 100%;
+  max-width: 500px;
+  height: 30px;
+}
+
+.temperature-slider-thumb {
+  font-size: 0.9em;
+  text-align: center;
+  background-color: #fafafa;
+  cursor: pointer;
+  border: 1px solid gray;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.temperature-slider-thumb.active {
+  border: 1px solid #467fcf;
+}
+
+.temperature-slider-track {
+  position: relative;
+  background: #467fcf;
+}
+
+.temperature-slider-track-1 {
+  background: #5eba00;
+}
+
+.temperature-slider-track-2 {
+  background: #cd201f;
+}
+
+.temperature-slider .temperature-slider-track {
+  top: 10px;
+  height: 10px;
+}
+
+.temperature-slider .temperature-slider-thumb {
+  top: 3px;
+  width: 41px;
+  height: 24px;
+  line-height: 22px;
+}
+
+.gauge-slider {
+  width: 100%;
+  max-width: 500px;
+  height: 30px;
+}
+
+.gauge-slider-thumb {
+  font-size: 0.9em;
+  text-align: center;
+  background-color: #fafafa;
+  cursor: pointer;
+  border: 1px solid gray;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.gauge-slider-thumb.active {
+  border: 1px solid #467fcf;
+}
+
+.gauge-slider-track {
+  position: relative;
+}
+
+.gauge-slider .gauge-slider-track {
+  top: 10px;
+  height: 10px;
+}
+
+.gauge-slider .gauge-slider-thumb {
+  top: 3px;
+  width: 60px;
+  height: 24px;
+  line-height: 22px;
+}
+
+.gauge-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gauge-thresholds-legend {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.rti--tag button:focus {
+  outline: none !important;
+}
+
+.row-cards > [class*='col'] {
+  display: flex;
+}
+
+.row-cards > [class*='col'] > .card {
+  width: 100%;
+  flex: 1;
+}
+
+.favorite-star {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 4px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  box-shadow: none;
+  outline: none;
+}
+
+.favorite-star:focus,
+.favorite-star:active,
+.favorite-star:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+
+.favorite-star svg {
+  fill: none;
+  stroke: #9aa0a6;
+}
+
+.favorite-star--active svg {
+  fill: #ffa000;
+  stroke: #ffa000;
+}
+
+.integration-tag {
+  font-size: 0.7rem;
+  margin-right: 6px;
+}

@@ -1,0 +1,264 @@
+import { CalDAVStatus } from '../../../../../utils/consts';
+import get from 'get-value';
+
+const actions = store => ({
+  updateCaldavHost(state, e) {
+    store.setState({
+      caldavHost: e.target.value
+    });
+
+    if (e.target.value === 'apple') {
+      store.setState({
+        caldavUrl: 'https://caldav.icloud.com'
+      });
+    } else if (e.target.value === 'google') {
+      store.setState({
+        caldavUrl: 'https://www.google.com/calendar/dav'
+      });
+    }
+  },
+  updateCaldavUrl(state, e) {
+    store.setState({
+      caldavUrl: e.target.value
+    });
+  },
+  updateCaldavCheckSSL(state, e) {
+    store.setState({
+      caldavCheckSSL: e.target.checked
+    });
+  },
+  updateCaldavUsername(state, e) {
+    store.setState({
+      caldavUsername: e.target.value
+    });
+  },
+  updateCaldavPassword(state, e) {
+    store.setState({
+      caldavPassword: e.target.value
+    });
+  },
+  async getCaldavSetting(state) {
+    store.setState({
+      caldavGetSettingsStatus: CalDAVStatus.Getting
+    });
+
+    let caldavHost = 'other';
+    let caldavUrl = '';
+    let caldavCheckSSL = true;
+    let caldavUsername = '';
+    let caldavPassword = '';
+
+    store.setState({
+      caldavHost,
+      caldavUrl,
+      caldavCheckSSL,
+      caldavUsername,
+      caldavPassword
+    });
+
+    try {
+      const { value: host } = await state.httpClient.get('/api/v1/service/caldav/variable/CALDAV_HOST', {
+        userRelated: true
+      });
+      caldavHost = host;
+
+      const { value: url } = await state.httpClient.get('/api/v1/service/caldav/variable/CALDAV_URL', {
+        userRelated: true
+      });
+      caldavUrl = url;
+
+      const { value: username } = await state.httpClient.get('/api/v1/service/caldav/variable/CALDAV_USERNAME', {
+        userRelated: true
+      });
+      caldavUsername = username;
+
+      const { value: password } = await state.httpClient.get('/api/v1/service/caldav/variable/CALDAV_PASSWORD', {
+        userRelated: true
+      });
+      caldavPassword = password;
+
+      try {
+        const { value: checkSSL } = await state.httpClient.get('/api/v1/service/caldav/variable/CALDAV_CHECK_SSL', {
+          userRelated: true
+        });
+        caldavCheckSSL = checkSSL !== '0';
+      } catch (e) {
+        caldavCheckSSL = true;
+      }
+
+      store.setState({
+        caldavGetSettingsStatus: CalDAVStatus.Success
+      });
+    } catch (e) {
+      store.setState({
+        caldavGetSettingsStatus: CalDAVStatus.Error
+      });
+    }
+
+    store.setState({
+      caldavHost,
+      caldavUrl,
+      caldavCheckSSL,
+      caldavUsername,
+      caldavPassword
+    });
+  },
+  async saveCaldavSettings(state) {
+    store.setState({
+      caldavSaveSettingsStatus: CalDAVStatus.Getting,
+      caldavCleanUpStatus: null,
+      caldavSyncStatus: null,
+      caldavLog: null
+    });
+    try {
+      // save caldav host
+      await state.httpClient.post('/api/v1/service/caldav/variable/CALDAV_HOST', {
+        value: state.caldavHost,
+        userRelated: true
+      });
+      // save caldav check SSL boolean
+      await state.httpClient.post('/api/v1/service/caldav/variable/CALDAV_CHECK_SSL', {
+        value: state.caldavCheckSSL,
+        userRelated: true
+      });
+      // save caldav url
+      await state.httpClient.post('/api/v1/service/caldav/variable/CALDAV_URL', {
+        value: state.caldavUrl,
+        userRelated: true
+      });
+      // save caldav username
+      await state.httpClient.post('/api/v1/service/caldav/variable/CALDAV_USERNAME', {
+        value: state.caldavUsername,
+        userRelated: true
+      });
+      // save caldav password
+      await state.httpClient.post('/api/v1/service/caldav/variable/CALDAV_PASSWORD', {
+        value: state.caldavPassword,
+        userRelated: true
+      });
+      // start service
+      await state.httpClient.post('/api/v1/service/caldav/start');
+
+      await state.httpClient.get('/api/v1/service/caldav/config');
+      store.setState({
+        caldavSaveSettingsStatus: CalDAVStatus.Success
+      });
+    } catch (e) {
+      let responseMessage = get(e, 'response.data.message');
+      let log;
+      if (responseMessage && typeof responseMessage === 'object') {
+        log = responseMessage.log;
+        responseMessage = responseMessage.message;
+      }
+      if (responseMessage === 'CALDAV_BAD_USERNAME_PASSWORD') {
+        store.setState({
+          caldavSaveSettingsStatus: CalDAVStatus.BadCredentialsError,
+          caldavLog: log || null,
+          caldavLogVisibility: !!log
+        });
+      } else if (responseMessage === 'CALDAV_BAD_URL') {
+        store.setState({
+          caldavSaveSettingsStatus: CalDAVStatus.BadUrlError,
+          caldavLog: log || null,
+          caldavLogVisibility: !!log
+        });
+      } else if (responseMessage === 'CALDAV_BAD_SETTINGS_PRINCIPAL_URL') {
+        store.setState({
+          caldavSaveSettingsStatus: CalDAVStatus.RetrievePrincipalUrlError,
+          caldavLog: log || null,
+          caldavLogVisibility: !!log
+        });
+      } else if (responseMessage === 'CALDAV_BAD_SETTINGS_HOME_URL') {
+        store.setState({
+          caldavSaveSettingsStatus: CalDAVStatus.RetrieveHomeUrlError,
+          caldavLog: log || null,
+          caldavLogVisibility: !!log
+        });
+      } else {
+        store.setState({
+          caldavSaveSettingsStatus: CalDAVStatus.Error,
+          caldavLog: log || null,
+          caldavLogVisibility: !!log
+        });
+      }
+    }
+  },
+  async cleanUp(state) {
+    store.setState({
+      caldavCleanUpStatus: CalDAVStatus.Getting,
+      caldavSaveSettingsStatus: null,
+      caldavSyncStatus: null,
+      caldavLog: null
+    });
+
+    try {
+      await state.httpClient.get('/api/v1/service/caldav/cleanup');
+      store.setState({
+        caldavCleanUpStatus: CalDAVStatus.Success
+      });
+    } catch (e) {
+      store.setState({
+        caldavCleanUpStatus: CalDAVStatus.Error
+      });
+    }
+  },
+  async startSync(state) {
+    store.setState({
+      caldavSyncStatus: CalDAVStatus.Getting,
+      caldavSaveSettingsStatus: null,
+      caldavCleanUpStatus: null,
+      caldavLog: null
+    });
+    try {
+      await state.httpClient.get('/api/v1/service/caldav/sync');
+      store.setState({
+        caldavSyncStatus: CalDAVStatus.Success
+      });
+    } catch (e) {
+      let responseMessage = get(e, 'response.data.message');
+      let log;
+      if (responseMessage && typeof responseMessage === 'object') {
+        log = responseMessage.log;
+        responseMessage = responseMessage.message;
+      }
+      if (responseMessage === 'SERVICE_NOT_CONFIGURED') {
+        store.setState({
+          caldavSyncStatus: CalDAVStatus.BadCredentialsError,
+          caldavLog: log || null,
+          caldavLogVisibility: !!log
+        });
+      } else if (responseMessage === 'CALDAV_FAILED_REQUEST_CALENDARS') {
+        store.setState({
+          caldavSyncStatus: CalDAVStatus.RequestCalendarsError,
+          caldavLog: log || null,
+          caldavLogVisibility: !!log
+        });
+      } else if (responseMessage === 'CALDAV_FAILED_REQUEST_CHANGES') {
+        store.setState({
+          caldavSyncStatus: CalDAVStatus.RequestChangesError,
+          caldavLog: log || null,
+          caldavLogVisibility: !!log
+        });
+      } else if (responseMessage === 'CALDAV_FAILED_REQUEST_EVENTS') {
+        store.setState({
+          caldavSyncStatus: CalDAVStatus.RequestEventsError,
+          caldavLog: log || null,
+          caldavLogVisibility: !!log
+        });
+      } else {
+        store.setState({
+          caldavSyncStatus: CalDAVStatus.Error,
+          caldavLog: log || null,
+          caldavLogVisibility: !!log
+        });
+      }
+    }
+  },
+  toggleCaldavLog(state) {
+    store.setState({
+      caldavLogVisibility: !state.caldavLogVisibility
+    });
+  }
+});
+
+export default actions;

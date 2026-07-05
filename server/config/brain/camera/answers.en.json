@@ -1,0 +1,15 @@
+[
+  {
+    "label": "camera.get-image.success",
+    "answers": ["Here is what I see:"]
+  },
+
+  {
+    "label": "camera.get-image.no-image-found",
+    "answers": ["Sorry, I can't get a recent image."]
+  },
+  {
+    "label": "camera.get-image.fail",
+    "answers": ["Sorry, something wrong happened while getting the camera"]
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "name": "gladys-telegram",
+  "main": "index.js",
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm",
+    "arm64"
+  ],
+  "scripts": {},
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0",
+    "uuid": "^9.0.0"
+  }
+}

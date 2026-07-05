@@ -1,0 +1,80 @@
+@media (max-width: 992px) {
+  .pageHeaderResponsive {
+    margin-top: 0rem;
+  }
+}
+
+.disabledSceneRow {
+  color: #868e96 !important;
+}
+
+.scene_icon {
+  font-size: 4rem !important;
+  margin: 0;
+  color: #9aa0ac !important;
+}
+
+.sceneListContainer {
+  min-height: 200px;
+}
+
+.emptyStateDivBox {
+  width: 60%;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 80px;
+  text-align: center;
+}
+
+.emptyStateImage {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  max-width: 300px;
+}
+
+.emptyStateText {
+  margin-top: 20px;
+}
+
+.disableSceneButton {
+  position: absolute;
+  top: 5%;
+  right: 3%;
+}
+
+.descriptionScene {
+  color: #9aa0ac;
+}
+
+.descriptionSceneEllipsis {
+  flex-grow: 2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.newButton {
+  min-width: min-content;
+}
+
+.menuScroll {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  max-height: 200px;
+}
+
+.iconUnselectAll {
+  position: absolute;
+  margin-top: 4px;
+  margin-left: 1px;
+}
+
+.tagsSceneCount {
+  position: absolute;
+  right: -10px;
+  top: 4px;
+}

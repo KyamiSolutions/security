@@ -1,0 +1,310 @@
+[
+  {
+    "external_id": "zigbee2mqtt:0x00158d00033e88d5",
+    "features": [
+      {
+        "category": "battery",
+        "external_id": "zigbee2mqtt:0x00158d00033e88d5:battery:integer:battery",
+        "has_feedback": false,
+        "max": 100,
+        "min": 0,
+        "name": "Battery",
+        "read_only": true,
+        "selector": "zigbee2mqtt-0x00158d00033e88d5-battery-integer-battery",
+        "type": "integer",
+        "unit": "percent"
+      },
+      {
+        "category": "button",
+        "external_id": "zigbee2mqtt:0x00158d00033e88d5:button:click:action",
+        "has_feedback": false,
+        "max": 7,
+        "min": 0,
+        "name": "Action",
+        "read_only": true,
+        "selector": "zigbee2mqtt-0x00158d00033e88d5-button-click-action",
+        "type": "click",
+        "unit": null
+      },
+      {
+        "category": "switch",
+        "external_id": "zigbee2mqtt:0x00158d00033e88d5:switch:voltage:voltage",
+        "has_feedback": false,
+        "max": 10000,
+        "min": 0,
+        "name": "Voltage",
+        "read_only": true,
+        "selector": "zigbee2mqtt-0x00158d00033e88d5-switch-voltage-voltage",
+        "type": "voltage",
+        "unit": "millivolt"
+      },
+      {
+        "category": "signal",
+        "external_id": "zigbee2mqtt:0x00158d00033e88d5:signal:integer:linkquality",
+        "has_feedback": false,
+        "max": 5,
+        "min": 0,
+        "name": "Linkquality",
+        "read_only": true,
+        "selector": "zigbee2mqtt-0x00158d00033e88d5-signal-integer-linkquality",
+        "type": "integer",
+        "unit": null
+      }
+    ],
+    "id": "gladys-id",
+    "model": "WXKG01LM",
+    "ieee_address": "0x00158d00033e88d5",
+    "name": "device-name",
+    "room_id": "room_id",
+    "service_id": "f87b7af2-ca8e-44fc-b754-444354b42fee",
+    "should_poll": false,
+    "updatable": true
+  },
+  {
+    "name": "0x00158d00033e88d1",
+    "model": "TS0043",
+    "ieee_address": "0x00158d00033e88d1",
+    "external_id": "zigbee2mqtt:0x00158d00033e88d1",
+    "id": "gladys-id-2",
+    "room_id": "room_id",
+    "updatable": false,
+    "features": [
+      {
+        "name": "Battery",
+        "read_only": true,
+        "has_feedback": false,
+        "min": 0,
+        "max": 100,
+        "category": "battery",
+        "type": "integer",
+        "unit": "percent",
+        "external_id": "zigbee2mqtt:0x00158d00033e88d1:battery:integer:battery",
+        "selector": "zigbee2mqtt-0x00158d00033e88d1-battery-integer-battery"
+      },
+      {
+        "name": "Action 1",
+        "read_only": true,
+        "has_feedback": false,
+        "min": 0,
+        "max": 9,
+        "category": "button",
+        "type": "click",
+        "unit": null,
+        "external_id": "zigbee2mqtt:0x00158d00033e88d1:button:click:action:1",
+        "selector": "zigbee2mqtt-0x00158d00033e88d1-button-click-action-1"
+      },
+      {
+        "name": "Action 2",
+        "read_only": true,
+        "has_feedback": false,
+        "min": 0,
+        "max": 9,
+        "category": "button",
+        "type": "click",
+        "unit": null,
+        "external_id": "zigbee2mqtt:0x00158d00033e88d1:button:click:action:2",
+        "selector": "zigbee2mqtt-0x00158d00033e88d1-button-click-action-2"
+      },
+      {
+        "name": "Action 3",
+        "read_only": true,
+        "has_feedback": false,
+        "min": 0,
+        "max": 9,
+        "category": "button",
+        "type": "click",
+        "unit": null,
+        "external_id": "zigbee2mqtt:0x00158d00033e88d1:button:click:action:3",
+        "selector": "zigbee2mqtt-0x00158d00033e88d1-button-click-action-3"
+      },
+      {
+        "category": "signal",
+        "external_id": "zigbee2mqtt:0x00158d00033e88d1:signal:integer:linkquality",
+        "has_feedback": false,
+        "max": 5,
+        "min": 0,
+        "name": "Linkquality",
+        "read_only": true,
+        "selector": "zigbee2mqtt-0x00158d00033e88d1-signal-integer-linkquality",
+        "type": "integer",
+        "unit": null
+      }
+    ],
+    "should_poll": false,
+    "service_id": "f87b7af2-ca8e-44fc-b754-444354b42fee"
+  },
+  {
+    "name": "0x00158d0004019127",
+    "model": "WXKG11LM",
+    "ieee_address": "0x00158d0004019127",
+    "external_id": "zigbee2mqtt:0x00158d0004019127",
+    "features": [
+      {
+        "name": "Battery",
+        "read_only": true,
+        "has_feedback": false,
+        "min": 0,
+        "max": 100,
+        "category": "battery",
+        "type": "integer",
+        "unit": "percent",
+        "external_id": "zigbee2mqtt:0x00158d0004019127:battery:integer:battery",
+        "selector": "zigbee2mqtt-0x00158d0004019127-battery-integer-battery"
+      },
+      {
+        "name": "Voltage",
+        "read_only": true,
+        "has_feedback": false,
+        "min": 0,
+        "max": 10000,
+        "category": "switch",
+        "type": "voltage",
+        "unit": "millivolt",
+        "external_id": "zigbee2mqtt:0x00158d0004019127:switch:voltage:voltage",
+        "selector": "zigbee2mqtt-0x00158d0004019127-switch-voltage-voltage"
+      },
+      {
+        "category": "signal",
+        "external_id": "zigbee2mqtt:0x00158d0004019127:signal:integer:linkquality",
+        "has_feedback": false,
+        "max": 5,
+        "min": 0,
+        "name": "Linkquality",
+        "read_only": true,
+        "selector": "zigbee2mqtt-0x00158d0004019127-signal-integer-linkquality",
+        "type": "integer",
+        "unit": null
+      }
+    ],
+    "should_poll": false,
+    "service_id": "f87b7af2-ca8e-44fc-b754-444354b42fee"
+  },
+  {
+    "name": "0x00158d00045b2740",
+    "model": "WSDCGQ11LM",
+    "ieee_address": "0x00158d00045b2740",
+    "external_id": "zigbee2mqtt:0x00158d00045b2740",
+    "features": [
+      {
+        "name": "Battery",
+        "read_only": true,
+        "has_feedback": false,
+        "min": 0,
+        "max": 100,
+        "category": "battery",
+        "type": "integer",
+        "unit": "percent",
+        "external_id": "zigbee2mqtt:0x00158d00045b2740:battery:integer:battery",
+        "selector": "zigbee2mqtt-0x00158d00045b2740-battery-integer-battery"
+      },
+      {
+        "name": "Temperature",
+        "read_only": true,
+        "has_feedback": false,
+        "min": -100,
+        "max": 150,
+        "category": "temperature-sensor",
+        "type": "decimal",
+        "unit": "celsius",
+        "external_id": "zigbee2mqtt:0x00158d00045b2740:temperature-sensor:decimal:temperature",
+        "selector": "zigbee2mqtt-0x00158d00045b2740-temperature-sensor-decimal-temperature"
+      },
+      {
+        "name": "Humidity",
+        "read_only": true,
+        "has_feedback": false,
+        "min": 0,
+        "max": 100,
+        "category": "humidity-sensor",
+        "type": "decimal",
+        "unit": "percent",
+        "external_id": "zigbee2mqtt:0x00158d00045b2740:humidity-sensor:decimal:humidity",
+        "selector": "zigbee2mqtt-0x00158d00045b2740-humidity-sensor-decimal-humidity"
+      },
+      {
+        "name": "Alarm",
+        "read_only": false,
+        "has_feedback": true,
+        "min": 0,
+        "max": 1,
+        "category": "siren",
+        "type": "binary",
+        "unit": null,
+        "external_id": "zigbee2mqtt:0x00158d00045b2740:siren:binary:alarm",
+        "selector": "zigbee2mqtt-0x00158d00045b2740-siren-binary-alarm"
+      },
+      {
+        "name": "Pressure",
+        "read_only": true,
+        "has_feedback": false,
+        "min": 0,
+        "max": 10000,
+        "category": "pressure-sensor",
+        "type": "decimal",
+        "unit": "hPa",
+        "external_id": "zigbee2mqtt:0x00158d00045b2740:pressure-sensor:decimal:pressure",
+        "selector": "zigbee2mqtt-0x00158d00045b2740-pressure-sensor-decimal-pressure"
+      },
+      {
+        "name": "Voltage",
+        "read_only": true,
+        "has_feedback": false,
+        "min": 0,
+        "max": 10000,
+        "category": "switch",
+        "type": "voltage",
+        "unit": "millivolt",
+        "external_id": "zigbee2mqtt:0x00158d00045b2740:switch:voltage:voltage",
+        "selector": "zigbee2mqtt-0x00158d00045b2740-switch-voltage-voltage"
+      },
+      {
+        "category": "signal",
+        "external_id": "zigbee2mqtt:0x00158d00045b2740:signal:integer:linkquality",
+        "has_feedback": false,
+        "max": 5,
+        "min": 0,
+        "name": "Linkquality",
+        "read_only": true,
+        "selector": "zigbee2mqtt-0x00158d00045b2740-signal-integer-linkquality",
+        "type": "integer",
+        "unit": null
+      }
+    ],
+    "should_poll": false,
+    "service_id": "f87b7af2-ca8e-44fc-b754-444354b42fee"
+  },
+  {
+    "name": "bosch-outdoor-siren",
+    "model": "BSIR-EZ",
+    "ieee_address": "0x00124b0023a1b2c3",
+    "external_id": "zigbee2mqtt:bosch-outdoor-siren",
+    "features": [
+      {
+        "read_only": false,
+        "has_feedback": false,
+        "min": 0,
+        "max": 1,
+        "category": "button",
+        "type": "push",
+        "unit": null,
+        "name": "Trigger alarm",
+        "external_id": "zigbee2mqtt:bosch-outdoor-siren:button:push:trigger_alarm",
+        "selector": "zigbee2mqtt-bosch-outdoor-siren-button-push-trigger-alarm"
+      },
+      {
+        "read_only": false,
+        "has_feedback": false,
+        "min": 0,
+        "max": 1,
+        "category": "button",
+        "type": "push",
+        "unit": null,
+        "name": "Stop alarm",
+        "external_id": "zigbee2mqtt:bosch-outdoor-siren:button:push:stop_alarm",
+        "selector": "zigbee2mqtt-bosch-outdoor-siren-button-push-stop-alarm"
+      }
+    ],
+    "should_poll": false,
+    "service_id": "f87b7af2-ca8e-44fc-b754-444354b42fee"
+  }
+]

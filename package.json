@@ -1,0 +1,53 @@
+{
+  "name": "gladys",
+  "version": "4.81.0",
+  "description": "A privacy-first, open-source home assistant",
+  "main": "index.js",
+  "engines": {
+    "node": "22.x",
+    "npm": "10.x"
+  },
+  "scripts": {
+    "postinstall": "npm run install-front:dev",
+    "start": "run-p start-server:dev start-front:dev",
+    "test": "run-p test-server test-front",
+    "install-server:dev": "cd server && npm install",
+    "start-server:dev": "cd server && npm start",
+    "test-server": "cd server && npm test",
+    "install-front:dev": "cd front && npm install",
+    "start-front:dev": "cd front && npm start",
+    "test-front": "cd front && npm test",
+    "db-migrate:dev": "cd server && npm run db-migrate:dev",
+    "build:clean": "shx --silent rm -rf server/static",
+    "build-front": "cd front && npm run build",
+    "copy-front": "shx cp -R front/build server/static",
+    "build": "npm run build:clean && npm run build-front && npm run copy-front",
+    "generate-changelog": "auto-changelog",
+    "generate-apidoc": "apidoc -i server/api/ -o apidoc",
+    "clean-node-modules": "npx rimraf ./**/node_modules",
+    "cypress:open": "cd front && npm run cypress:open",
+    "cypress:run": "cd front && npm run cypress:run",
+    "start:cypress": "run-p start-server:cypress start-front:cypress",
+    "start-server:cypress": "cd server && npm run cypress",
+    "start-front:cypress": "cd front && npm run start:cypress",
+    "cypress": "run-p start:cypress cypress:open"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GladysAssistant/Gladys"
+  },
+  "author": "Pierre-Gilles Leymarie",
+  "license": "Apache-2.0",
+  "apidoc": {
+    "name": "Gladys Assistant REST API documentation",
+    "description": "A documentation of all routes of Gladys API.",
+    "url": "http://YOUR_LOCAL_GLADYS_URL"
+  },
+  "devDependencies": {
+    "apidoc": "^1.0.3",
+    "all-contributors-cli": "^6.15.0",
+    "npm-run-all": "^4.1.5",
+    "shx": "^0.3.2"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,10 @@
+.conditionTagify {
+  min-height: 2.375rem;
+  display: flex;
+  align-items: center;
+}
+
+.explanationText {
+  font-size: 12px;
+  margin-bottom: .375rem;
+}
