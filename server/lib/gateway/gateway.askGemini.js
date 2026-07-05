@@ -92,6 +92,85 @@ function messagesToGeminiPayload(messages) {
   };
 }
 
+const MAX_REF_DEPTH = 20;
+
+/**
+ * @description Recursively inline `$ref` pointers (to `$defs`/`definitions`) in a JSON schema,
+ * since Gemini's function schema doesn't support `$ref`.
+ * @param {*} schema - JSON schema node (object, array, or scalar).
+ * @param {object} defs - Map of definition name to schema, gathered from `$defs`/`definitions`.
+ * @param {number} [depth] - Recursion guard against malformed/circular refs.
+ * @returns {*} Schema node with `$ref` pointers resolved inline.
+ * @example
+ * resolveRefs({ $ref: '#/$defs/Foo' }, { Foo: { type: 'string' } });
+ */
+function resolveRefs(schema, defs, depth = 0) {
+  if (depth > MAX_REF_DEPTH || !schema || typeof schema !== 'object') {
+    return schema;
+  }
+  if (Array.isArray(schema)) {
+    return schema.map((item) => resolveRefs(item, defs, depth + 1));
+  }
+  if (typeof schema.$ref === 'string') {
+    const refName = schema.$ref.replace(/^#\/(\$defs|definitions)\//, '');
+    const resolved = defs[refName];
+    return resolved ? resolveRefs(resolved, defs, depth + 1) : {};
+  }
+  const result = {};
+  Object.keys(schema).forEach((key) => {
+    if (key === '$defs' || key === 'definitions') {
+      return;
+    }
+    result[key] = resolveRefs(schema[key], defs, depth + 1);
+  });
+  return result;
+}
+
+/**
+ * @description Strip/convert JSON schema keywords Gemini's function schema doesn't support:
+ * drops `additionalProperties`/`$schema`, and converts `const` to a single-value `enum`.
+ * @param {*} schema - JSON schema node (object, array, or scalar), with `$ref` already resolved.
+ * @returns {*} Gemini-compatible schema node.
+ * @example
+ * sanitizeForGemini({ type: 'string', const: 'on', additionalProperties: false });
+ */
+function sanitizeForGemini(schema) {
+  if (Array.isArray(schema)) {
+    return schema.map(sanitizeForGemini);
+  }
+  if (!schema || typeof schema !== 'object') {
+    return schema;
+  }
+  const result = {};
+  Object.keys(schema).forEach((key) => {
+    if (key === 'additionalProperties' || key === '$schema') {
+      return;
+    }
+    if (key === 'const') {
+      result.enum = [schema[key]];
+      return;
+    }
+    result[key] = sanitizeForGemini(schema[key]);
+  });
+  return result;
+}
+
+/**
+ * @description Make an MCP/OpenAI JSON schema safe for Gemini's function-calling API: inline
+ * `$ref`/`$defs` and drop/convert unsupported keywords.
+ * @param {object} parameters - Original JSON schema for a tool's parameters.
+ * @returns {object} Gemini-compatible schema.
+ * @example
+ * cleanParametersForGemini({ type: 'object', properties: {} });
+ */
+function cleanParametersForGemini(parameters) {
+  if (!parameters) {
+    return parameters;
+  }
+  const defs = parameters.$defs || parameters.definitions || {};
+  return sanitizeForGemini(resolveRefs(parameters, defs));
+}
+
 /**
  * @description Convert OpenAI-style `tools` (function definitions) into Gemini's
  * `functionDeclarations` shape.
@@ -109,7 +188,7 @@ function toolsToGeminiTools(tools) {
       functionDeclarations: tools.map((tool) => ({
         name: tool.function.name,
         description: tool.function.description,
-        parameters: tool.function.parameters,
+        parameters: cleanParametersForGemini(tool.function.parameters),
       })),
     },
   ];
