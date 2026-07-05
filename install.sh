@@ -61,10 +61,14 @@ ok "Docker image ehitatud: kyami-security:latest"
 
 # ── docker-compose.yml kohandamine ────────────────────────────────────────────
 COMPOSE_FILE="$CURRENT_DIR/docker/docker-compose.local.yml"
-info "Loon kohandatud docker-compose faili (kasutab kohalikku image'it)..."
-sed 's|image: gladysassistant/gladys:v4|image: kyami-security:latest|; s|container_name: gladys|container_name: kyami-security|' \
-  docker/docker-compose.yml > "$COMPOSE_FILE"
-ok "Loodud: $COMPOSE_FILE"
+if [ ! -f "$COMPOSE_FILE" ]; then
+  info "Loon kohandatud docker-compose faili (kasutab kohalikku image'it)..."
+  sed 's|image: gladysassistant/gladys:v4|image: kyami-security:latest|; s|container_name: gladys|container_name: kyami-security|' \
+    docker/docker-compose.yml > "$COMPOSE_FILE"
+  ok "Loodud: $COMPOSE_FILE"
+else
+  ok "$COMPOSE_FILE on juba olemas, ei kirjuta üle (su muudatused SERVER_PORT/DISCORD_WEBHOOK_URL jm kohta jäävad alles)"
+fi
 
 # ── Käivitamine ────────────────────────────────────────────────────────────────
 info "Käivitan konteinerid..."
