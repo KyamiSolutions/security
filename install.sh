@@ -8,85 +8,78 @@ info() { echo -e "${Y}→ $*${N}"; }
 err()  { echo -e "${R}✗ $*${N}"; exit 1; }
 
 echo ""
-echo "  Kaamera kaughaldus — paigaldaja"
-echo "────────────────────────────────────"
+echo "  KyamiSecurity (Gladys Assistant fork) — paigaldaja"
+echo "────────────────────────────────────────────────────"
 
-# ── Python ──────────────────────────────────────────────────────────────────
-info "Kontrollin Python 3.10+..."
-python3 -c "import sys; assert sys.version_info >= (3,10)" 2>/dev/null \
-  || err "Vaja Python 3.10 või uuemat. Käivita: sudo apt install python3"
-ok "Python OK"
-
-# ── Sõltuvused ───────────────────────────────────────────────────────────────
-INSTALL_DIR="$HOME/kaamera"
 CURRENT_DIR="$(cd "$(dirname "$0")" && pwd)"
-if [ "$CURRENT_DIR" != "$INSTALL_DIR" ]; then
-  info "Kopeerin kausta: $INSTALL_DIR"
-  mkdir -p "$INSTALL_DIR"
-  cp -r . "$INSTALL_DIR/"
+cd "$CURRENT_DIR"
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+if ! command -v docker &>/dev/null; then
+  info "Docker ei ole paigaldatud, paigaldan..."
+  curl -fsSL https://get.docker.com | sh
+  ok "Docker paigaldatud"
+else
+  ok "Docker on juba paigaldatud"
 fi
-cd "$INSTALL_DIR"
-info "Töökausta: $INSTALL_DIR"
 
-info "Paigaldan Python-paketid..."
-python3 -m venv .venv
-.venv/bin/pip install -q --upgrade pip
-.venv/bin/pip install -q -r requirements.txt
-ok "Paketid paigaldatud"
+if ! docker compose version &>/dev/null; then
+  err "Docker Compose plugin puudub. Paigalda: sudo apt install docker-compose-plugin"
+fi
+ok "Docker Compose OK"
 
-# ── API võti ─────────────────────────────────────────────────────────────────
-if [ ! -f .env ]; then
+# ── Node (front build jaoks) ──────────────────────────────────────────────────
+info "Kontrollin Node.js 22.x..."
+if ! command -v node &>/dev/null || ! node -e "process.exit(process.versions.node.split('.')[0] >= 22 ? 0 : 1)"; then
+  err "Vaja Node.js 22.x front'i ehitamiseks. Paigalda: https://nodejs.org/ või nvm"
+fi
+ok "Node.js OK"
+
+# ── Front build ───────────────────────────────────────────────────────────────
+info "Paigaldan front'i sõltuvused ja ehitan kasutajaliidese..."
+(cd front && npm ci && npm run build)
+rm -rf static
+cp -r front/build static
+ok "Front ehitatud (static/)"
+
+# ── .env ──────────────────────────────────────────────────────────────────────
+ENV_FILE="$CURRENT_DIR/docker/.env"
+if [ ! -f "$ENV_FILE" ]; then
   info "Loon .env faili..."
-  RANDOM_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
-  cat > .env <<EOF
-CAMERA_API_KEY=$RANDOM_KEY
-HOST=0.0.0.0
-PORT=8080
+  cat > "$ENV_FILE" <<EOF
+TZ=Europe/Tallinn
 EOF
-  echo ""
-  echo -e "  ${Y}Sinu API võti on:${N}"
-  echo -e "  ${G}$RANDOM_KEY${N}"
-  echo -e "  ${Y}(salvestatud ka faili: $INSTALL_DIR/.env)${N}"
-  echo ""
+  ok ".env loodud ($ENV_FILE)"
 else
   ok ".env on juba olemas"
 fi
 
-# ── systemd teenus ───────────────────────────────────────────────────────────
-info "Seadistan automaatse käivituse (systemd)..."
-SERVICE_FILE="$HOME/.config/systemd/user/kaamera.service"
-mkdir -p "$(dirname "$SERVICE_FILE")"
+# ── Docker image ehitus ───────────────────────────────────────────────────────
+info "Ehitan Docker image'i (see võib mõne minuti aega võtta)..."
+docker build -f docker/Dockerfile.buildx -t kyami-security:latest .
+ok "Docker image ehitatud: kyami-security:latest"
 
-cat > "$SERVICE_FILE" <<EOF
-[Unit]
-Description=Kaamera kaughaldus
-After=network.target
+# ── docker-compose.yml kohandamine ────────────────────────────────────────────
+COMPOSE_FILE="$CURRENT_DIR/docker/docker-compose.local.yml"
+info "Loon kohandatud docker-compose faili (kasutab kohalikku image'it)..."
+sed 's|image: gladysassistant/gladys:v4|image: kyami-security:latest|; s|container_name: gladys|container_name: kyami-security|' \
+  docker/docker-compose.yml > "$COMPOSE_FILE"
+ok "Loodud: $COMPOSE_FILE"
 
-[Service]
-WorkingDirectory=$INSTALL_DIR
-ExecStart=$INSTALL_DIR/.venv/bin/python main.py
-EnvironmentFile=$INSTALL_DIR/.env
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=default.target
-EOF
-
-systemctl --user daemon-reload
-systemctl --user enable kaamera
-systemctl --user start kaamera
+# ── Käivitamine ────────────────────────────────────────────────────────────────
+info "Käivitan konteinerid..."
+docker compose -f "$COMPOSE_FILE" up -d
 ok "Teenus käivitatud"
 
 # ── Tailscale (kaugpääs) ─────────────────────────────────────────────────────
 echo ""
-echo -e "  ${Y}Kas soovid kaugpääsu (vaata kaamerat ka kodust väljaspool)?${N}"
+echo -e "  ${Y}Kas soovid kaugpääsu (vaata süsteemi ka kodust väljaspool)?${N}"
 read -r -p "  Paigalda Tailscale? [j/e]: " TAIL
 if [[ "$TAIL" =~ ^[jJ]$ ]]; then
   if command -v tailscale &>/dev/null; then
     ok "Tailscale on juba paigaldatud"
   else
-    info "Paigaldan Tailscale..."
+    info "Paigaldan Tailscale'i..."
     curl -fsSL https://tailscale.com/install.sh | sh
     ok "Tailscale paigaldatud"
   fi
@@ -100,24 +93,25 @@ else
   TAIL_IP=""
 fi
 
-# ── Kohalik IP ───────────────────────────────────────────────────────────────
+# ── Kokkuvõte ──────────────────────────────────────────────────────────────────
 LOCAL_IP=$(hostname -I | awk '{print $1}')
-PORT=$(grep PORT "$INSTALL_DIR/.env" | cut -d= -f2 || echo 8080)
 
 echo ""
-echo "────────────────────────────────────"
+echo "────────────────────────────────────────────────────"
 ok "Paigaldus valmis!"
 echo ""
-echo -e "  Koduvõrgus:   ${G}http://${LOCAL_IP}:${PORT}${N}"
+echo -e "  Koduvõrgus:   ${G}http://${LOCAL_IP}${N}"
 if [ -n "$TAIL_IP" ]; then
-echo -e "  Kõikjalt:     ${G}http://${TAIL_IP}:${PORT}${N}"
+echo -e "  Kõikjalt:     ${G}http://${TAIL_IP}${N}"
 echo -e "  ${Y}(Tailscale peab olema paigaldatud ka vaataja seadmes: tailscale.com/download)${N}"
 fi
 echo ""
-echo -e "  API võti: ${G}$(grep CAMERA_API_KEY "$INSTALL_DIR/.env" | cut -d= -f2)${N}"
-echo ""
 echo -e "  Teenuse haldus:"
-echo -e "    Peata:   ${Y}systemctl --user stop kaamera${N}"
-echo -e "    Käivita: ${Y}systemctl --user start kaamera${N}"
-echo -e "    Logid:   ${Y}journalctl --user -u kaamera -f${N}"
+echo -e "    Peata:   ${Y}docker compose -f docker/docker-compose.local.yml down${N}"
+echo -e "    Käivita: ${Y}docker compose -f docker/docker-compose.local.yml up -d${N}"
+echo -e "    Logid:   ${Y}docker compose -f docker/docker-compose.local.yml logs -f${N}"
+echo ""
+echo -e "  Kaamera/liikumistuvastuse API asub teenuse all: ${Y}/api/v1/service/kyami-motion/*${N}"
+echo -e "  (esmalt logi Gladys'i veebiliideses admin-kasutajaga sisse, seejärel proovi:"
+echo -e "   GET /api/v1/service/kyami-motion/probe?ip=<kaamera-ip>&user=admin&password=...)"
 echo ""

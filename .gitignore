@@ -1,7 +1,28 @@
+node_modules
+*.db
+*.duckdb
+*.duckdb.wal
+*.db-shm
+*.db-wal
+*.dbfile-shm
+*.dbfile-wal
+apidoc
+jsdoc
+*.lcov
+.nyc_output
 .env
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-venv/
-*.egg-info/
+build
+static
+gladys-backups
+qemu-*
+coverage
+persist
+stats.json
+size-plugin.json
+# VSCode
+.vscode
+# Webstorm
+.idea
+.tmp
+.DS_Store
+matter-controller-data

@@ -1,0 +1,32 @@
+const db = require('../../../models');
+const { DEVICE_FEATURE_CATEGORIES } = require('../../../utils/constants');
+const { getFeaturesInclude } = require('../../../utils/deviceQueryIncludes');
+
+/**
+ * @description Get list of cameras.
+ * @returns {Promise} Resolve with array of cameras.
+ * @example
+ * camera.get();
+ */
+async function get() {
+  const cameras = await db.Device.findAll({
+    include: [
+      getFeaturesInclude({
+        attributes: ['name', 'selector'],
+        where: {
+          category: DEVICE_FEATURE_CATEGORIES.CAMERA,
+        },
+      }),
+      {
+        model: db.Room,
+        as: 'room',
+        attributes: ['name', 'selector'],
+      },
+    ],
+  });
+  return cameras.map((camera) => camera.get({ plain: true }));
+}
+
+module.exports = {
+  get,
+};

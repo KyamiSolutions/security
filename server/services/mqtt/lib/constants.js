@@ -1,0 +1,25 @@
+const CONFIGURATION = {
+  MQTT_URL_KEY: 'MQTT_URL',
+  MQTT_USERNAME_KEY: 'MQTT_USERNAME',
+  MQTT_PASSWORD_KEY: 'MQTT_PASSWORD',
+  MQTT_EMBEDDED_BROKER_KEY: 'MQTT_EMBEDDED_BROKER',
+  MQTT_MOSQUITTO_VERSION: 'MQTT_MOSQUITTO',
+};
+
+const DEFAULT = {
+  TOPICS: [
+    'gladys/master/#', // Default gladys topic
+  ],
+  INSTALLATION_STATUS: {
+    DONE: 'DONE',
+    IN_PROGRESS: 'IN_PROGRESS',
+    ERROR: 'ERROR',
+  },
+  MOSQUITTO_VERSION: '4',
+  PASSWORD_FILE_PATH: '/mosquitto/config/mosquitto.passwd',
+};
+
+module.exports = {
+  CONFIGURATION,
+  DEFAULT,
+};

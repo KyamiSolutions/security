@@ -1,0 +1,186 @@
+name: Release Gladys Production Images
+run-name: Release Gladys ${{ github.ref_name }} Production Image
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  test-front:
+    name: Front test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: ⬇️ Checkout Gladys code
+        uses: actions/checkout@v3
+      - name: 💽 Setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: 'front/package.json'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+      - name: 📦 Install Global NPM Packages
+        run: |
+          sudo npm install typescript node-gyp -g
+      - name: 📦 Install NPM front packages
+        working-directory: ./front
+        run: |
+          npm ci
+      - name: 🧐 Prettier check
+        working-directory: ./front
+        run: |
+          npm run prettier-check
+      - name: 👕 ESlint
+        working-directory: ./front
+        run: |
+          npm run eslint
+      - name: 🌐 Integration comparison
+        working-directory: ./front
+        run: |
+          npm run compare-translations
+  test-server:
+    name: Server test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: ⬇️ Checkout Gladys code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: 💽 Setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: 'server/package.json'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+      - name: 💽 Install System Dependencies
+        run: |
+          sudo apt update
+          sudo apt-get install -y libudev-dev sqlite3 openssl python-is-python3
+      - name: 📦 Install Global NPM Packages
+        run: |
+          sudo npm install typescript node-gyp -g
+      - name: 📦 Install NPM server packages
+        working-directory: ./server
+        run: |
+          npm ci
+      - name: 🧐 Prettier check
+        working-directory: ./server
+        run: |
+          npm run prettier-check
+      - name: 👕 ESlint
+        working-directory: ./server
+        run: |
+          npm run eslint
+      - name: ✅ Test with coverage
+        working-directory: ./server
+        run: |
+          npm run coverage
+      - name: 🔐 Dependencies security audit
+        working-directory: ./server
+        run: npm audit --production --audit-level=critical || true
+      - name: 📄 Codecov report upload
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true
+          token: 08cd0d46-0291-42ed-b352-50924cb6cca6
+
+          ## Yes, we are storing the CODECOV token in plain text here and not as a secret.
+          ## This is because Codecov report upload keeps failing because of a Github Action rate limit
+          ## And as we are an open source project, we need forks to be able to upload reports as well, so
+          ## we followed the recommandatiom from CodeCov:
+          ## https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
+          ## It's not that dangerous to do it, and it's the best tradeoff we could find
+  build-front:
+    name: Front build
+    needs:
+      - test-front
+      - test-server
+    runs-on: ubuntu-22.04
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v3
+      - name: 💽 Setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: 'front/package.json'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+      - name: 📦 Install NPM front packages
+        working-directory: ./front
+        run: |
+          npm ci
+      - name: 🏗️ Build front
+        working-directory: ./front
+        run: |
+          npm run build
+      - name: ↗️ Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: static
+          path: front/build
+  docker:
+    needs: build-front
+    name: Docker magic !
+    runs-on: ubuntu-22.04
+    env:
+      DOCKERHUB_USER: ${{secrets.DOCKERHUB_USER}}
+      DOCKERHUB_PASSWORD: ${{secrets.DOCKERHUB_PASSWORD}}
+      DOCKERHUB_REPO: ${{secrets.DOCKERHUB_REPO}}
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v3
+      - name: 🐳 Docker meta
+        id: docker_meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.DOCKERHUB_REPO }},ghcr.io/${{ secrets.DOCKERHUB_REPO }}
+          labels: |
+            org.opencontainers.image.title=Gladys Assistant Production Image
+          tags: |
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}
+            type=sha
+      - name: 💽 Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: 🐳 Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: v0.9.1
+      - name: ↙️ Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: static
+          path: static
+      - name: 🔑 Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: 🔑 Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 🐳 Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./docker/Dockerfile.buildx
+          platforms: linux/amd64,linux/arm64/v8
+          push: true
+          pull: true
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_REPO }}:latest
+          cache-to: type=inline
+      - name: 🐳 Legacy Tags
+        run: |
+          export DIGESTARM64=$(docker manifest inspect ${{ env.DOCKERHUB_REPO }}:latest | jq -r '.manifests | to_entries[] | select(.value.platform.architecture == "arm64").value | .digest')
+          docker pull ${{ env.DOCKERHUB_REPO }}@$DIGESTARM64
+          docker tag ${{ env.DOCKERHUB_REPO }}@$DIGESTARM64 ${{ env.DOCKERHUB_REPO }}:v4-arm64v8
+          docker push ${{ env.DOCKERHUB_REPO }}:v4-arm64v8
+          export DIGESTAMD64=$(docker manifest inspect ${{ env.DOCKERHUB_REPO }}:latest | jq -r '.manifests | to_entries[] | select(.value.platform.architecture == "amd64").value | .digest')
+          docker pull ${{ env.DOCKERHUB_REPO }}@$DIGESTAMD64
+          docker tag ${{ env.DOCKERHUB_REPO }}@$DIGESTAMD64 ${{ env.DOCKERHUB_REPO }}:v4-amd64
+          docker push ${{ env.DOCKERHUB_REPO }}:v4-amd64
