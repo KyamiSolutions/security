@@ -653,6 +653,10 @@
         "createGithubIssue": "Suggest this device"
       }
     },
+    "kyamiMotion": {
+      "title": "Kyami Motion",
+      "description": "Auto-discover RTSP cameras, detect motion locally and record clips."
+    },
     "rtspCamera": {
       "title": "Cameras",
       "description": "Display your cameras video flux in Gladys.",

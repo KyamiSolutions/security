@@ -6,6 +6,12 @@
     "local": true
   },
   {
+    "key": "kyamiMotion",
+    "link": "kyami-motion",
+    "img": "/assets/integrations/cover/rtsp-camera.jpg",
+    "local": true
+  },
+  {
     "key": "xiaomi",
     "img": "/assets/integrations/cover/xiaomi.jpg",
     "local": true

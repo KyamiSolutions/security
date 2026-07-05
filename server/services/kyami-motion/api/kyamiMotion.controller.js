@@ -80,8 +80,7 @@ module.exports = function KyamiMotionController(gladys, kyamiMotionHandler) {
   async function snapshot(req, res) {
     const source = parseSource(req.query.source);
     const frame = await kyamiMotionHandler.getSnapshot(source);
-    res.set('Content-Type', 'image/jpeg');
-    res.send(frame);
+    res.json({ image: `image/jpeg;base64,${frame.toString('base64')}` });
   }
 
   /**
