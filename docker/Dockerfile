@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
          gzip \
          udev \
          bluez \
+         v4l-utils \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /tmp
