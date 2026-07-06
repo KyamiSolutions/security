@@ -579,6 +579,25 @@ const actionsFunc = {
       throw new AbortScene(e.message);
     }
   },
+  [ACTIONS.ELERING.CONDITION]: async (self, action) => {
+    try {
+      const eleringService = self.service.getService('elering');
+      const currentPrice = await eleringService.getCurrentPrice();
+      if (!currentPrice) {
+        throw new AbortScene('ELERING_PRICE_NOT_FOUND');
+      }
+      const threshold = Number(action.elering_price_threshold);
+      const conditionValid =
+        action.elering_comparator === 'below'
+          ? currentPrice.price_cents_kwh < threshold
+          : currentPrice.price_cents_kwh > threshold;
+      if (!conditionValid) {
+        throw new AbortScene('ELERING_PRICE_CONDITION_NOT_MET');
+      }
+    } catch (e) {
+      throw new AbortScene(e.message);
+    }
+  },
   [ACTIONS.ALARM.CHECK_ALARM_MODE]: async (self, action) => {
     const house = await self.house.getBySelector(action.house);
     if (house.alarm_mode !== action.alarm_mode) {

@@ -2610,6 +2610,13 @@
         "warning": "Network warning",
         "critical": "Network critical"
       },
+      "eleringCondition": {
+        "description": "This condition lets you check the current Estonian day-ahead (Nord Pool) electricity price.",
+        "comparatorLabel": "Continue scene if the price is",
+        "below": "Below",
+        "above": "Above",
+        "thresholdLabel": "Threshold (cents/kWh)"
+      },
       "edfTempoCondition": {
         "description": "The scene will continue if the following conditions on EDF Tempo are met.",
         "selectDay": "For the day",
@@ -2713,6 +2720,9 @@
       },
       "edf-tempo": {
         "condition": "Condition on EDF-Tempo"
+      },
+      "elering": {
+        "condition": "Condition on Elering electricity price (Estonia)"
       },
       "alarm": {
         "check-alarm-mode": "If the alarm is in mode",

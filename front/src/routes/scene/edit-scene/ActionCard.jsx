@@ -32,6 +32,7 @@ import SendMqttMessage from './actions/SendMqttMessage';
 import SendZigbee2MqttMessage from './actions/SendZigbee2MqttMessage';
 import PlayNotification from './actions/PlayNotification';
 import EdfTempoCondition from './actions/EdfTempoCondition';
+import EleringCondition from './actions/EleringCondition';
 import AskAI from './actions/AskAI';
 import SendSms from './actions/SendSms';
 import ConditionIfElseThen from './actions/ConditionIfElseThen';
@@ -62,6 +63,7 @@ const ACTION_ICON = {
   [ACTIONS.CALENDAR.IS_EVENT_RUNNING]: 'fe fe-calendar',
   [ACTIONS.ECOWATT.CONDITION]: 'fe fe-zap',
   [ACTIONS.EDF_TEMPO.CONDITION]: 'fe fe-zap',
+  [ACTIONS.ELERING.CONDITION]: 'fe fe-zap',
   [ACTIONS.ALARM.CHECK_ALARM_MODE]: 'fe fe-bell',
   [ACTIONS.ALARM.SET_ALARM_MODE]: 'fe fe-bell',
   [ACTIONS.MQTT.SEND]: 'fe fe-message-square',
@@ -97,6 +99,7 @@ const ACTION_COMPONENTS = {
   [ACTIONS.CALENDAR.IS_EVENT_RUNNING]: CalendarIsEventRunning,
   [ACTIONS.ECOWATT.CONDITION]: EcowattCondition,
   [ACTIONS.EDF_TEMPO.CONDITION]: EdfTempoCondition,
+  [ACTIONS.ELERING.CONDITION]: EleringCondition,
   [ACTIONS.ALARM.CHECK_ALARM_MODE]: CheckAlarmMode,
   [ACTIONS.ALARM.SET_ALARM_MODE]: SetAlarmMode,
   [ACTIONS.MQTT.SEND]: SendMqttMessage,

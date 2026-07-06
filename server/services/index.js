@@ -37,3 +37,4 @@ module.exports.airplay = require('./airplay');
 module.exports['free-mobile'] = require('./free-mobile');
 module.exports.mcp = require('./mcp');
 module.exports['kyami-motion'] = require('./kyami-motion');
+module.exports.elering = require('./elering');

@@ -550,6 +550,9 @@ const ACTIONS = {
   EDF_TEMPO: {
     CONDITION: 'edf-tempo.condition',
   },
+  ELERING: {
+    CONDITION: 'elering.condition',
+  },
   MQTT: {
     SEND: 'mqtt.send',
   },
