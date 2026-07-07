@@ -38,8 +38,8 @@ async function discover() {
           const channels = await connection.getDeviceChannelCount(discoveredDevice.deviceid);
           logger.debug(`eWeLink: Get device channel count "${discoveredDevice.deviceid}": ${JSON.stringify(channels)}`);
 
-          logger.debug(
-            `eWeLink: Device "${discoveredDevice.deviceid}" found, uiid: ${discoveredDevice.uiid}, model: "${discoveredDevice.productModel}, switches: ${channels.switchesAmount}`,
+          logger.info(
+            `eWeLink: Device "${discoveredDevice.deviceid}" found, uiid: ${discoveredDevice.uiid}, model: "${discoveredDevice.productModel}", switches: ${channels.switchesAmount}`,
           );
           unknownDevices.push(features.getDevice(this.serviceId, discoveredDevice, channels.switchesAmount));
         }
