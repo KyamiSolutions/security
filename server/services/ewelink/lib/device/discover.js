@@ -39,7 +39,7 @@ async function discover() {
           logger.debug(`eWeLink: Get device channel count "${discoveredDevice.deviceid}": ${JSON.stringify(channels)}`);
 
           logger.info(
-            `eWeLink: Device "${discoveredDevice.deviceid}" found, uiid: ${discoveredDevice.uiid}, model: "${discoveredDevice.productModel}", switches: ${channels.switchesAmount}`,
+            `eWeLink: Device "${discoveredDevice.deviceid}" found, uiid: ${discoveredDevice.uiid}, model: "${discoveredDevice.productModel}", switches: ${channels.switchesAmount}, online: ${discoveredDevice.online}, params: ${JSON.stringify(discoveredDevice.params)}`,
           );
           unknownDevices.push(features.getDevice(this.serviceId, discoveredDevice, channels.switchesAmount));
         }
