@@ -3,8 +3,8 @@ const EweLinkHandler = require('./lib/device');
 const EwelinkController = require('./api/ewelink.controller');
 
 module.exports = function EwelinkService(gladys, serviceId) {
-  // require the eWeLink module
-  const eWeLinkApi = require('ewelink-api');
+  // eWeLink client (replaces the abandoned/blocked ewelink-api npm package)
+  const eWeLinkApi = require('./lib/eWeLinkClient');
   const eWeLinkHandler = new EweLinkHandler(gladys, eWeLinkApi, serviceId);
 
   /**
