@@ -281,14 +281,20 @@ class EWeLinkClient {
    * @param {string} deviceId - eWeLink device id.
    * @param {string} state - 'on' or 'off'.
    * @param {number} [channel] - 1-based channel index for multi-channel devices (0 = single).
+   * @param {number} [uiid] - eWeLink device uiid, used for model-specific quirks.
    * @returns {Promise<object>} `{}` on success, `{ error, msg }` on failure.
    * @example
    * await client.setDevicePowerState('1000abcd', 'on', 0);
    */
-  async setDevicePowerState(deviceId, state, channel = 0) {
+  async setDevicePowerState(deviceId, state, channel = 0, uiid = null) {
     let params;
     if (channel > 0) {
       params = { switches: [{ switch: state, outlet: channel - 1 }] };
+      // POWR3 (uiid 190/276): single switch reported over multi-channel firmware,
+      // the relay side must be selected explicitly or the update is ignored.
+      if ([190, 276].includes(uiid)) {
+        params.operSide = 1;
+      }
     } else {
       params = { switch: state };
     }

@@ -32,7 +32,7 @@ async function setValue(device, deviceFeature, value) {
   let response;
   switch (deviceFeature.type) {
     case DEVICE_FEATURE_TYPES.SWITCH.BINARY:
-      response = await connection.setDevicePowerState(deviceId, writeBinaryValue(value), channel);
+      response = await connection.setDevicePowerState(deviceId, writeBinaryValue(value), channel, eweLinkDevice.uiid);
       await this.throwErrorIfNeeded(response);
       break;
     default:

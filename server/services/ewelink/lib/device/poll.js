@@ -7,6 +7,10 @@ const { readOnlineValue } = require('../features');
 const { pollBinary } = require('../features/binary');
 const { pollHumidity } = require('../features/humidity');
 const { pollTemperature } = require('../features/temperature');
+const { pollCo2 } = require('../features/co2');
+const { pollPower } = require('../features/power');
+const { pollVoltage } = require('../features/voltage');
+const { pollCurrent } = require('../features/current');
 const { DEVICE_FIRMWARE, EWELINK_REGION_KEY, DEVICE_ONLINE } = require('../utils/constants');
 const { parseExternalId } = require('../utils/externalId');
 
@@ -45,9 +49,15 @@ async function poll(device) {
   await Promise.mapSeries(device.features || [], (feature) => {
     let state;
     switch (feature.category) {
-      case DEVICE_FEATURE_CATEGORIES.SWITCH: // Binary
+      case DEVICE_FEATURE_CATEGORIES.SWITCH: // Binary, power, voltage, current
         if (feature.type === DEVICE_FEATURE_TYPES.SWITCH.BINARY) {
           state = pollBinary(eWeLinkDevice, feature);
+        } else if (feature.type === DEVICE_FEATURE_TYPES.SWITCH.POWER) {
+          state = pollPower(eWeLinkDevice, feature);
+        } else if (feature.type === DEVICE_FEATURE_TYPES.SWITCH.VOLTAGE) {
+          state = pollVoltage(eWeLinkDevice, feature);
+        } else if (feature.type === DEVICE_FEATURE_TYPES.SWITCH.CURRENT) {
+          state = pollCurrent(eWeLinkDevice, feature);
         }
         break;
       case DEVICE_FEATURE_CATEGORIES.HUMIDITY_SENSOR: // Humidity
@@ -55,6 +65,9 @@ async function poll(device) {
         break;
       case DEVICE_FEATURE_CATEGORIES.TEMPERATURE_SENSOR: // Temperature
         state = pollTemperature(eWeLinkDevice, feature);
+        break;
+      case DEVICE_FEATURE_CATEGORIES.CO2_SENSOR: // CO2
+        state = pollCo2(eWeLinkDevice, feature);
         break;
       default:
         break;

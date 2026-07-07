@@ -22,7 +22,8 @@ module.exports = {
   },
   pollTemperature: (eWeLinkDevice, feature) => {
     const { deviceId } = parseExternalId(feature.external_id);
-    const currentTemperature = (eWeLinkDevice.params && eWeLinkDevice.params.currentTemperature) || false;
+    const currentTemperature =
+      (eWeLinkDevice.params && (eWeLinkDevice.params.currentTemperature ?? eWeLinkDevice.params.temperature)) || false;
     // if the value is different from the value we have, save new state
     if (currentTemperature && feature.last_value !== currentTemperature) {
       logger.debug(`eWeLink: Polling device "${deviceId}", temperature new value = ${currentTemperature}`);

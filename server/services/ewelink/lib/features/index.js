@@ -8,19 +8,41 @@ const { getExternalId } = require('../utils/externalId');
 const binaryFeature = require('./binary');
 const humidityFeature = require('./humidity');
 const temperatureFeature = require('./temperature');
+const co2Feature = require('./co2');
+const powerFeature = require('./power');
+const voltageFeature = require('./voltage');
+const currentFeature = require('./current');
 
 const AVAILABLE_FEATURE_MODELS = {
   binary: {
-    uiid: [1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 15],
+    // 190/276: POWR3 (single switch, metering) - 266: SAWF-08P air quality monitor has no switch
+    uiid: [1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 15, 190, 276],
     feature: binaryFeature,
   },
   humidity: {
-    uiid: [15],
+    // 15: TH10/TH16 - 266: SAWF-08P air quality monitor
+    uiid: [15, 266],
     feature: humidityFeature,
   },
   temperature: {
-    uiid: [15],
+    uiid: [15, 266],
     feature: temperatureFeature,
+  },
+  co2: {
+    uiid: [266],
+    feature: co2Feature,
+  },
+  power: {
+    uiid: [190, 276],
+    feature: powerFeature,
+  },
+  voltage: {
+    uiid: [190, 276],
+    feature: voltageFeature,
+  },
+  current: {
+    uiid: [190, 276],
+    feature: currentFeature,
   },
 };
 
