@@ -20,11 +20,16 @@ function configFilePath() {
  * const config = await getConfig.call(this);
  */
 async function getConfig() {
+  let config;
   try {
-    return await fse.readJson(configFilePath.call(this));
+    config = await fse.readJson(configFilePath.call(this));
   } catch (e) {
-    return { discordWebhookUrl: process.env.DISCORD_WEBHOOK_URL || '' };
+    config = { discordWebhookUrl: process.env.DISCORD_WEBHOOK_URL || '' };
   }
+  if (!Array.isArray(config.sources)) {
+    config.sources = [];
+  }
+  return config;
 }
 
 /**

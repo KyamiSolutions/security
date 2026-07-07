@@ -83,7 +83,9 @@ import PhilipsHueSetupPage from '../routes/integration/all/philips-hue/setup-pag
 import PhilipsHueDevicePage from '../routes/integration/all/philips-hue/device-page';
 import TPLinkDevicePage from '../routes/integration/all/tp-link/device-page';
 import RtspCameraPage from '../routes/integration/all/rtsp-camera';
-import KyamiMotionPage from '../routes/integration/all/kyami-motion';
+import KyamiMotionPage from '../routes/integration/all/kyami-motion/cameras-page';
+import KyamiMotionRecordingsPage from '../routes/integration/all/kyami-motion/recordings-page';
+import KyamiMotionSettingsPage from '../routes/integration/all/kyami-motion/settings-page';
 import XiaomiPage from '../routes/integration/all/xiaomi';
 import EditXiaomiPage from '../routes/integration/all/xiaomi/edit-page';
 import NextcloudTalkPage from '../routes/integration/all/nextcloud-talk';
@@ -285,6 +287,8 @@ const AppRouter = connect(
         <TPLinkDevicePage path="/dashboard/integration/device/tp-link/device" />
         <RtspCameraPage path="/dashboard/integration/device/rtsp-camera" />
         <KyamiMotionPage path="/dashboard/integration/device/kyami-motion" />
+        <KyamiMotionRecordingsPage path="/dashboard/integration/device/kyami-motion/recordings" />
+        <KyamiMotionSettingsPage path="/dashboard/integration/device/kyami-motion/settings" />
         <MqttDevicePage path="/dashboard/integration/device/mqtt" />
         <MqttDeviceSetupPage path="/dashboard/integration/device/mqtt/edit" />
         <MqttDeviceSetupPage path="/dashboard/integration/device/mqtt/edit/:deviceSelector" />

@@ -654,8 +654,11 @@
       }
     },
     "kyamiMotion": {
-      "title": "Kyami Motion",
-      "description": "Auto-discover RTSP cameras, detect motion locally and record clips."
+      "title": "Security Camera",
+      "description": "Auto-discover RTSP cameras, detect motion locally and record clips.",
+      "camerasTab": "Cameras",
+      "recordingsTab": "Recordings",
+      "settingsTab": "Notifications"
     },
     "rtspCamera": {
       "title": "Cameras",

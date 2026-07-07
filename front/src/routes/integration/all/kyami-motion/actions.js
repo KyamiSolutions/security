@@ -1,30 +1,27 @@
 import update from 'immutability-helper';
 import { RequestStatus } from '../../../../utils/consts';
 
-const STORAGE_KEY = 'kyamiMotionSources';
-
-function loadSourcesFromStorage() {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
-}
-
-function saveSourcesToStorage(sources) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sources.map(s => s.source)));
+function saveSourcesToBackend(state, kyamiSources) {
+  return state.httpClient.post('/api/v1/service/kyami-motion/sources', {
+    sources: kyamiSources.map(s => s.source)
+  });
 }
 
 function createActions(store) {
   const actions = {
-    getSources(state) {
-      const sources = loadSourcesFromStorage().map(source => ({
-        source,
-        active: false,
-        snapshot: null
-      }));
-      store.setState({ kyamiSources: sources });
+    async getSources(state) {
+      store.setState({ kyamiGetSourcesStatus: RequestStatus.Getting });
+      try {
+        const result = await state.httpClient.get('/api/v1/service/kyami-motion/sources');
+        const kyamiSources = (result.sources || []).map(source => ({
+          source,
+          active: false,
+          snapshot: null
+        }));
+        store.setState({ kyamiSources, kyamiGetSourcesStatus: RequestStatus.Success });
+      } catch (e) {
+        store.setState({ kyamiSources: [], kyamiGetSourcesStatus: RequestStatus.Error });
+      }
     },
     updateProbeField(state, field, value) {
       store.setState({
@@ -34,7 +31,7 @@ function createActions(store) {
     updateManualSource(state, value) {
       store.setState({ kyamiManualSource: value });
     },
-    addManualSource(state) {
+    async addManualSource(state) {
       const value = state.kyamiManualSource && state.kyamiManualSource.trim();
       if (!value) {
         return;
@@ -42,7 +39,7 @@ function createActions(store) {
       const kyamiSources = update(state.kyamiSources || [], {
         $push: [{ source: value, active: false, snapshot: null }]
       });
-      saveSourcesToStorage(kyamiSources);
+      await saveSourcesToBackend(state, kyamiSources);
       store.setState({ kyamiSources, kyamiManualSource: '' });
     },
     async probeCamera(state) {
@@ -58,7 +55,7 @@ function createActions(store) {
         const kyamiSources = update(state.kyamiSources || [], {
           $push: [{ source: result.internal_source, active: false, snapshot: null }]
         });
-        saveSourcesToStorage(kyamiSources);
+        await saveSourcesToBackend(state, kyamiSources);
         store.setState({ kyamiSources, kyamiProbeStatus: RequestStatus.Success });
       } catch (e) {
         store.setState({
@@ -67,9 +64,9 @@ function createActions(store) {
         });
       }
     },
-    removeSource(state, index) {
+    async removeSource(state, index) {
       const kyamiSources = update(state.kyamiSources, { $splice: [[index, 1]] });
-      saveSourcesToStorage(kyamiSources);
+      await saveSourcesToBackend(state, kyamiSources);
       store.setState({ kyamiSources });
     },
     async startMotion(state, index) {

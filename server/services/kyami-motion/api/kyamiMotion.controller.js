@@ -42,6 +42,30 @@ module.exports = function KyamiMotionController(gladys, kyamiMotionHandler) {
   }
 
   /**
+   * @api {get} /api/v1/service/kyami-motion/sources Get saved camera sources
+   * @apiName GetSources
+   * @apiGroup KyamiMotion
+   */
+  async function getSources(req, res) {
+    const config = await kyamiMotionHandler.getConfig();
+    res.json({ sources: config.sources || [] });
+  }
+
+  /**
+   * @api {post} /api/v1/service/kyami-motion/sources Save camera sources
+   * @apiName SaveSources
+   * @apiGroup KyamiMotion
+   */
+  async function saveSources(req, res) {
+    const { sources } = req.body;
+    if (!Array.isArray(sources)) {
+      throw new Error400('SOURCES_MUST_BE_AN_ARRAY');
+    }
+    const config = await kyamiMotionHandler.saveConfig({ sources });
+    res.json({ sources: config.sources });
+  }
+
+  /**
    * @api {get} /api/v1/service/kyami-motion/probe Probe a camera IP for a working RTSP path
    * @apiName Probe
    * @apiGroup KyamiMotion
@@ -182,7 +206,18 @@ module.exports = function KyamiMotionController(gladys, kyamiMotionHandler) {
       admin: true,
       controller: asyncMiddleware(saveConfig),
     },
+    'get /api/v1/service/kyami-motion/sources': {
+      authenticated: true,
+      admin: true,
+      controller: asyncMiddleware(getSources),
+    },
+    'post /api/v1/service/kyami-motion/sources': {
+      authenticated: true,
+      admin: true,
+      controller: asyncMiddleware(saveSources),
+    },
     'get /api/v1/service/kyami-motion/probe': {
+      authenticated: true,
       authenticated: true,
       admin: true,
       controller: asyncMiddleware(probe),
