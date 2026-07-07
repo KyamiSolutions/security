@@ -1569,6 +1569,7 @@ const DASHBOARD_BOX_TYPE = {
   CHART: 'chart',
   ECOWATT: 'ecowatt',
   EDF_TEMPO: 'edf-tempo',
+  ELERING: 'elering',
   CLOCK: 'clock',
   SCENE: 'scene',
   MUSIC: 'music',

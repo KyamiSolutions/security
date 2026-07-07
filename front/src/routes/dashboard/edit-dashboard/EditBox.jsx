@@ -8,6 +8,7 @@ import EditDevicesInRoom from '../../../components/boxs/device-in-room/EditDevic
 import EditDevices from '../../../components/boxs/device-in-room/EditDevices';
 import EditChart from '../../../components/boxs/chart/EditChart';
 import EditEcowatt from '../../../components/boxs/ecowatt/EditEcowatt';
+import EditElering from '../../../components/boxs/elering/EditElering';
 import EditClock from '../../../components/boxs/clock/EditClock';
 
 import SelectBoxType from '../../../components/boxs/SelectBoxType';
@@ -40,6 +41,8 @@ const Box = ({ children, ...props }) => {
       return <EditChart {...props} />;
     case 'ecowatt':
       return <EditEcowatt {...props} />;
+    case 'elering':
+      return <EditElering {...props} />;
     case 'clock':
       return <EditClock {...props} />;
     case 'scene':

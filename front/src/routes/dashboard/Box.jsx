@@ -7,6 +7,7 @@ import DevicesInRoomsBox from '../../components/boxs/device-in-room/DevicesInRoo
 import DevicesBox from '../../components/boxs/device-in-room/DevicesBox';
 import ChartBox from '../../components/boxs/chart/Chart';
 import EcowattBox from '../../components/boxs/ecowatt/Ecowatt';
+import EleringBox from '../../components/boxs/elering/Elering';
 import ClockBox from '../../components/boxs/clock/Clock';
 import SceneBox from '../../components/boxs/scene/SceneBox';
 import AlarmBox from '../../components/boxs/alarm/Alarm';
@@ -37,6 +38,8 @@ const Box = ({ children, ...props }) => {
       return <ChartBox {...props} />;
     case 'ecowatt':
       return <EcowattBox {...props} />;
+    case 'elering':
+      return <EleringBox {...props} />;
     case 'clock':
       return <ClockBox {...props} />;
     case 'scene':

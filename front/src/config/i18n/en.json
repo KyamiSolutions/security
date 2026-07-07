@@ -282,6 +282,7 @@
       "chart": "Chart",
       "ecowatt": "Ecowatt (France)",
       "edf-tempo": "Tempo EDF",
+      "elering": "Elering electricity price (Estonia)",
       "clock": "Clock",
       "scene": "Scene",
       "music": "Music",
@@ -429,6 +430,13 @@
         "ok": "Network ok",
         "warning": "Network warning",
         "critical": "Network critical"
+      },
+      "elering": {
+        "title": "Estonian electricity price",
+        "description": "This box shows the current and upcoming Estonian day-ahead electricity price (Elering, Nord Pool).",
+        "error": "An error occurred while fetching the Elering API. Please retry.",
+        "currentPrice": "Current price",
+        "cheapestHour": "Cheapest upcoming hour"
       },
       "edfTempo": {
         "description": "This widget allows you to display the current EDF Tempo state.",
