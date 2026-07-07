@@ -13,4 +13,7 @@ class SettingsPage extends Component {
   }
 }
 
-export default connect('kyamiDiscordWebhookUrl,kyamiConfigSaveStatus', actions)(SettingsPage);
+export default connect(
+  'kyamiDiscordWebhookUrl,kyamiConfigSaveStatus,kyamiTestNotificationStatus,kyamiTestNotificationError',
+  actions
+)(SettingsPage);

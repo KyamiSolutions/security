@@ -42,6 +42,16 @@ module.exports = function KyamiMotionController(gladys, kyamiMotionHandler) {
   }
 
   /**
+   * @api {post} /api/v1/service/kyami-motion/notifications/test Send a test Discord notification
+   * @apiName SendTestNotification
+   * @apiGroup KyamiMotion
+   */
+  async function sendTestNotification(req, res) {
+    const result = await kyamiMotionHandler.sendTestNotification();
+    res.json(result);
+  }
+
+  /**
    * @api {get} /api/v1/service/kyami-motion/sources Get saved camera sources
    * @apiName GetSources
    * @apiGroup KyamiMotion
@@ -215,6 +225,11 @@ module.exports = function KyamiMotionController(gladys, kyamiMotionHandler) {
       authenticated: true,
       admin: true,
       controller: asyncMiddleware(saveConfig),
+    },
+    'post /api/v1/service/kyami-motion/notifications/test': {
+      authenticated: true,
+      admin: true,
+      controller: asyncMiddleware(sendTestNotification),
     },
     'get /api/v1/service/kyami-motion/sources': {
       authenticated: true,

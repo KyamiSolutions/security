@@ -5,7 +5,7 @@ const { listUsbCameras } = require('./listUsbCameras');
 const { getV4l2Controls, setV4l2Control } = require('./v4l2Controls');
 const { startRecording, stopRecording, listRecordings, deleteRecording } = require('./recordings');
 const { motionTick, startMotionDetector, stopMotionDetector } = require('./motionDetector');
-const { notifyDiscord } = require('./discordNotify');
+const { notifyDiscord, sendTestNotification } = require('./discordNotify');
 const { getConfig, saveConfig } = require('./config');
 
 /**
@@ -37,6 +37,7 @@ KyamiMotionHandler.prototype.motionTick = motionTick;
 KyamiMotionHandler.prototype.startMotionDetector = startMotionDetector;
 KyamiMotionHandler.prototype.stopMotionDetector = stopMotionDetector;
 KyamiMotionHandler.prototype.notifyDiscord = notifyDiscord;
+KyamiMotionHandler.prototype.sendTestNotification = sendTestNotification;
 KyamiMotionHandler.prototype.getConfig = getConfig;
 KyamiMotionHandler.prototype.saveConfig = saveConfig;
 

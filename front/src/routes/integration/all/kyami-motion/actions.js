@@ -123,6 +123,25 @@ function createActions(store) {
       } catch (e) {
         store.setState({ kyamiConfigSaveStatus: RequestStatus.Error });
       }
+    },
+    async sendTestNotification(state) {
+      store.setState({ kyamiTestNotificationStatus: RequestStatus.Getting, kyamiTestNotificationError: null });
+      try {
+        const result = await state.httpClient.post('/api/v1/service/kyami-motion/notifications/test', {});
+        if (result.success) {
+          store.setState({ kyamiTestNotificationStatus: RequestStatus.Success });
+        } else {
+          store.setState({
+            kyamiTestNotificationStatus: RequestStatus.Error,
+            kyamiTestNotificationError: result.error
+          });
+        }
+      } catch (e) {
+        store.setState({
+          kyamiTestNotificationStatus: RequestStatus.Error,
+          kyamiTestNotificationError: (e.response && e.response.data && e.response.data.message) || e.message
+        });
+      }
     }
   };
   return actions;
