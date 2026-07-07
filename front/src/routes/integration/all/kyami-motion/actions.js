@@ -13,9 +13,9 @@ function createActions(store) {
       store.setState({ kyamiGetSourcesStatus: RequestStatus.Getting });
       try {
         const result = await state.httpClient.get('/api/v1/service/kyami-motion/sources');
-        const kyamiSources = (result.sources || []).map(source => ({
-          source,
-          active: false,
+        const kyamiSources = (result.sources || []).map(entry => ({
+          source: entry.source,
+          active: Boolean(entry.active),
           snapshot: null
         }));
         store.setState({ kyamiSources, kyamiGetSourcesStatus: RequestStatus.Success });

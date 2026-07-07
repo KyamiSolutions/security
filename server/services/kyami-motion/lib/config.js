@@ -29,6 +29,9 @@ async function getConfig() {
   if (!Array.isArray(config.sources)) {
     config.sources = [];
   }
+  if (!Array.isArray(config.activeSources)) {
+    config.activeSources = [];
+  }
   return config;
 }
 

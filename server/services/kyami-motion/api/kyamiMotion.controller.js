@@ -48,7 +48,11 @@ module.exports = function KyamiMotionController(gladys, kyamiMotionHandler) {
    */
   async function getSources(req, res) {
     const config = await kyamiMotionHandler.getConfig();
-    res.json({ sources: config.sources || [] });
+    const sources = (config.sources || []).map((source) => ({
+      source,
+      active: Boolean(kyamiMotionHandler.detectors[source] && kyamiMotionHandler.detectors[source].running),
+    }));
+    res.json({ sources });
   }
 
   /**
@@ -140,6 +144,9 @@ module.exports = function KyamiMotionController(gladys, kyamiMotionHandler) {
     const source = parseSource(req.body.source);
     const threshold = req.body.threshold ? Number(req.body.threshold) : undefined;
     kyamiMotionHandler.startMotionDetector(source, threshold);
+    const config = await kyamiMotionHandler.getConfig();
+    const activeSources = Array.from(new Set([...config.activeSources, String(source)]));
+    await kyamiMotionHandler.saveConfig({ activeSources });
     res.json({ success: true });
   }
 
@@ -154,6 +161,9 @@ module.exports = function KyamiMotionController(gladys, kyamiMotionHandler) {
     }
     const source = parseSource(req.body.source);
     kyamiMotionHandler.stopMotionDetector(source);
+    const config = await kyamiMotionHandler.getConfig();
+    const activeSources = config.activeSources.filter((s) => s !== String(source));
+    await kyamiMotionHandler.saveConfig({ activeSources });
     res.json({ success: true });
   }
 

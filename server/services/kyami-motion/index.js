@@ -27,6 +27,12 @@ module.exports = function KyamiMotionService(gladys) {
     logger.info('Starting kyami-motion service');
     await fse.ensureDir(gladys.config.tempFolder);
     await fse.ensureDir(gladys.config.recordingsFolder);
+
+    const config = await device.getConfig();
+    (config.activeSources || []).forEach((source) => {
+      logger.info(`kyami-motion: resuming motion detection for ${source}`);
+      device.startMotionDetector(source);
+    });
   }
 
   /**
