@@ -159,7 +159,7 @@ class EWeLinkClient {
     });
     const json = await response.json();
     if (!json.data || !Array.isArray(json.data.familyList)) {
-      throw new Error(json.msg || 'eWeLink: could not fetch homes');
+      return { error: json.error || response.status, msg: json.msg || 'eWeLink: could not fetch homes' };
     }
     return json.data.familyList.map((home) => home.id);
   }
@@ -175,6 +175,9 @@ class EWeLinkClient {
   async getDevices() {
     try {
       const homeIds = await this.getHomeIds();
+      if (homeIds.error) {
+        return homeIds;
+      }
       const devices = [];
       // eslint-disable-next-line no-restricted-syntax
       for (const familyId of homeIds) {

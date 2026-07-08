@@ -36,7 +36,11 @@ const EweLinkHandler = function EweLinkHandler(gladys, eweLinkApi, serviceId) {
  */
 async function throwErrorIfNeeded(response, emit = false, config = false) {
   if (response.error) {
-    if (response.error === 406) {
+    // eWeLink cloud returns various error codes/messages when the access token has expired or
+    // was invalidated (e.g. "cannot found access token info"). Unlike a bad login (406), the
+    // stored email/password are still valid here - just force a fresh connect() on next call.
+    const tokenExpired = typeof response.msg === 'string' && /access ?token/i.test(response.msg);
+    if (response.error === 406 || tokenExpired) {
       this.connected = false;
       this.accessToken = '';
       this.apiKey = '';
@@ -46,7 +50,7 @@ async function throwErrorIfNeeded(response, emit = false, config = false) {
           payload: response.msg,
         });
       }
-      if (config) {
+      if (config && !tokenExpired) {
         await Promise.all([
           this.gladys.variable.setValue(EWELINK_EMAIL_KEY, '', this.serviceId),
           this.gladys.variable.setValue(EWELINK_PASSWORD_KEY, '', this.serviceId),
