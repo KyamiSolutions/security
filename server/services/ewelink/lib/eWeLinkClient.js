@@ -304,6 +304,7 @@ class EWeLinkClient {
 
     try {
       const dispatchHost = await this.getDispatchHost();
+      logger.info(`eWeLink: setDevicePowerState "${deviceId}", dispatch host = "${dispatchHost}"`);
       return await new Promise((resolve) => {
         const ws = new WebSocket(`wss://${dispatchHost}:8080/api/ws`);
         let settled = false;
@@ -312,6 +313,7 @@ class EWeLinkClient {
             return;
           }
           settled = true;
+          logger.info(`eWeLink: setDevicePowerState "${deviceId}", result = ${JSON.stringify(result)}`);
           try {
             ws.close();
           } catch (e) {
@@ -323,6 +325,7 @@ class EWeLinkClient {
 
         let loggedIn = false;
         ws.on('open', () => {
+          logger.info(`eWeLink: setDevicePowerState "${deviceId}", WebSocket open, sending login`);
           const sequence = String(Date.now());
           ws.send(
             JSON.stringify({
@@ -339,6 +342,7 @@ class EWeLinkClient {
           );
         });
         ws.on('message', (raw) => {
+          logger.info(`eWeLink: setDevicePowerState "${deviceId}", WebSocket message received: ${raw}`);
           if (raw === 'pong') {
             return;
           }
@@ -376,8 +380,14 @@ class EWeLinkClient {
           }
         });
         ws.on('error', (e) => {
+          logger.warn(`eWeLink: setDevicePowerState "${deviceId}", WebSocket error: ${e.message}`);
           clearTimeout(timeout);
           finish({ error: 500, msg: e.message });
+        });
+        ws.on('close', (code, reason) => {
+          logger.info(
+            `eWeLink: setDevicePowerState "${deviceId}", WebSocket closed, code: ${code}, reason: ${reason}`,
+          );
         });
       });
     } catch (e) {
