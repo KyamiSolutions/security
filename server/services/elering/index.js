@@ -68,21 +68,22 @@ module.exports = function EleringService(gladys) {
   }
 
   /**
-   * @description Get the current hour's Estonian electricity price.
+   * @description Get the current Estonian electricity price. Elering price periods used to be
+   * hourly but switched to 15-minute periods in 2025 - this doesn't assume either, it just picks
+   * the latest period that has already started.
    * @returns {Promise<{timestamp: number, price_eur_mwh: number, price_cents_kwh: number}|null>}
-   * Current hour price, or null if not found.
+   * Current period price, or null if not found.
    * @example
    * getCurrentPrice();
    */
   async function getCurrentPrice() {
     const now = new Date();
-    const start = new Date(now);
-    start.setUTCHours(now.getUTCHours() - 1, 0, 0, 0);
-    const end = new Date(now);
-    end.setUTCHours(now.getUTCHours() + 1, 0, 0, 0);
+    const start = new Date(now.getTime() - 60 * 60 * 1000);
+    const end = new Date(now.getTime() + 60 * 60 * 1000);
     const prices = await getPrices(start, end);
     const nowSeconds = Math.floor(now.getTime() / 1000);
-    return prices.find((hour) => nowSeconds >= hour.timestamp && nowSeconds < hour.timestamp + 3600) || null;
+    const started = prices.filter((price) => price.timestamp <= nowSeconds).sort((a, b) => a.timestamp - b.timestamp);
+    return started.length > 0 ? started[started.length - 1] : null;
   }
 
   return Object.freeze({

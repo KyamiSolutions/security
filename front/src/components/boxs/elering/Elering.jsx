@@ -86,9 +86,17 @@ class Elering extends Component {
     try {
       this.setState({ error: false, loading: true });
       const data = await this.props.httpClient.get('/api/v1/service/elering/prices');
-      const prices = data.prices || [];
+      const prices = [...(data.prices || [])].sort((a, b) => a.timestamp - b.timestamp);
       const now = Math.floor(Date.now() / 1000);
-      const upcoming = prices.filter(p => p.timestamp + 3600 > now).slice(0, 12);
+      // Find the currently active price period (periods used to be hourly, are 15 minutes since
+      // 2025 - this doesn't assume either), then show it plus the next few upcoming ones.
+      let currentIndex = -1;
+      prices.forEach((p, index) => {
+        if (p.timestamp <= now) {
+          currentIndex = index;
+        }
+      });
+      const upcoming = (currentIndex >= 0 ? prices.slice(currentIndex) : prices).slice(0, 12);
 
       const relevantPrices = upcoming.length > 0 ? upcoming : prices;
       const min = Math.min(...relevantPrices.map(p => p.price_cents_kwh));
