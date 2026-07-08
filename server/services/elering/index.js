@@ -3,17 +3,20 @@ const EleringController = require('./controllers/elering.controller');
 
 const ELERING_PRICE_API_URL = 'https://dashboard.elering.ee/api/nps/price';
 const ELERING_AREA = 'ee';
+// Estonian standard VAT rate (24% since 1 July 2025). Comparison sites like elektrihind.ee
+// show the exchange price with VAT included by default, so we match that here.
+const VAT_RATE = 0.24;
 
 /**
- * @description Convert a price in EUR/MWh (Elering's unit) to cents/kWh (easier to reason
- * about for a home electricity bill).
- * @param {number} eurPerMwh - Price in EUR/MWh.
- * @returns {number} Price in cents/kWh, rounded to 2 decimals.
+ * @description Convert a price in EUR/MWh (Elering's unit, excluding VAT) to cents/kWh
+ * including VAT, matching what a home electricity bill / elektrihind.ee shows.
+ * @param {number} eurPerMwh - Price in EUR/MWh, excluding VAT.
+ * @returns {number} Price in cents/kWh, including VAT, rounded to 2 decimals.
  * @example
- * eurPerMwhToCentsPerKwh(45.6); // 4.56
+ * eurPerMwhToCentsPerKwh(45.6); // 5.65 (incl. 24% VAT)
  */
 function eurPerMwhToCentsPerKwh(eurPerMwh) {
-  return Math.round((eurPerMwh / 10) * 100) / 100;
+  return Math.round(((eurPerMwh * (1 + VAT_RATE)) / 10) * 100) / 100;
 }
 
 module.exports = function EleringService(gladys) {

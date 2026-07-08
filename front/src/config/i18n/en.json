@@ -439,7 +439,7 @@
         "title": "Estonian electricity price",
         "description": "This box shows the current and upcoming Estonian day-ahead electricity price (Elering, Nord Pool).",
         "error": "An error occurred while fetching the Elering API. Please retry.",
-        "currentPrice": "Current price",
+        "currentPrice": "Current price (incl. 24% VAT)",
         "cheapestHour": "Cheapest upcoming hour"
       },
       "edfTempo": {
