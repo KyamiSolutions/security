@@ -1,0 +1,14 @@
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - ../homeassistant-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    privileged: true
+    # Host networking is Home Assistant's recommended mode: it lets HA discover
+    # devices on the local network (mDNS/SSDP for Sonos, Chromecast, HomeKit, etc.)
+    # that bridge networking would hide behind Docker's NAT. It listens on the
+    # host's port 8123 directly (no "ports:" mapping needed/possible in this mode).
+    network_mode: host

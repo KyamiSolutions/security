@@ -28,3 +28,4 @@ size-plugin.json
 matter-controller-data
 .tailscale-choice
 docker/docker-compose.local.yml
+homeassistant-config

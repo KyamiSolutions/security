@@ -1,0 +1,25 @@
+# Home Assistant Apache reverse proxy näidis (ha.mrnux.ee -> 127.0.0.1:8123)
+#
+# Paigaldus serveris:
+#   sudo cp docker/apache-ha.conf.example /etc/apache2/sites-available/ha.mrnux.ee.conf
+#   sudo a2enmod proxy proxy_http proxy_wstunnel rewrite
+#   sudo a2ensite ha.mrnux.ee.conf
+#   sudo systemctl reload apache2
+#   sudo certbot --apache -d ha.mrnux.ee   # lisab automaatselt HTTPS ploki
+
+<VirtualHost *:80>
+    ServerName ha.mrnux.ee
+
+    # Home Assistant kasutab liidese live-uuendusteks WebSocketi - ilma selle
+    # reeglita jääb liides "laadib..." olekusse.
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule /(.*) ws://127.0.0.1:8123/$1 [P,L]
+
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:8123/
+    ProxyPassReverse / http://127.0.0.1:8123/
+
+    ErrorLog ${APACHE_LOG_DIR}/ha-error.log
+    CustomLog ${APACHE_LOG_DIR}/ha-access.log combined
+</VirtualHost>
