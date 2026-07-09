@@ -1,0 +1,28 @@
+services:
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    volumes:
+      - ../mosquitto-config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ../mosquitto-data:/mosquitto/data
+    # Host networking so Home Assistant and Frigate (also host network) can reach it on
+    # 127.0.0.1:1883 without extra port mapping/firewall rules.
+    network_mode: host
+
+  frigate:
+    container_name: frigate
+    image: ghcr.io/blakeblackshear/frigate:stable
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    shm_size: "256mb"
+    env_file:
+      - frigate.env
+    volumes:
+      - ../frigate-config:/config
+      - ../frigate-media:/media/frigate
+      - /etc/localtime:/etc/localtime:ro
+    # Host networking is Frigate's recommended mode (needed for RTSP/go2rtc/webrtc to work
+    # correctly). Web UI ends up on the host's port 5000 (and 8971 for the newer UI).
+    network_mode: host

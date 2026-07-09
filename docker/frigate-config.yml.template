@@ -1,0 +1,37 @@
+# Frigate põhikonfiguratsioon - kopeeritakse install-frigate.sh poolt -> ../frigate-config/config.yml
+# Kasutajanimi/parool tulevad frigate.env failist ({FRIGATE_RTSP_USER}/{FRIGATE_RTSP_PASSWORD}),
+# ei ole siin failis kõvakodeeritud (see fail läheb gitti).
+
+mqtt:
+  host: 127.0.0.1
+  port: 1883
+
+# go2rtc annab stabiilse taasesituse Home Assistant'i kaamerakaardile ja madalama latentsusega
+# live-vaate. Kasuta siin sama voogu, mida detect/record allpool kasutavad.
+go2rtc:
+  streams:
+    reolink: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.1.142:554/h264Preview_01_sub
+
+cameras:
+  reolink:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/reolink
+          roles:
+            - detect
+            - record
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+    record:
+      enabled: true
+      retain:
+        days: 7
+        mode: motion
+    objects:
+      track:
+        - person
+        - car
+        - dog
+        - cat

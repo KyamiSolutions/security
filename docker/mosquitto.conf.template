@@ -1,0 +1,6 @@
+# Mosquitto MQTT vahendaja - minimaalne kohalik seadistus (Frigate <-> Home Assistant side).
+# Kopeeritakse install-frigate.sh poolt -> ../mosquitto-config/mosquitto.conf
+listener 1883 127.0.0.1
+allow_anonymous true
+persistence true
+persistence_location /mosquitto/data/

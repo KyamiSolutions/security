@@ -29,3 +29,8 @@ matter-controller-data
 .tailscale-choice
 docker/docker-compose.local.yml
 homeassistant-config
+frigate-config
+frigate-media
+mosquitto-config
+mosquitto-data
+docker/frigate.env
