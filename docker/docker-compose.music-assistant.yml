@@ -1,0 +1,11 @@
+services:
+  music-assistant:
+    container_name: music-assistant
+    image: ghcr.io/music-assistant/server:stable
+    restart: unless-stopped
+    volumes:
+      - ../music-assistant-data:/data
+      - /etc/localtime:/etc/localtime:ro
+    # Host networking is required for player discovery (Sonos/Chromecast/AirPlay use
+    # mDNS/SSDP on the local network, which Docker's bridge networking would hide).
+    network_mode: host
