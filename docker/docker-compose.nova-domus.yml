@@ -1,0 +1,14 @@
+services:
+  nova-domus:
+    container_name: nova-domus
+    image: ghcr.io/amedello/nova-domus
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Tallinn
+      - HASS_URL=http://localhost:8123
+    volumes:
+      - ../nova-domus-data:/app/data
+    # Host networking keeps this consistent with the other services (HA, Frigate,
+    # Music Assistant) and lets HASS_URL=http://localhost:8123 work directly,
+    # without needing host.docker.internal (unreliable on plain Linux Docker).
+    network_mode: host

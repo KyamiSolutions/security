@@ -35,3 +35,4 @@ mosquitto-config
 mosquitto-data
 docker/frigate.env
 music-assistant-data
+nova-domus-data
